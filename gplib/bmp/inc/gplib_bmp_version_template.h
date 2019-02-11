@@ -1,0 +1,6 @@
+#ifndef GPLIB_BMP_VERSION_H
+#define GPLIB_BMP_VERSION_H
+
+#define GPLIB_BMP_SVN_VERSION			"$WCREV$ - $WCRANGE$ "
+#define GPLIB_BMP_LIB_BUILD_TIME		"$WCNOW$"
+#endif  // endif GPLIB_BMP_VERSION_H

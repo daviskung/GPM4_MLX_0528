@@ -1,0 +1,6 @@
+#ifndef GPLIB_VFM_VERSION_H
+#define GPLIB_VFM_VERSION_H
+
+#define GPLIB_VFM_SVN_VERSION			"$WCREV$ - $WCRANGE$ "
+#define GPLIB_VFM_LIB_BUILD_TIME		"$WCNOW$"
+#endif  // endif GPLIB_VFM_VERSION_H

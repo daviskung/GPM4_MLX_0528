@@ -1,0 +1,8 @@
+#include "sprite.h"
+
+const INT16U ALIGN4 _Sprite01A_IMG0000_CellIdx[]={
+	   1,	SP_ROTATE0,	   0,	SP_ZOOM0,	   0,	SP_PBANK0,	SPBLEND_DISABLE,	SP_DEPTH1,	SP_PALETTE7,	SP_VSIZE_L256,	SP_HSIZE_L256,	SPVFLIP_DISABLE,	SPHFLIP_DISABLE,	SP_COLOR256,	SP_MOSAIC0,	SPBLEND_LEVEL0,	0,	SpriteNoGroupID,	SPLarge_ENABLE,	SPInterpolation_DISABLE,
+	0xffff, 0xffff };
+const SPRITE ALIGN4 Sprite01A_SP[]={ 
+ { 0, 0, 0, 256, 256, 0, 0, 0, 0, 0, 0, 0, 0, (const INT32U *)_Sprite01A_IMG0000_CellIdx } 
+};

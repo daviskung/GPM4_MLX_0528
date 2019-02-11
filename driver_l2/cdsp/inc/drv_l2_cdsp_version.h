@@ -1,0 +1,6 @@
+#ifndef L2_CDSP_VERSION_H
+#define L2_CDSP_VERSION_H
+
+#define L2_CDSP_SVN_VERSION			"7958 - 7971 "
+#define L2_CDSP_LIB_BUILD_TIME		"2017/08/31 20:18:02"
+#endif  // endif L2_CDSP_VERSION_H

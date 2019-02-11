@@ -1,0 +1,6 @@
+#ifndef L2_USBH_VERSION_H
+#define L2_USBH_VERSION_H
+
+#define L2_USBH_SVN_VERSION				"7876 - 7971 "
+#define L2_USBH_LIB_BUILD_TIME		"2017/08/31 20:18:01"
+#endif  // endif L2_USBH_VERSION_H

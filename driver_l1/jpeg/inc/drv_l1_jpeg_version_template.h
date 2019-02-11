@@ -1,0 +1,6 @@
+#ifndef L1_JPEG_VERSION_H
+#define L1_JPEG_VERSION_H
+
+#define L1_JPEG_SVN_VERSION				"$WCREV$ - $WCRANGE$ "
+#define L1_JPEG_LIB_BUILD_TIME		"$WCNOW$"
+#endif  // endif L1_JPEG_VERSION_H
