@@ -1,0 +1,1228 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<emIDE_project_file>
+	<FileVersion major="1" minor="7" />
+	<Project>
+		<Option title="GPDemoProject_Release" />
+		<Option pch_mode="2" />
+		<Option compiler="armelfgcc" />
+		<Option DownloadLog="-1" />
+		<Option ProjectVersion="V1.0.2.1" />
+		<Build>
+			<Target title="Debug">
+				<Option output="prjRelease/bin/Debug/project" prefix_auto="1" extension_auto="1" />
+				<Option object_output="prjRelease/obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-g" />
+					<Add option="-mfpu=fpv4-sp-d16" />
+					<Add option="-mfloat-abi=hard" />
+					<Add option="-fno-common" />
+					<Add option="-D__CS_COMPILER__" />
+					<Add option="-DARMCM4_FP" />
+					<Add option="-DDEBUG=1" />
+					<Add option="-DARM_MATH_CM4" />
+					<Add option="-D__FPU_PRESENT=1" />
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add option="-ffunction-sections" />
+					<Add option="-fdata-sections" />
+					<Add directory="Inc" />
+					<Add directory="../../Device/ARM/ARMCM4/Include" />
+					<Add directory="../../CMSIS/Include" />
+					<Add directory="../../os/freertos_v9.0.0/Source/include" />
+					<Add directory="../../os/freertos_v9.0.0/Source/portable/GCC/ARM_CM4F" />
+					<Add directory="../../board_config/inc" />
+					<Add directory="../../driver_l1/inc" />
+					<Add directory="../../os" />
+					<Add directory="../../driver_l1/common/inc" />
+					<Add directory="../../driver_l1/jpeg/inc" />
+					<Add directory="../../driver_l1/h264/inc" />
+					<Add directory="../../driver_l2/display/inc" />
+					<Add directory="../../driver_l2/display/user/ui_data/inc" />
+					<Add directory="../../driver_l2/h264/inc" />
+					<Add directory="../../driver_l2/jpeg/inc" />
+					<Add directory="../../driver_l2/scaler/inc" />
+					<Add directory="../../driver_l2/hdmi/inc" />
+					<Add directory="../../driver_l2/sccb/inc" />
+					<Add directory="../../driver_l2/sensor/inc" />
+					<Add directory="../../driver_l2/spi_flash/inc" />
+					<Add directory="../../driver_l2/spi_nand/inc" />
+					<Add directory="../../driver_l2/fft/inc" />
+					<Add directory="../../driver_l2/ad_key/inc" />
+					<Add directory="../../driver_l2/ad_keyscan/inc" />
+					<Add directory="../../driver_l2/video_muxer/inc" />
+					<Add directory="../../application/inc" />
+					<Add directory="../../application/gpbt03/inc" />
+					<Add directory="../../application/app_audio_codec/inc" />
+					<Add directory="../../application/multimedia_platform/inc" />
+					<Add directory="../../application/task_avi_encoder/inc" />
+					<Add directory="../../application/task_video_decoder/inc" />
+					<Add directory="../../application/task_audio_i2s/inc" />
+					<Add directory="../../application/task_audio_record/inc" />
+					<Add directory="../../application/task_audio_dac/inc" />
+					<Add directory="../../application/task_audio_dac/user/inc" />
+					<Add directory="../../application/task_audio_decoder/inc" />
+					<Add directory="../../application/task_filesrv/inc" />
+					<Add directory="../../application/msg_manager/inc" />
+					<Add directory="../../application/task_image/inc" />
+					<Add directory="../../application/task_usbd/inc" />
+					<Add directory="../../application/task_camera_processor/inc" />
+					<Add directory="../../application/task_code_decoder/inc" />
+					<Add directory="src/inc" />
+					<Add directory="../../gplib/fs" />
+					<Add directory="../../gplib/mm/inc" />
+					<Add directory="../../gplib/print_string/inc" />
+					<Add directory="../../gplib/fs/include" />
+					<Add directory="../../gplib/inc" />
+					<Add directory="../../gplib/fs/driver" />
+					<Add directory="../../gplib/gpzp/inc" />
+					<Add directory="../../driver_l2/sd/inc" />
+					<Add directory="../../driver_l1/sdc/inc" />
+					<Add directory="../../driver_l1/ppu/inc" />
+					<Add directory="../../driver_l2/inc" />
+					<Add directory="../../driver_l1/usbd/inc" />
+					<Add directory="../../driver_l1/usbh/inc" />
+					<Add directory="../../driver_l2/usbh/inc" />
+					<Add directory="../../gplib/jpeg/inc" />
+					<Add directory="../../gplib/bmp/inc" />
+					<Add directory="../../gplib/EnvelopDetect/inc" />
+					<Add directory="../../driver_l2/usbd/inc" />
+					<Add directory="../../driver_l2/usbd/inc/msdc" />
+					<Add directory="../../driver_l2/usbd/inc/uvc" />
+					<Add directory="src/diag_usbd/drv_l1/inc" />
+					<Add directory="src/diag_usbd/drv_l2/inc" />
+					<Add directory="src/diag_usbd/usbd_msdc_test/src/drv_l2/inc" />
+					<Add directory="src/diag_usbd/usbd_uvc_uc_test/src/drv_l2/inc" />
+					<Add directory="src/diag_usbd/usbd_uac_test/inc" />
+					<Add directory="src/ppu_demo/G+Director_Data_Init/inc" />
+					<Add directory="src/ppu_demo/resource/inc" />
+					<Add directory="src/fd_demo/inc" />
+					<Add directory="src/obj_demo/inc" />
+					<Add directory="src/ct_fdwa_vr_demo/inc" />
+					<Add directory="src/diag_irda" />
+					<Add directory="src/diag_usbh/drv_l1/usbh/inc" />
+					<Add directory="src/diag_usbh/drv_l2/usbh/inc" />
+					<Add directory="../../driver_l1/cdsp/inc" />
+					<Add directory="../../gplib/liba/inc" />
+					<Add directory="../../gplib/ppu/inc" />
+					<Add directory="../../driver_l1/spu/inc" />
+					<Add directory="../../gplib/spu/inc" />
+					<Add directory="../../driver_l2/cdsp/inc" />
+					<Add directory="../../gplib/lib/inc" />
+					<Add directory="../../gplib/lib" />
+					<Add directory="../../gplib/oggdec/inc" />
+					<Add directory="../../gplib/tts/inc" />
+					<Add directory="../../gpstdlib/inc" />
+					<Add directory="../../gp_nand/platform" />
+					<Add directory="../../gp_nand/gp_nand_app" />
+					<Add directory="../../gp_nand/gp_nand_config" />
+					<Add directory="../../gp_nand/gp_nand_data" />
+					<Add directory="../../gp_nand/gp_nand_hal/GP22" />
+					<Add directory="../../gp_nand" />
+					<Add directory="../../gplib/video_frame_manager/inc" />
+					<Add directory="../../gplib/video_muxer/inc" />
+					<Add directory="../../gplib/qrcode/inc" />
+					<Add directory="../../application/gpwf/app/inc" />
+					<Add directory="../../application/gpwf/driver/inc" />
+					<Add directory="../../project/GPDemoProject/src/vr_demo/inc" />
+					<Add directory="../../gplib/vr/inc" />
+					<Add directory="../../gplib/danes/inc" />
+					<Add directory="src/cplusplus_sample/inc" />
+					<Add directory="src/fdwa_hand_vr_demo/inc" />
+					<Add directory="src/ehci_demo/" />
+					<Add directory="src/pattern_color_demo" />
+					<Add directory="../../driver_l2/csi/inc" />
+					<Add directory="../../driver_l2/power_save/inc" />
+					<Add directory="../../driver_l2/keyscan/inc" />
+				</Compiler>
+				<Linker>
+					<Add option="-Wl,-Map" />
+					<Add option="-Wl,${TARGET_OUTPUT_FILE}.map" />
+					<Add option="-Wl,--gc-sections" />
+					<Add option="-n" />
+					<Add option="-Wl,-cref" />
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add option="-mfloat-abi=hard" />
+					<Add option="-mfpu=fpv4-sp-d16" />
+					<Add option="-TSetup\Flash.ld" />
+					<Add option="-specs=nosys.specs" />
+					<Add library="..\..\liba\GPM47XXA\drv_l2_cdsp.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l2_jpeg.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l2_h264.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l2_scaler.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l2_sd.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l2_usbd.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l2_usbh.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l1_usbh.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l1_jpeg.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l1_h264.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l1_sdc.a" />
+					<Add library="..\..\liba\GPM47XXA\drv_l1_usbd.a" />
+					<Add library="..\..\gplib\liba\gplib_aeawb.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_A18Dec.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_A18Enc.a" />
+					<Add library="..\..\gplib\liba\libwave_dvr_M4_Lib.a" />
+					<Add library="..\..\gplib\liba\gplib_face_identify.a" />
+					<Add library="..\..\gplib\liba\gplib_face_detect.a" />
+					<Add library="..\..\gplib\liba\lib_nand_gpm4_g+ide_freertos.a" />
+					<Add library="..\..\gplib\liba\libMultiMediaParser.a" />
+					<Add library="..\..\gplib\liba\libgplib_AviParser.a" />
+					<Add library="..\..\gplib\liba\libgplib_QtffParser.a" />
+					<Add library="..\..\gplib\liba\libRatecontrol.a" />
+					<Add library="..\..\liba\GPM47XXA\gplib_bmp_decode.a" />
+					<Add library="..\..\liba\GPM47XXA\gplib_fs.a" />
+					<Add library="..\..\gplib\liba\gplib_RFMS.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_ConstantPitch.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_Echo.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_mp3_dec.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_Ogg_HWDec.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_Upsample.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_VoiceChanger.a" />
+					<Add library="..\..\gplib\liba\libCSpotterSDK_P_16k24d_GPM4.a" />
+					<Add library="..\..\gplib\liba\gplib_wfm02.a" />
+					<Add library="..\..\CMSIS\Lib\GCC\libarm_cortexM4lf_math.a" />
+					<Add library="..\..\gplib\liba\gplib_object_Tracker.a" />
+					<Add library="..\..\gplib\liba\gplib_mouth_detect.a" />
+					<Add library="..\..\gplib\liba\gplib_face_tracking.a" />
+					<Add library="..\..\liba\GPM47XXA\gplib_env_det_decode.a" />
+					<Add library="..\..\liba\GPM47XXA\gplib_vfm.a" />
+					<Add library="..\..\liba\GPM47XXA\gplib_vidmux.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_a6400_decode_sw.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_ProgressiveJPEG_Dec.a" />
+					<Add library="..\..\gplib\liba\gplib_wideAngleFaceDetect.a" />
+					<Add library="..\..\gplib\liba\gplib_color_tracking.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_tts.a" />
+					<Add library="..\..\gplib\liba\gplib_M4_AAC_dec.a" />
+					<Add library="..\..\gplib\liba\gplib_bt03.a" />
+					<Add library="..\..\gplib\liba\gplib_flandmark.a" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="arm-none-eabi-size.exe prjRelease\bin\Debug\project.elf" />
+					<Add after="arm-none-eabi-objcopy.exe -R .data_iram -O binary prjRelease\bin\Debug\project.elf prjRelease\bin\Debug\project.bin" />
+				</ExtraCommands>
+				<PostOutput>
+					<ConvertedOutput PostOutputCreate="1" />
+					<ConvertedOutput PostOutputType="BIN" />
+					<ConvertedOutput PostOutputFile="${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}" />
+				</PostOutput>
+			</Target>
+			<Target title="Release">
+				<Option output="prjDebug/bin/Release/project" prefix_auto="1" extension_auto="1" />
+				<Option object_output="prjDebug/obj/Release/" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-O0" />
+					<Add option="-g" />
+					<Add option="-D__CS_COMPILER__" />
+					<Add option="-DARMCM4_FP" />
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add directory="Inc" />
+				</Compiler>
+				<Linker>
+					<Add option="-Wl,-Map" />
+					<Add option="-Wl,${TARGET_OUTPUT_FILE}.map" />
+					<Add option="-Wl,--gc-sections" />
+					<Add option="-n" />
+					<Add option="-Wl,-cref" />
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add option="-T..\..\Device\ARM\ARMCM4\Source\GCC\gcc_arm.ld" />
+					<Add option="-s" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="arm-none-eabi-size.exe prjRelease\bin\Debug\project.elf" />
+					<Add after="arm-none-eabi-objcopy.exe -R .data_iram -O binary prjRelease\bin\Debug\project.elf prjRelease\bin\Debug\project.bin" />
+				</ExtraCommands>
+				<PostOutput>
+					<ConvertedOutput PostOutputCreate="1" />
+					<ConvertedOutput PostOutputType="BIN" />
+					<ConvertedOutput PostOutputFile="${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}" />
+				</PostOutput>
+			</Target>
+		</Build>
+		<PostOutput>
+			<ConvertedOutput PostOutputCreate="0" />
+			<ConvertedOutput PostOutputType="HEX" />
+			<ConvertedOutput PostOutputFile="${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}" />
+		</PostOutput>
+		<Unit filename="../../CMSIS/DSP_Lib/Examples/arm_sin_cos_example/GCC/arm_sin_cos_example_f32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../CMSIS/Include/core_cm4.h" />
+		<Unit filename="../../CMSIS/Include/core_cmSimd.h" />
+		<Unit filename="../../Device/ARM/ARMCM4/Include/ARMCM4_FP.h" />
+		<Unit filename="../../Device/ARM/ARMCM4/Include/system_ARMCM4.h" />
+		<Unit filename="../../Device/ARM/ARMCM4/Source/system_ARMCM4.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/app_audio_codec/inc/audio_codec_callback.h" />
+		<Unit filename="../../application/app_audio_codec/src/audio_codec_callback.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpbt03/inc/GPBT03_CDef.h" />
+		<Unit filename="../../application/gpbt03/inc/GPBT03_Drv.h" />
+		<Unit filename="../../application/gpbt03/inc/SPI_Code.h" />
+		<Unit filename="../../application/gpbt03/inc/gpbt03_iodef.h" />
+		<Unit filename="../../application/gpwf/app/bin/goplus_xml/goplus_xml.s" />
+		<Unit filename="../../application/gpwf/app/inc/gp_cmd.h" />
+		<Unit filename="../../application/gpwf/app/inc/wifi_demo.h" />
+		<Unit filename="../../application/gpwf/app/src/audio_stream.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/goplus_socket.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/gp_cmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/gp_socket_cmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/mjpeg_streamer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/simple_config.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/ssl_client.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/tutk_avapi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/udp_server.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/websocket.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/app/src/wifi_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/gpwf/driver/fw_bin/wifi_image.s" />
+		<Unit filename="../../application/gpwf/driver/inc/gspi_cmd.h" />
+		<Unit filename="../../application/gpwf/driver/inc/gspi_fw_download.h" />
+		<Unit filename="../../application/gpwf/driver/inc/gspi_master_drv.h" />
+		<Unit filename="../../application/inc/application.h" />
+		<Unit filename="../../application/msg_manager/inc/msg_manager.h" />
+		<Unit filename="../../application/msg_manager/src/msg_manager.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/multimedia_platform/inc/audio_decoder.h" />
+		<Unit filename="../../application/multimedia_platform/inc/audio_encoder.h" />
+		<Unit filename="../../application/multimedia_platform/inc/camera_processor.h" />
+		<Unit filename="../../application/multimedia_platform/inc/image_decoder.h" />
+		<Unit filename="../../application/multimedia_platform/inc/image_encoder.h" />
+		<Unit filename="../../application/multimedia_platform/inc/multimedia_platform.h" />
+		<Unit filename="../../application/multimedia_platform/inc/video_decoder.h" />
+		<Unit filename="../../application/multimedia_platform/inc/video_encoder.h" />
+		<Unit filename="../../application/multimedia_platform/src/audio_decoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/multimedia_platform/src/audio_encoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/multimedia_platform/src/camera_processor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/multimedia_platform/src/image_decoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/multimedia_platform/src/image_encoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/multimedia_platform/src/multimedia_platform.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/multimedia_platform/src/video_decoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/multimedia_platform/src/video_encoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_audio_dac/inc/turnkey_audio_dac_task.h" />
+		<Unit filename="../../application/task_audio_dac/src/turnkey_audio_dac_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_audio_dac/user/inc/audio_codec_device.h" />
+		<Unit filename="../../application/task_audio_dac/user/src/codec_w8988.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_audio_decoder/inc/turnkey_audio_decoder_task.h" />
+		<Unit filename="../../application/task_audio_decoder/src/turnkey_audio_bg_decoder_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_audio_decoder/src/turnkey_audio_decoder_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_audio_decoder/src/turnkey_audio_i2s_decoder_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_audio_decoder/src/turnkey_midi_decoder_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_audio_i2s/inc/turnkey_audio_i2s_task.h" />
+		<Unit filename="../../application/task_audio_i2s/src/turnkey_audio_i2s_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_audio_record/inc/audio_record.h" />
+		<Unit filename="../../application/task_audio_record/src/audio_record.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_avi_encoder/inc/AviPackerV3.h" />
+		<Unit filename="../../application/task_avi_encoder/inc/avi_audio_record.h" />
+		<Unit filename="../../application/task_avi_encoder/inc/avi_encoder_app.h" />
+		<Unit filename="../../application/task_avi_encoder/inc/avi_encoder_scaler_jpeg.h" />
+		<Unit filename="../../application/task_avi_encoder/inc/avi_encoder_state.h" />
+		<Unit filename="../../application/task_avi_encoder/inc/font.h" />
+		<Unit filename="../../application/task_avi_encoder/inc/jpeg_header.h" />
+		<Unit filename="../../application/task_avi_encoder/inc/wav_dec.h" />
+		<Unit filename="../../application/task_avi_encoder/inc/wav_enc.h" />
+		<Unit filename="../../application/task_avi_encoder/src/SPRITE_objectSP_CellData.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_avi_encoder/src/SPRITE_objectSP_CellIdx.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_avi_encoder/src/avi_audio_record.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_avi_encoder/src/avi_encoder_app.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_avi_encoder/src/avi_encoder_scaler_jpeg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_avi_encoder/src/avi_encoder_state.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_avi_encoder/src/jpeg_header.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_camera_processor/inc/cp_camera_processor.h" />
+		<Unit filename="../../application/task_camera_processor/src/cp_audio_record.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_camera_processor/src/cp_encoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_camera_processor/src/cp_muxer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_camera_processor/src/cp_sensor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_filesrv/inc/turnkey_filesrv_task.h" />
+		<Unit filename="../../application/task_filesrv/src/turnkey_filesrv_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_image/inc/ap_bmp.h" />
+		<Unit filename="../../application/task_image/inc/ap_image_task.h" />
+		<Unit filename="../../application/task_image/inc/ap_jpeg.h" />
+		<Unit filename="../../application/task_image/inc/ap_progressive_jpeg.h" />
+		<Unit filename="../../application/task_image/inc/turnkey_image_task.h" />
+		<Unit filename="../../application/task_image/src/ap_bmp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_image/src/ap_image_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_image/src/ap_jpeg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_image/src/ap_progressive_jpeg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_image/src/turnkey_image_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_usbd/inc/usbd_uac.h" />
+		<Unit filename="../../application/task_usbd/inc/usbd_uvc.h" />
+		<Unit filename="../../application/task_usbd/src/usbd_uac_dec.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_usbd/src/usbd_uvc_dec.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_video_decoder/inc/MultiMediaParser.h" />
+		<Unit filename="../../application/task_video_decoder/inc/task_video_decoder.h" />
+		<Unit filename="../../application/task_video_decoder/inc/task_video_decoder_cfg.h" />
+		<Unit filename="../../application/task_video_decoder/src/audio_decoder_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_video_decoder/src/video_decoder_app.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_video_decoder/src/video_decoder_state.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../application/task_video_decoder/src/video_decoder_task.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../board_config/inc/board_config.h" />
+		<Unit filename="../../board_config/src/board_config.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/cdsp/inc/drv_l1_cdsp.h" />
+		<Unit filename="../../driver_l1/cdsp/inc/drv_l1_front.h" />
+		<Unit filename="../../driver_l1/cdsp/src/drv_l1_cdsp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/cdsp/src/drv_l1_front.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/inc/drv_l1_adc.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_cache.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_can.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_cec.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_clock.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_csi.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_dac.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_dma.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_ext_int.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_fft.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_gpio.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_hdmi.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_mipi.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_pscaler.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_rotator.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_rtc.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_scaler.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_system.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_timer.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_uart.h" />
+		<Unit filename="../../driver_l1/common/inc/drv_l1_watchdog.h" />
+		<Unit filename="../../driver_l1/common/src/drv_l1_adc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_cache.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_can.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_cec.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_clock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_conv420to422.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_csi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_dac.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_dma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_ext_int.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_fft.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_gpio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_hdmi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_i2c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_i2s_rx.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_i2s_tx.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_init.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_pscaler.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_rotator.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_rtc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_scaler.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_spi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_system.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_tft.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_timer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_uart.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/common/src/drv_l1_watchdog.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/h264/inc/drv_l1_h264.h" />
+		<Unit filename="../../driver_l1/h264/inc/drv_l1_h264scaler.h" />
+		<Unit filename="../../driver_l1/inc/drv_l1.h" />
+		<Unit filename="../../driver_l1/inc/drv_l1_sfr.h" />
+		<Unit filename="../../driver_l1/jpeg/inc/drv_l1_jpeg.h" />
+		<Unit filename="../../driver_l1/ppu/inc/drv_l1_ppu.h" />
+		<Unit filename="../../driver_l1/ppu/src/drv_l1_ppu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/sdc/inc/drv_l1_sdc.h" />
+		<Unit filename="../../driver_l1/spu/inc/drv_l1_spu.h" />
+		<Unit filename="../../driver_l1/spu/src/drv_l1_spu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l1/usbd/inc/drv_l1_usbd.h" />
+		<Unit filename="../../driver_l1/usbh/inc/drv_l1_usbh.h" />
+		<Unit filename="../../driver_l2/ad_key/inc/ad_key.h" />
+		<Unit filename="../../driver_l2/ad_key/src/ad_key.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/ad_keyscan/inc/drv_l2_ad_key_scan.h" />
+		<Unit filename="../../driver_l2/ad_keyscan/src/drv_l2_ad_key_scan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/cdsp/inc/drv_l2_aeawb.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/drv_l2_cdsp.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/drv_l2_cdsp_config.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/drv_l2_user_calibration.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/drv_l2_user_preference.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/gp_LensDef.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/lens/gp_calibration.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/lens/gp_gc1004_calibration.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/lens/gp_gc1004_preference.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/lens/gp_jxh22_calibration.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/lens/gp_jxh22_preference.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/lens/gp_jxh42_calibration.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/lens/gp_jxh42_preference.h" />
+		<Unit filename="../../driver_l2/cdsp/inc/lens/gp_preference.h" />
+		<Unit filename="../../driver_l2/csi/inc/drv_l2_csi.h" />
+		<Unit filename="../../driver_l2/csi/src/drv_l2_csi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/inc/drv_l2_display.h" />
+		<Unit filename="../../driver_l2/display/src/drv_l2_display.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/user/tft_ILI9325.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/user/tft_ILI9806E_IDT.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/user/tft_auo_a027dtn019.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/user/tft_auo_a043fl01.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/user/tft_gpm_lm765a0.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/user/tft_tpo_td025thd1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/user/tft_txd_t144c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/user/ui_data/inc/ui_QVGA_256.h" />
+		<Unit filename="../../driver_l2/display/user/ui_data/src/ui_QVGA_256_PAL.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/display/user/ui_data/src/ui_QVGA_256_lData.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/fft/src/drv_l2_fft.c">
+			<Option compilerVar="CC" />
+			<Option compiler="armelfgcc" use="1" buildCommand="$compiler $options   $includes -c $file -o $object" />
+		</Unit>
+		<Unit filename="../../driver_l2/h264/inc/drv_l2_h264dec.h" />
+		<Unit filename="../../driver_l2/h264/inc/drv_l2_h264enc.h" />
+		<Unit filename="../../driver_l2/hdmi/inc/drv_l2_hdmi.h" />
+		<Unit filename="../../driver_l2/hdmi/src/drv_l2_hdmi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/inc/drv_l2.h" />
+		<Unit filename="../../driver_l2/jpeg/inc/gplib_jpeg.h" />
+		<Unit filename="../../driver_l2/jpeg/inc/gplib_jpeg_decode.h" />
+		<Unit filename="../../driver_l2/jpeg/inc/gplib_jpeg_encode.h" />
+		<Unit filename="../../driver_l2/jpeg/inc/gplib_progressive_jpeg_decode.h" />
+		<Unit filename="../../driver_l2/keyscan/inc/drv_l2_key_scan.h" />
+		<Unit filename="../../driver_l2/keyscan/src/drv_l2_key_scan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/power_save/inc/drv_l2_power_save.h" />
+		<Unit filename="../../driver_l2/power_save/src/drv_l2_power_save.c">
+			<Option compilerVar="CC" />
+			<Option compiler="armelfgcc" use="1" buildCommand="$compiler $options -O0 $includes -c $file -o $object" />
+		</Unit>
+		<Unit filename="../../driver_l2/scaler/inc/define.h" />
+		<Unit filename="../../driver_l2/scaler/inc/drv_l2_scaler.h" />
+		<Unit filename="../../driver_l2/sccb/inc/drv_l2_sccb.h" />
+		<Unit filename="../../driver_l2/sccb/src/drv_l2_sccb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sd/inc/drv_l2_sd.h" />
+		<Unit filename="../../driver_l2/sensor/inc/drv_l2_sensor.h" />
+		<Unit filename="../../driver_l2/sensor/src/drv_l2_sensor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_ar0330_cdsp_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_gc0308_csi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_gc1004_cdsp_dvp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_gc1004_cdsp_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_gc1014_cdsp_dvp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_gc1014_cdsp_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_h22_cdsp_dvp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_h42_cdsp_dvp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_h42_cdsp_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_h62_cdsp_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_jxf02_cdsp_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_ov3640_cdsp_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_ov3640_csi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_ov3640_csi_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_ov5650_cdsp_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_ov5658_cdsp_mipi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_ov7670_cdsp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_ov7670_csi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_ov9712_cdsp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/tvin_tvp5150_csi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/spi_flash/inc/drv_l2_spi_flash.h" />
+		<Unit filename="../../driver_l2/spi_flash/src/drv_l2_spi_flash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/spi_nand/inc/spi_nand_api.h" />
+		<Unit filename="../../driver_l2/spi_nand/inc/spi_nand_support_list.h" />
+		<Unit filename="../../driver_l2/spi_nand/src/spi_nand_support_list.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/src/drv_l2_init.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbd/inc/drv_l2_usbd.h" />
+		<Unit filename="../../driver_l2/usbd/inc/msdc/drv_l2_usbd_msdc.h" />
+		<Unit filename="../../driver_l2/usbd/inc/msdc/drv_l2_usbd_msdc_vendor.h" />
+		<Unit filename="../../driver_l2/usbd/inc/uvc/drv_l2_usbd_uvc_uc.h" />
+		<Unit filename="../../driver_l2/usbd/src/user/drv_l2_usbd_msdc_descriptor_tbl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbd/src/user/drv_l2_usbd_msdc_user_vendor_cmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbd/src/user/drv_l2_usbd_user_def.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbd/src/user/drv_l2_usbd_user_uac_tbl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbd/src/user/drv_l2_usbd_uvc_uc_descriptor_tbl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbd/src/user/storage/nand_app_storage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbd/src/user/storage/nand_storage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbd/src/user/storage/ramdisk_storage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbd/src/user/storage/sdcdisk_storage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/usbh/inc/drv_l2_usbh.h" />
+		<Unit filename="../../driver_l2/usbh/inc/drv_l2_usbh_msc_class.h" />
+		<Unit filename="../../gplib/EnvelopDetect/inc/EnvelopDetect.h" />
+		<Unit filename="../../gplib/EnvelopDetect/inc/gplib_envelop_detect_template.h" />
+		<Unit filename="../../gplib/EnvelopDetect/inc/gplib_envelop_detect_version.h" />
+		<Unit filename="../../gplib/EnvelopDetect/user/EnvelopDetect_user.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/bmp/inc/gplib_bmp.h" />
+		<Unit filename="../../gplib/bmp/inc/gplib_bmp_decode.h" />
+		<Unit filename="../../gplib/cmd/mem/cmd_mem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/cmd/os/Run-time-stats-utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/cmd/os/cmd_os.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/cdrom.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/cf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/drv_struct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/fs_driver.h" />
+		<Unit filename="../../gplib/fs/driver/fs_drv_manager.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/fs_usb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/fs_xdc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/mspro.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/nand.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/nand2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/nand_app.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/ramdisk.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/sd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/driver/spi_flash_disk.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/fs.h" />
+		<Unit filename="../../gplib/fs/fs_get_version.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/fs_os.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/fsglobalvar.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/include/buffer.h" />
+		<Unit filename="../../gplib/fs/include/cds.h" />
+		<Unit filename="../../gplib/fs/include/date.h" />
+		<Unit filename="../../gplib/fs/include/dcb.h" />
+		<Unit filename="../../gplib/fs/include/device.h" />
+		<Unit filename="../../gplib/fs/include/dirmatch.h" />
+		<Unit filename="../../gplib/fs/include/error.h" />
+		<Unit filename="../../gplib/fs/include/errors32.h" />
+		<Unit filename="../../gplib/fs/include/fat.h" />
+		<Unit filename="../../gplib/fs/include/fat32.h" />
+		<Unit filename="../../gplib/fs/include/file.h" />
+		<Unit filename="../../gplib/fs/include/filesys32.h" />
+		<Unit filename="../../gplib/fs/include/fnode.h" />
+		<Unit filename="../../gplib/fs/include/format.h" />
+		<Unit filename="../../gplib/fs/include/fsystem.h" />
+		<Unit filename="../../gplib/fs/include/globals.h" />
+		<Unit filename="../../gplib/fs/include/portab.h" />
+		<Unit filename="../../gplib/fs/include/proto.h" />
+		<Unit filename="../../gplib/fs/include/speedup.h" />
+		<Unit filename="../../gplib/fs/include/unicode32.h" />
+		<Unit filename="../../gplib/fs/nls/nls_ascii.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/nls/nls_codepage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/swap_byte.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_case.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_fd32_utf16to32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_fd32_utf16to8.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_fd32_utf32to16.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_fd32_utf32to8.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_fd32_utf8to16.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_fd32_utf8to32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_nls_base.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_oemcp_to_utf8.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_toupper.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_utf8_stricmp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_utf8_strupr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/unicode/uni_utf8_to_oemcp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/fs/vfs.h" />
+		<Unit filename="../../gplib/inc/console.h" />
+		<Unit filename="../../gplib/inc/drv_l2_nand.h" />
+		<Unit filename="../../gplib/inc/gplib.h" />
+		<Unit filename="../../gplib/liba/inc/ColorTrackerAP.h" />
+		<Unit filename="../../gplib/liba/inc/FLandmark.h" />
+		<Unit filename="../../gplib/liba/inc/FaceDetectAP.h" />
+		<Unit filename="../../gplib/liba/inc/FaceIdentifyAP.h" />
+		<Unit filename="../../gplib/liba/inc/KOT.h" />
+		<Unit filename="../../gplib/liba/inc/MouthDetect.h" />
+		<Unit filename="../../gplib/liba/inc/NoseDetect.h" />
+		<Unit filename="../../gplib/liba/inc/PFMST.h" />
+		<Unit filename="../../gplib/liba/inc/RFMS.h" />
+		<Unit filename="../../gplib/liba/inc/gp_aeawb.h" />
+		<Unit filename="../../gplib/liba/inc/gp_track.h" />
+		<Unit filename="../../gplib/mm/inc/gplib_mm_gplus.h" />
+		<Unit filename="../../gplib/mm/src/gplib_mm_gplus.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/oggdec/inc/GP22_HW_FFT.h" />
+		<Unit filename="../../gplib/oggdec/inc/gp_acodec.h" />
+		<Unit filename="../../gplib/oggdec/inc/ogg_gpadec_api.h" />
+		<Unit filename="../../gplib/oggdec/src/GP_HW_FFT.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/oggdec/src/ogg_gpadec_api.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/ppu/inc/gplib_ppu.h" />
+		<Unit filename="../../gplib/ppu/inc/gplib_ppu_sprite.h" />
+		<Unit filename="../../gplib/ppu/inc/gplib_ppu_text.h" />
+		<Unit filename="../../gplib/ppu/src/gplib_ppu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/ppu/src/gplib_ppu_dma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/ppu/src/gplib_ppu_sprite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/ppu/src/gplib_ppu_text.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/print_string/inc/gplib_print_string.h" />
+		<Unit filename="../../gplib/print_string/src/gplib_print_string.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/print_string/src/stdio_retarget.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/spu/inc/gplib_spu_driver.h" />
+		<Unit filename="../../gplib/spu/src/gplib_spu_drv.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/src/console.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/src/gplib_init.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/tts/user/AudioDevice.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/tts/user/NewImpl.cpp" />
+		<Unit filename="../../gplib/tts/user/System.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/tts/user/gp_Extflash_ram.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../gplib/video_frame_manager/inc/gp_vfm.h" />
+		<Unit filename="../../gplib/video_muxer/inc/gp_avcodec.h" />
+		<Unit filename="../../gplib/video_muxer/inc/gp_mux.h" />
+		<Unit filename="../../gpstdlib/inc/gp_stdlib.h" />
+		<Unit filename="../../gpstdlib/src/gp_stdlib.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../os/cmsis_os.c">
+			<Option compilerVar="CC" />
+			<Option compiler="armelfgcc" use="1" buildCommand="$compiler $options -O1 $includes -c $file -o $object" />
+		</Unit>
+		<Unit filename="../../os/cmsis_os.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/croutine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../os/freertos_v9.0.0/Source/event_groups.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/FreeRTOS.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/StackMacros.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/croutine.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/deprecated_definitions.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/event_groups.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/list.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/mpu_prototypes.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/mpu_wrappers.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/portable.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/projdefs.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/queue.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/semphr.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/task.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/include/timers.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/list.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../os/freertos_v9.0.0/Source/portable/GCC/ARM_CM4F/port.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../os/freertos_v9.0.0/Source/portable/GCC/ARM_CM4F/portmacro.h" />
+		<Unit filename="../../os/freertos_v9.0.0/Source/portable/MemMang/heap_4.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../os/freertos_v9.0.0/Source/queue.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../os/freertos_v9.0.0/Source/tasks.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../os/freertos_v9.0.0/Source/timers.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Setup/Flash.ld" />
+		<Unit filename="Setup/startup.S" />
+		<Unit filename="inc/FreeRTOSConfig.h" />
+		<Unit filename="inc/application_cfg.h" />
+		<Unit filename="inc/drv_l1_cfg.h" />
+		<Unit filename="inc/drv_l2_cfg.h" />
+		<Unit filename="inc/gplib_cfg.h" />
+		<Unit filename="inc/project.h" />
+		<Unit filename="inc/typedef.h" />
+		<Unit filename="src/audio_i2s_simple_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/audio_oggmix_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/audio_simple_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/camera_processr_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/cec_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/change_system_pll_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/cplusplus_sample/inc/string_sample.h" />
+		<Unit filename="src/cplusplus_sample/src/string_sample.cpp" />
+		<Unit filename="src/csi_disp_demo/src/csi_disp_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ct_fdwa_vr_demo/src/ct_fdwa_vr_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/digital_video_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ehci_demo/display_VGAtoQVGApanel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ehci_demo/ehci_usbh.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ehci_demo/usbh_uvc.h" />
+		<Unit filename="src/ehci_demo/usbh_uvc_decode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fd_demo/inc/SPRITE_FACE_RECOGNIZE_HDR.h" />
+		<Unit filename="src/fd_demo/src/PPU_data/SPRITE_FACE_RECOGNIZE_CellData.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fd_demo/src/PPU_data/SPRITE_FACE_RECOGNIZE_CellIdx.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fd_demo/src/PPU_data/SPRITE_FACE_RECOGNIZE_PAL.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fd_demo/src/fd_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fd_demo/src/gamma_table.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fd_demo/src/rotation.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fdwa_hand_vr_demo/inc/SPRITE_GPM4_HDR.h" />
+		<Unit filename="src/fdwa_hand_vr_demo/src/SPRITE_GPM4SP_CellData.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fdwa_hand_vr_demo/src/fdwa_hand_vr_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gpbt03_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/image_codec_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/main_release.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/obj_demo/src/object_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/pattern_color_demo/objDatabase.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/pattern_color_demo/pattern_color_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/G+Director_Data_Init/inc/Sprite_demo.h" />
+		<Unit filename="src/ppu_demo/G+Director_Data_Init/inc/Text_demo.h" />
+		<Unit filename="src/ppu_demo/G+Director_Data_Init/inc/sprite.h" />
+		<Unit filename="src/ppu_demo/G+Director_Data_Init/inc/text.h" />
+		<Unit filename="src/ppu_demo/G+Director_Data_Init/src/Sprite_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/G+Director_Data_Init/src/Text_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/GPM4_Platform_Code_PPU.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/resource/inc/TEXT_Platform_verification_1_HDR.h" />
+		<Unit filename="src/ppu_demo/resource/inc/TEXT_Platform_verification_2_HDR.h" />
+		<Unit filename="src/ppu_demo/resource/inc/TEXT_Platform_verification_3_HDR.h" />
+		<Unit filename="src/ppu_demo/resource/inc/sprite_dataSP_HDR.h" />
+		<Unit filename="src/ppu_demo/resource/src/TEXT_Platform_verification_1_0_ach.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/resource/src/TEXT_Platform_verification_2_0_ach.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/resource/src/TEXT_Platform_verification_2_PAL.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/resource/src/TEXT_Platform_verification_3_0_ach.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/resource/src/sprite_dataSP_CellData.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/resource/src/sprite_dataSP_CellIdx.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ppu_demo/resource/src/sprite_data_SP_PAL.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/sensor_cal_sample.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/tts/src/tts_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/usbd_msdc_demo/usbd_msdc_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/usbd_uac_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/usbd_uvc_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/vr_demo/inc/vr_demo_global.h" />
+		<Unit filename="src/vr_demo/vr_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/vr_demo/vr_demo_utility.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/vr_demo/vr_mem_flash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/vr_demo/vr_sdsv_demo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<projectwizard TargetDevice="GPM4730A_DDR" isCreated="true" />
+			<debugger>
+				<remote_debugging>
+					<options conn_type="2682356" ip_address="localhost" ip_port="2331" clock_rate="1000" target_device="GPM4730A_DDR" remote_server="Build in GDB Server" Break_at_Main="0" Break_at_Main_Symbol="main" En_BeforeDownload_Script="0" En_AfterReset_Script="0" En_ReplaceBody_Script="0" En_StackOverflowDetection="1" />
+				</remote_debugging>
+				<remote_debugging target="Debug">
+					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="2331" clock_rate="1000" target_device="GPM4730A_DDR" remote_server="Build in GDB Server" Break_at_Main="1" Break_at_Main_Symbol="main" additional_cmds="monitor reset halt&#x0A;load" En_BeforeDownload_Script="0" En_AfterReset_Script="0" En_ReplaceBody_Script="0" En_StackOverflowDetection="1" />
+				</remote_debugging>
+				<remote_debugging target="Release">
+					<options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="2331" clock_rate="1000" target_device="GPM4730A_DDR" remote_server="Build in GDB Server" Break_at_Main="1" Break_at_Main_Symbol="main" additional_cmds="monitor reset halt&#x0A;load" En_BeforeDownload_Script="0" En_AfterReset_Script="0" En_ReplaceBody_Script="0" En_StackOverflowDetection="1" />
+				</remote_debugging>
+			</debugger>
+			<code_completion />
+		</Extensions>
+	</Project>
+</emIDE_project_file>
