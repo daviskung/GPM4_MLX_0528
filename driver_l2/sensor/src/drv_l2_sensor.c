@@ -515,10 +515,13 @@ void drv_l2_user_sensor_init(INT32U isp_bufferA, INT32U isp_bufferB)
     tvp5150_csi_stream_start(0,isp_bufferA,isp_bufferB);
 #endif
 
+/*
 #if (defined _SENSOR_GC0308_CSI) && (_SENSOR_GC0308_CSI == 1)
     gc0308_csi_init();
 	gc0308_csi_stream_start(0,isp_bufferA,isp_bufferB);
 #endif
+*/
+
 #if (defined _SENSOR_OV5658_CDSP_MIPI) && (_SENSOR_OV5658_CDSP_MIPI == 1)
     ov5658_cdsp_mipi_init();
     ov5658_cdsp_mipi_stream_on(1,isp_bufferA, isp_bufferB);

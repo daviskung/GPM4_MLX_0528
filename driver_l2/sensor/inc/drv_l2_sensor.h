@@ -75,7 +75,7 @@
     #define _SENSOR_H42_CDSP_MIPI           1
 #else
     #define _SENSOR_OV7670_CSI				0
-    #define _SENSOR_GC0308_CSI				0
+    #define _SENSOR_GC0308_CSI				1
     #define _SENSOR_OV3640_CSI				0
     #define _SENSOR_OV7670_CDSP				0
     #define _SENSOR_OV9712_CDSP				0
@@ -89,7 +89,7 @@
     #define _SENSOR_GC1004_CDSP_DVP			0
     #define _SENSOR_GC1004_CDSP_MIPI		0
     #define _SENSOR_JXH22_CDSP_DVP		    0
-    #define _SENSOR_H42_CDSP_MIPI           1
+    #define _SENSOR_H42_CDSP_MIPI           0
     #define _SENSOR_JXH42_CDSP_DVP          0
     #define _SENSOR_GC1014_CDSP_DVP			0
     #define _SENSOR_GC1014_CDSP_MIPI        0

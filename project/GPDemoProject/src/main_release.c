@@ -14,7 +14,7 @@
 #define AUDIO_DECODE_OGGMIX     0
 #define AUDIO_I2S_DECODE        0
 #define AUDIO_ENCODE            0
-#define DIGITAL_VIDEO_DEMO      0
+#define DIGITAL_VIDEO_DEMO      1
 #define GPM4_PPU_DEMO           0
 #define FACE_DETECTION_DEMO     0
 #define USBD_UAC_DEMO           0

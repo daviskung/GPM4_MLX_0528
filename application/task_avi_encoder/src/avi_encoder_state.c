@@ -180,8 +180,13 @@ static INT32S sensor_start(INT16U width, INT16U height, INT32U csi_frame1, INT32
 	INT32U i, idx;
 	drv_l2_sensor_info_t *pInfo;
 
+	
+	DBG_PRINT("width = 0x%x height = 0x%x\r\n", width,height);
+	
 	for(i=0; i<3; i++) {
 		pInfo = pSencor->get_info(i);
+		
+	DBG_PRINT("target_w = 0x%x target_h = 0x%x\r\n", pInfo->target_w,pInfo->target_h);
 		if(pInfo->target_w == width && pInfo->target_h == height) {
 			idx = i;
 			break;
@@ -1226,11 +1231,15 @@ static void avi_encode_state_task_entry(void const *para)
 			nRet = sensor_start(pAviEncVidPara->sensor_capture_width,
 								pAviEncVidPara->sensor_capture_height,
 								0x50000000, 0x50000000);
+			
 			if(nRet >= 0) {
 				eof_handle_register();
 				msg_id = ACK_OK;
+				DBG_PRINT("sensor_start nRet OK \r\n");
 			} else {
 				msg_id = ACK_FAIL;
+				
+				DBG_PRINT("sensor_start nRet fail\r\n");
 			}
 
 			osMessagePut(avi_encode_ack_m, (INT32U)&msg_id, osWaitForever);
@@ -1239,6 +1248,7 @@ static void avi_encode_state_task_entry(void const *para)
 //			avi_enc_start();
 		//	}
 	//		#endif
+			
 			break;
 
 		case MSG_AVI_STOP_SENSOR:

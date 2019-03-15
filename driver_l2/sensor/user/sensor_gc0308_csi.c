@@ -165,9 +165,15 @@ INT8U GC0308_SetY(INT8U Value)
 static INT32S gc0308_init(void)
 {
 	//640x480 init registers code.
-	gc0308_sccb_write(0xfe, 0x80);
+
+	INT32S	ack;
+
+	ack = gc0308_sccb_write(0xfe, 0x80);
+
+    DBG_PRINT("debug set0a ack=0x%x \r\n",ack);
 
 	gc0308_sccb_write(0xfe, 0x00);  // set page0
+
 
 	gc0308_sccb_write(0xd2, 0x10);  // close AEC
 	gc0308_sccb_write(0x22, 0x55);  // close AWB
@@ -600,7 +606,7 @@ void gc0308_csi_init(void)
 	// request sccb
 	gc0308_sccb_open();
 
-	DBG_PRINT("Sensor GC0308 csi interface init completed\r\n");
+	DBG_PRINT("Sensor GC0308 csi interface init completed_davis\r\n");
 }
 
 /**
@@ -670,6 +676,7 @@ void gc0308_csi_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 		csi_Para.target_h = gc0308_sensor_csi_ops.info[index].target_h;
 		csi_Para.hratio = 0;		// No Scale
 		csi_Para.vratio = 0;		// No Scale
+		DBG_PRINT("debug set0 \r\n");
 		break;
 
 	case 1:
@@ -692,7 +699,7 @@ void gc0308_csi_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 
 	/* Set sensor's registers via SCCB */
 	if(gc0308_init() < 0) {
-		DBG_PRINT("gc0308 init fail!!!\r\n");
+		DBG_PRINT("gc0308 init fail_davis!!!\r\n");
 	}
 
 	DBG_PRINT("%s = %d\r\n", __func__, index);

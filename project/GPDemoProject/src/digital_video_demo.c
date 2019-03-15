@@ -22,6 +22,7 @@
 #define DV_RECORD		1
 
 #define ENCODE_MJPEG_X1_5      0
+#define VGA_sensor      1
 
 #if ENCODE_MJPEG_X1_5 == 1
 #define TAR_WIDTH		1280
@@ -29,7 +30,7 @@
 #define SNR_WIDTH		1280
 #define SNR_HEIGHT		720
 #else
-#if 0//VGA sensor
+#if VGA_sensor //VGA sensor
 #define TAR_WIDTH		640
 #define TAR_HEIGHT		480
 #define SNR_WIDTH		640
@@ -216,6 +217,7 @@ void Digital_Video_Demo(void)
 	arg.AudSampleRate = SPR;
 	arg.OutputFormat = IMAGE_OUTPUT_FORMAT_YUYV; //for display
 	//R_FUNPOS1 &= ~((0x3<<8)|(0x3<<3));
+
 	video_encode_preview_start(arg);
 
     /*OperationMode = DV_PLAY;
