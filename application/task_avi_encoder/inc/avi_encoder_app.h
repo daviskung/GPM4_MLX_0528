@@ -414,6 +414,15 @@ void cpu_draw_osd(const INT8U *source_addr, INT32U target_addr, INT16U offset, I
 void cpu_draw_time_osd(TIME_T current_time, INT32U target_buffer, INT16U resolution);
 #endif
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+// TH32x32 I2C calc data task
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern INT32S TH32x32_task_create(INT8U pori);
+//extern INT32S TH32x32_task_del(void);
+extern INT32S TH32x32_task_start(void);
+extern INT32S TH32x32_task_stop(void);
+
 INT32S h264_encode_start(INT32S width, INT32S height);
 INT32S h264_encode_stop(void);
 INT32S h264_encode_frame(INT32U frameAddr, INT32U outAddr, INT32U PictureType, INT32S insertHdr, INT32U NullFrame);

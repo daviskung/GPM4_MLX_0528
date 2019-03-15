@@ -306,6 +306,7 @@ CODEC_START_STATUS video_encode_preview_start(VIDEO_ARGUMENT arg)
     pAviEncVidPara->display_buffer_height = arg.DisplayBufferHeight;
 #endif
 
+
     nRet = scaler_task_create(SCALER_PRIORITY);
     if(nRet < 0) {
     	DEBUG_MSG("scaler_task_create fail !!!");
@@ -319,6 +320,11 @@ CODEC_START_STATUS video_encode_preview_start(VIDEO_ARGUMENT arg)
     nRet = avi_adc_record_task_create(AUD_ENC_PRIORITY);
     if(nRet < 0) {
     	DEBUG_MSG("avi_adc_record_task_create fail !!!");
+    }
+
+	nRet = TH32x32_task_create(TH32x32_TASK_PRIORITY);
+    if(nRet < 0) {
+    	DEBUG_MSG("TH32x32_task_create fail !!!");
     }
 
    	nRet = vid_enc_preview_start();

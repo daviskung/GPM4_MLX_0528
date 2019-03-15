@@ -23,6 +23,9 @@
 #include "Sprite_demo.h"
 #include "Text_demo.h"
 #include "SPRITE_object_HDR.h"
+/* Thermopile Array */
+#include "defs_32x32.h"
+
 
 #if (defined APP_VIDEO_ENCODER_EN) && (APP_VIDEO_ENCODER_EN == 1)
 /**************************************************************************
@@ -87,6 +90,14 @@ typedef enum
 
 typedef enum
 {
+	MSG_TH32x32_TASK_INIT = 0x2200,
+	MSG_TH32x32_TASK_STOP,
+	MSG_TH32x32_TASK_EXIT
+} TH32x32_SENSOR_ENUM;
+
+
+typedef enum
+{
 	MSG_VIDEO_ENCODE_TASK_INIT = 0x3000,
 	MSG_VIDEO_ENCODE_TASK_STOP,
 	MSG_VIDEO_ENCODE_TASK_EXIT,
@@ -100,6 +111,8 @@ static void scaler_task_entry(void const *parm);
 static void video_encode_task_entry(void const *parm);
 static void rotate_task_entry(void const* param);
 void scaler_video_init();
+static void TH32x32_task_entry(void const *parm);
+
 
 /**************************************************************************
  *                         G L O B A L    D A T A                         *
@@ -119,6 +132,11 @@ osMessageQId video_frame_q = NULL;
 osMessageQId vid_enc_task_ack_m = NULL;
 osMessageQId video_stream_q = NULL;
 osMessageQId jpeg_fifo_q = NULL;
+
+osMessageQId TH32x32_task_q = NULL;
+osMessageQId TH32x32_task_ack_m = NULL;
+
+
 #if VIDEO_TIMESTAMP
 osMessageQId frame_ts_q = NULL;
 #endif
@@ -405,6 +423,114 @@ static void avi_ppu_draw_go(INT32U x, INT32U y, INT32U frame_buffer)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // TH32x32 I2C calc data task
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+INT32S TH32x32_task_create(INT8U pori)
+{
+	INT32S nRet;
+	osThreadId id;
+	osThreadDef_t TH32x32_task = { "TH32x32_task", TH32x32_task_entry, osPriorityNormal, 1, C_SCALER_STACK_SIZE };
+
+
+	if(TH32x32_task_q == 0) {
+		osMessageQDef_t TH32x32_q = {C_SCALER_QUEUE_MAX*2, sizeof(INT32U), 0}; //queue size double for possible null frame
+
+		TH32x32_task_q = osMessageCreate(&TH32x32_q, NULL);
+		if(TH32x32_task_q == 0) {
+			RETURN(STATUS_FAIL);
+		}
+	}
+
+	if(TH32x32_task_ack_m == 0) {
+		osMessageQDef_t TH32x32_ack_q = {C_ACK_QUEUE_MAX, sizeof(INT32U), 0};
+
+		TH32x32_task_ack_m = osMessageCreate(&TH32x32_ack_q, NULL);
+		if(TH32x32_task_ack_m == 0) {
+			RETURN(STATUS_FAIL);
+		}
+	}
+
+
+	id = osThreadCreate(&TH32x32_task, (void *)NULL);
+    if(id == 0) {
+        RETURN(STATUS_FAIL);
+    }
+
+	nRet = STATUS_OK;
+Return:
+	return nRet;
+}
+
+INT32S TH32x32_task_start(void)
+{
+	INT32S nRet;
+
+	nRet = STATUS_OK;
+	POST_MESSAGE(TH32x32_task_q, MSG_TH32x32_TASK_INIT, TH32x32_task_ack_m, 5000);
+Return:
+	return nRet;
+}
+
+INT32S TH32x32_task_stop(void)
+{
+	INT32S nRet = STATUS_OK;
+
+	POST_MESSAGE(TH32x32_task_q, MSG_TH32x32_TASK_STOP, TH32x32_task_ack_m, 5000);
+
+Return:
+	return nRet;
+}
+
+static void TH32x32_task_entry(void const *parm)
+{
+	INT32U msg_id, ack_msg;
+	INT32U sensor_frame, scaler_frame, display_frame;
+	ScalerFormat_t scale;
+	ScalerPara_t para;
+	osEvent result;
+	osThreadId id;
+
+
+    DEBUG_MSG("<<%s>>\r\n", __func__);
+
+	while(1)
+	{
+		result = osMessageGet(TH32x32_task_q, osWaitForever);
+		msg_id = result.value.v;
+		if((result.status != osEventMessage) || (	msg_id == 0)) {
+			continue;
+		}
+
+		switch(msg_id)
+		{
+		case MSG_TH32x32_TASK_INIT:
+			DEBUG_MSG("[MSG_TH32x32_TASK_INIT]\r\n");
+			
+			ack_msg = ACK_OK;
+			osMessagePut(TH32x32_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			break;
+
+		case MSG_TH32x32_TASK_STOP:
+			DEBUG_MSG("[MSG_TH32x32_TASK_STOP]\r\n");
+			OSQFlush(TH32x32_task_q);
+			ack_msg = ACK_OK;
+			osMessagePut(TH32x32_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			break;
+
+		case MSG_TH32x32_TASK_EXIT:
+			DEBUG_MSG("[MSG_TH32x32_TASK_EXIT]\r\n");
+			
+			ack_msg = ACK_OK;
+			osMessagePut(TH32x32_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			id = osThreadGetId();
+    		osThreadTerminate(id);
+			break;
+
+		default:
+			break;
+			
+		}
+	}
+}
 
 
 // scaler task

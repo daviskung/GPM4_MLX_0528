@@ -55,6 +55,8 @@
 #define CONSOLE_TASK_PRIORITY	26
 #define MAIN_TASK_PRIORITY		32
 
+#define TH32x32_TASK_PRIORITY	33
+
 #define AP_QUEUE_MSG_MAX_LEN    60
 
 /*== Turn Key File Server Task ==*/
