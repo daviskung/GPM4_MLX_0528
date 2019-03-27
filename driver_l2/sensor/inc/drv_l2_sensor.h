@@ -32,7 +32,7 @@
 // sccb interface
 #define SCCB_GPIO		0
 #define SCCB_HW_I2C		1
-#define SCCB_MODE		SCCB_GPIO//SCCB_HW_I2C//
+#define SCCB_MODE		SCCB_GPIO //SCCB_HW_I2C//SCCB_GPIO
 
 #define MAX_SENSOR_NUM	2	/* Support 1 sensor in platform */
 #define MAX_INFO_NUM	4
@@ -98,6 +98,10 @@
     #define _SENSOR_GC1064_CDSP_MIPI		0
     #define _SENSOR_GC5025_CDSP_MIPI        0
     #define _SENSOR_H62_CDSP_MIPI			0
+
+	
+	#define _SENSOR_TH32x32_THERMOPILE		1
+	
 #endif
 /*ISP Pin Position Configuration*/
 #define ISP_CLKO__IOC9								0x00006661

@@ -150,12 +150,12 @@ INT8S i2c0_pinmux_set(INT8U idx)
 	}
     else if (idx == I2C0_MUX1){//I2C_SCL_SDA__IOC14_IOC15
         funpos0 |= (1<<25);
-        gpio_drving_init_io(IO_C14,(IO_DRV_LEVEL)I2C0_DRIVING);
+        gpio_drving_init_io(IO_C14,(IO_DRV_LEVEL)I2C0_DRIVING); // 與 spec p.96不符 IO_C12 IO_C13 ?
         gpio_drving_init_io(IO_C15,(IO_DRV_LEVEL)I2C0_DRIVING);
 	}
     else if (idx == I2C0_MUX2){//I2C_SCL_SDA__IOD4_IOD5
         funpos0 |= (2<<25);
-        gpio_drving_init_io(IO_D4,(IO_DRV_LEVEL)I2C0_DRIVING);
+        gpio_drving_init_io(IO_D4,(IO_DRV_LEVEL)I2C0_DRIVING);	// 與 spec p.96 不符 IO_A8 IO_CA9 ?
         gpio_drving_init_io(IO_D5,(IO_DRV_LEVEL)I2C0_DRIVING);
 	}
 
@@ -643,8 +643,8 @@ void board_init(void)
 
 	ext_irq_pinmux_set(EXT_IRQ_POS);
 
-	i2c0_pinmux_set(I2C0_POS);
-	i2c1_pinmux_set(I2C1_POS);
+	i2c0_pinmux_set(I2C0_POS);	// davis set //I2C0_SCL_SDA__IOC12_IOC13
+	i2c1_pinmux_set(I2C1_POS);	
 	i2c2_pinmux_set(I2C2_POS);
 
 	spi0_pinmux_set(SPI0_POS, SPI0_CS_GPIO_MODE);

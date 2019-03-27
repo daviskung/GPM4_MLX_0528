@@ -593,10 +593,6 @@ INT32S vid_enc_preview_start(void)
 		DEBUG_MSG("c.sensor start\r\n");
 	}
 
-	// start TH32x32
-
-	if(TH32x32_task_start() < 0) RETURN(STATUS_FAIL);
-		DEBUG_MSG("d.TH32x32_task start\r\n");
 	
 
 #if (AVI_AUDIO_ENCODE_EN == 1) && (AVI_ENCODE_PRE_ENCODE_EN == 1)

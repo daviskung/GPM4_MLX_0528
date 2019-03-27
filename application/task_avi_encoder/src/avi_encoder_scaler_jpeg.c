@@ -24,7 +24,9 @@
 #include "Text_demo.h"
 #include "SPRITE_object_HDR.h"
 /* Thermopile Array */
-#include "defs_32x32.h"
+#include "defs_th32x32.h"
+#include "drv_l1_i2c.h"
+
 
 
 #if (defined APP_VIDEO_ENCODER_EN) && (APP_VIDEO_ENCODER_EN == 1)
@@ -62,6 +64,7 @@
 #define FRAME_BUF_ALIGN16           0xF
 #define FRAME_BUF_ALIGN8            0x7
 #define FRAME_BUF_ALIGN4            0x3
+
 
 typedef struct
 {
@@ -483,12 +486,31 @@ Return:
 static void TH32x32_task_entry(void const *parm)
 {
 	INT32U msg_id, ack_msg;
-	INT32U sensor_frame, scaler_frame, display_frame;
-	ScalerFormat_t scale;
-	ScalerPara_t para;
+	//INT32U sensor_frame, scaler_frame, display_frame;
+	//ScalerFormat_t scale;
+	//ScalerPara_t para;
 	osEvent result;
 	osThreadId id;
 
+	drv_l1_i2c_bus_handle_t th32x32_handle;
+
+	sensor32x32_cmdCode sensorCmd;
+	INT8U value;
+	INT16U value2byte;
+
+	float	PTATGrad,PTATOff,PTATLong;
+	float 	common[2];
+	INT8U 	EEcopy[8],*pEEcopy;
+	INT8U 	EEaddr[2],*pEEaddr;
+	INT16U	EEaddress16,EEcopy16BIT,*pEEcopy16BIT;
+	INT16U	TA,gradScale,TableNumberSensor,epsilon;
+	unsigned short GlobalGain;	// INT16U
+	char 	GlobalOffset;			// INT8U
+	INT32U	PTATsum;
+	float	PixCMin,PixCMax;
+	INT16U	SetMBITCalib,SetBIASCalib,SetCLKCalib,SetBPACalib,SetPUCalib,VddCalib;
+
+	//pEEcopy16BIT = EEcopy16BIT;
 
     DEBUG_MSG("<<%s>>\r\n", __func__);
 
@@ -504,6 +526,183 @@ static void TH32x32_task_entry(void const *parm)
 		{
 		case MSG_TH32x32_TASK_INIT:
 			DEBUG_MSG("[MSG_TH32x32_TASK_INIT]\r\n");
+
+
+			pEEcopy = EEcopy;
+			pEEaddr = EEaddr;
+
+
+			// =====================================================================
+
+			th32x32_handle.devNumber = I2C_1;
+		    th32x32_handle.slaveAddr = TH32x32_EEPROM_ID << 1 ;
+		    th32x32_handle.clkRate = 800;
+			//
+			// EEPROM data [ PTATGrad / PTATOff / GlobalGain / GlobalOffset ]
+			//
+			EEaddress16 = AdrPTATGrad;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pEEcopy,sizeof(float)*2,TH32x32_I2C_RESTART_MODE);
+			gp_memcpy((INT8S*)&common,(INT8S*)pEEcopy,sizeof(float)*2);
+			PTATGrad=common[0];
+			PTATOff=common[1];
+			DBG_PRINT("PTATGrad [0x%x] /PTATOff [0x%x] \r\n",(INT32U)PTATGrad,(INT32U)PTATOff);
+
+			EEaddress16 = AdrGlobalGain;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pEEcopy,sizeof(char)*2,TH32x32_I2C_RESTART_MODE);
+			gp_memcpy((INT8S*)&GlobalGain,(INT8S*)pEEcopy,sizeof(short));
+
+			EEaddress16 = AdrGlobalOffset;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pEEcopy,sizeof(char),TH32x32_I2C_RESTART_MODE);
+			gp_memcpy((INT8S*)&GlobalOffset,(INT8S*)pEEcopy,sizeof(char));
+			DBG_PRINT("GlobalGain [%d] GlobalOffset [%d] \r\n",GlobalGain,GlobalOffset);
+
+			//
+			// EEPROM data [ PixCMin / PixCMax ]
+			//
+
+			EEaddress16 = AdrPixCMin;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pEEcopy,sizeof(float)*2,TH32x32_I2C_RESTART_MODE);
+			gp_memcpy((INT8S*)&common,(INT8S*)pEEcopy,sizeof(float)*2);
+			PixCMin=common[0];
+			PixCMax=common[1];
+			DBG_PRINT("PixCMin/PixCMax = [0x%x]/ [0x%x] \r\n", PixCMin,PixCMax);
+
+
+			drv_l1_reg_2byte_data_1byte_read(&th32x32_handle,AdrGradScale,pEEcopy);
+			gradScale =(INT16U) EEcopy[0];
+			DBG_PRINT("gradScale = [0x%x] \r\n", gradScale);
+
+			EEaddress16 = AdrTableNumber;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pEEcopy,sizeof(char)*3,TH32x32_I2C_RESTART_MODE);
+			TableNumberSensor=(INT16U)EEcopy[1]<<8;
+			TableNumberSensor +=(INT16U)EEcopy[0];
+			epsilon=(INT16U)EEcopy[2];
+			DBG_PRINT("TableNumberSensor = [%d]/ epsilon = [%d] \r\n", TableNumberSensor,epsilon);
+
+
+
+			// =====================================================================
+			th32x32_handle.devNumber = I2C_1;
+		    th32x32_handle.clkRate = 800;	// 必須 再設定 
+
+
+			//
+			//	sensor registers
+			//
+
+			sensorCmd.DeviceAdd =(TH32x32_REG_ID << 1);
+		    th32x32_handle.slaveAddr = sensorCmd.DeviceAdd;
+
+			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
+			sensorCmd.RegCmd =CONFIG_REG_WAKEUP;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+			osDelay(10);
+			sensorCmd.RegAdd =TH32x32_MBIT_TRIM;
+			sensorCmd.RegCmd =MBIT_TRIM_12BIT_DEFAULT;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+			osDelay(10);
+			sensorCmd.RegAdd =TH32x32_BIAS_TRIM_TOP;
+			sensorCmd.RegCmd =BIAS_TRIM_TOP_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+            osDelay(10);
+			sensorCmd.RegAdd =TH32x32_BIAS_TRIM_BOT;
+			sensorCmd.RegCmd =BIAS_TRIM_BOM_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+            osDelay(10);
+           	sensorCmd.RegAdd =TH32x32_CLK_TRIM;
+			sensorCmd.RegCmd =CLK_TRIM_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+			osDelay(10);
+           	sensorCmd.RegAdd =TH32x32_BPA_TRIM_TOP;
+			sensorCmd.RegCmd =BPA_TRIM_TOP_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+			osDelay(10);
+           	sensorCmd.RegAdd =TH32x32_BPA_TRIM_BOT;
+			sensorCmd.RegCmd =BPA_TRIM_BOM_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+			osDelay(10);
+           	sensorCmd.RegAdd =TH32x32_PU_SDA_TRIM;
+			sensorCmd.RegCmd =PU_SDA_TRIM_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+			osDelay(10);
+           	sensorCmd.RegAdd =TH32x32_CONFIG_REG;
+			sensorCmd.RegCmd =CONFIG_REG_START_B0_WAKEUP;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+
+			osDelay(30);
+			EEaddr[0]=TH32x32_STATUS_REG;
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
+			
+			DBG_PRINT("EEcopy B0 = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
+			EEcopy[0]=0xf1;	// why can not change? need use this change !!
+			EEcopy[1]=0xf2;
+			
+			DBG_PRINT("EEcopy check = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
+			EEcopy[2]=0xf3;
+			EEcopy[3]=0;
+			EEcopy[4]=0;
+			EEcopy[5]=0;
+			EEcopy[6]=0;
+			EEcopy[7]=0;
+			
+			EEaddr[0]=TH32x32_READ_DATA_TOP;
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,8,TH32x32_I2C_RESTART_MODE);
+			
+			
+			
+
+			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
+			sensorCmd.RegCmd = CONFIG_REG_START_B1_WAKEUP; // block1
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+
+			osDelay(10);
+			EEaddr[0]=TH32x32_STATUS_REG;
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
+			
+			DBG_PRINT("EEcopy B1 = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
+
+			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
+			sensorCmd.RegCmd = CONFIG_REG_START_B2_WAKEUP; // block2
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+
+			osDelay(10);
+			EEaddr[0]=TH32x32_STATUS_REG;
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
+			
+			DBG_PRINT("EEcopy B2 = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
+
+			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
+			sensorCmd.RegCmd = CONFIG_REG_START_B3_WAKEUP; // block3
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+
+
+			osDelay(10);
+			EEaddr[0]=TH32x32_STATUS_REG;
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
+			
+			DBG_PRINT("EEcopy B3 = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
 			
 			ack_msg = ACK_OK;
 			osMessagePut(TH32x32_task_ack_m, (INT32U)&ack_msg, osWaitForever);
@@ -518,7 +717,7 @@ static void TH32x32_task_entry(void const *parm)
 
 		case MSG_TH32x32_TASK_EXIT:
 			DEBUG_MSG("[MSG_TH32x32_TASK_EXIT]\r\n");
-			
+
 			ack_msg = ACK_OK;
 			osMessagePut(TH32x32_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			id = osThreadGetId();
@@ -527,7 +726,7 @@ static void TH32x32_task_entry(void const *parm)
 
 		default:
 			break;
-			
+
 		}
 	}
 }

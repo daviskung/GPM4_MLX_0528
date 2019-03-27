@@ -686,8 +686,12 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../driver_l2/sd/inc/drv_l2_sd.h" />
+		<Unit filename="../../driver_l2/sensor/inc/defs_th32x32.h" />
 		<Unit filename="../../driver_l2/sensor/inc/drv_l2_sensor.h" />
 		<Unit filename="../../driver_l2/sensor/src/drv_l2_sensor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_TH32x32_Thermopile.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../driver_l2/sensor/user/sensor_ar0330_cdsp_mipi.c">
@@ -1197,18 +1201,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/vr_demo/inc/vr_demo_global.h" />
-		<Unit filename="src/vr_demo/vr_demo.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/vr_demo/vr_demo_utility.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/vr_demo/vr_mem_flash.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/vr_demo/vr_sdsv_demo.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Extensions>
 			<projectwizard TargetDevice="GPM4730A_DDR" isCreated="true" />
 			<debugger>

@@ -243,6 +243,14 @@ void Digital_Video_Demo(void)
 
 	DBG_PRINT("\r\nDEMO in RECORD Mode\r\n");
 
+	th32x32_thermopile_init();
+
+	
+	// start TH32x32
+
+	if(TH32x32_task_start() < 0) DEBUG_MSG("d.TH32x32_task start fail !!\r\n");
+		else	DEBUG_MSG("d.TH32x32_task start\r\n");
+
 	while(1)
 	{
 		adc_key_scan();

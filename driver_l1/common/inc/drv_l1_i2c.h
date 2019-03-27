@@ -48,6 +48,13 @@
 #define I2C_MISC_PINMUX_EN			0x01
 #define I2C_MISC_ACK_DONTCARE		0x02
 
+//mode[in]:i2c restart without stop or not: 
+// 1:I2C_RESTART_WITHOUT_STOP 0:I2C_RESTART_WITH_STOP
+
+#define TH32x32_I2C_RESTART_MODE	    1
+
+
+
 typedef enum
 {
     I2C_0,
@@ -79,4 +86,7 @@ extern INT32S drv_l1_reg_1byte_data_2byte_write(drv_l1_i2c_bus_handle_t *handle,
 extern INT32S drv_l1_reg_1byte_data_2byte_read(drv_l1_i2c_bus_handle_t *handle, INT8U reg, INT16U *value);
 extern INT32S drv_l1_i2c_multi_write(drv_l1_i2c_bus_handle_t *handle, INT8U *subaddr, INT32U length, INT8U *data, INT32U data_len, INT32U mode);
 extern INT32S drv_l1_i2c_multi_read(drv_l1_i2c_bus_handle_t *handle, INT8U *subaddr, INT32U length, INT8U *data, INT32U data_len, INT32U mode);
+extern INT32S drv_l1_reg_2byte_data_2byte_write(drv_l1_i2c_bus_handle_t *handle, INT16U reg, INT16U value);
+extern INT32S drv_l1_reg_2byte_data_2byte_read(drv_l1_i2c_bus_handle_t *handle, INT16U reg, INT16U *value);
+
 #endif	/*__drv_l1_I2C_H__*/

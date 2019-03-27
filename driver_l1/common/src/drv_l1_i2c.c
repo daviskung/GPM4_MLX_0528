@@ -51,7 +51,7 @@
 *		Definition 									*
 ****************************************************/
 #define I2C_RESTART_WITHOUT_STOP     0x01
-#define DBG_I2C_ENABLE		         0
+#define DBG_I2C_ENABLE		         1
 
 #if DBG_I2C_ENABLE == 1
 #define DRV_I2C_DBG		DBG_PRINT
@@ -203,6 +203,7 @@ static INT32S _i2cStartTran(i2cReg_t *pI2CDev, INT16U slaveAddr, INT16U clkRate,
 	INT32S ret = 1;
 	INT32U iccr = 0, ctrl = 0;
 	INT32S timeout;
+	INT32S timeout_tmp;
 
 	/* check i2c bus is idle or not */
 	ret = _i2c_busy_waiting(pI2CDev, I2C_TIME_OUT);
@@ -257,13 +258,14 @@ static INT32S _i2cStartTran(i2cReg_t *pI2CDev, INT16U slaveAddr, INT16U clkRate,
 		return -1;
 	}
 
-	timeout = NO_ACK_TIMEOUT * 75;
+	timeout = NO_ACK_TIMEOUT * 750;
+	timeout_tmp = timeout;
 	while ((pI2CDev->ICSR & MASK_I2C_SR_LRBIT) && aAck)
 	{
 		// Waiting for ACK
 		timeout--;
 		if(timeout < 0) {
-			DRV_I2C_DBG("[%s]-- Waiting ACK timeout\r\n", __func__);
+			DRV_I2C_DBG("[%s]-- Waiting ACK timeout[%d]\r\n", __func__,timeout_tmp);
 			ret = -1;
 			break;
 		}
@@ -681,6 +683,55 @@ INT32S drv_l1_reg_1byte_data_1byte_read(drv_l1_i2c_bus_handle_t *handle, INT8U r
 
 	return ret;
 }
+//==========================================================================
+/**
+ * @brief   I2C bus write 2byte then write 2 bytes
+ * @param   handle: hanle for I2C clock and slave address
+ * @param   reg: the first data want to write
+ * @param   value: contains 2 bytes data want to write
+ * @return 	0(successful) or -1(failed)
+ */
+INT32S drv_l1_reg_2byte_data_2byte_write(drv_l1_i2c_bus_handle_t *handle, INT16U reg, INT16U value)
+{
+	INT8U data[4]={0};
+
+	
+	data[0] = (reg >> 8) & 0xFF;
+	data[1] = reg & 0xFF;
+	data[2] = (value >> 8) & 0xFF;
+	data[3] = value & 0xFF;
+	DRV_I2C_DBG("[%s]-- addr_2BYTE=0x%04X , data2_BYTE=0x%04X \r\n", __func__, reg, value);
+
+	return drv_l1_i2c_bus_write(handle, data, 4);
+}
+
+/**
+ * @brief   I2C bus write 2byte then read 2 bytes
+ * @param   handle: hanle for I2C clock and slave address
+ * @param   reg: the first data want to write
+ * @param   value: the buffer where I2C write the read 2 bytes data into
+ * @return 	0(successful) or -1(failed)
+ */
+INT32S drv_l1_reg_2byte_data_2byte_read(drv_l1_i2c_bus_handle_t *handle, INT16U reg, INT16U *value)
+{
+	INT32S ret=0;
+	INT8U addr[2]={0}, data[2]={0};
+	
+	addr[0] = (reg >> 8) & 0xFF;
+	addr[1] = reg & 0xFF;
+
+	
+	ret = drv_l1_i2c_multi_read(handle,addr,2,data,2,TH32x32_I2C_RESTART_MODE);
+
+	//ret = drv_l1_i2c_bus_write(handle, addr, 2);
+	//ret = drv_l1_i2c_bus_read(handle, data, 2);
+	*value = (((INT16U)data[0]) << 8) | (data[1]);
+	DRV_I2C_DBG("[%s]-- addr_2byte=0x%04X, data_2byte=0x%04X \r\n", __func__, reg, *value);
+
+	return ret;
+}
+
+//==========================================================================
 
 /**
  * @brief   I2C bus write 1byte then write 2 bytes

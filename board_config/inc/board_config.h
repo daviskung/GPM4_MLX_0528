@@ -78,14 +78,14 @@
 #define I2C0_MUX1								MUX1//I2C0_SCL_SDA__IOC12_IOC13
 #define I2C0_MUX2								MUX2//I2C0_SCL_SDA__IOA8_IOA9
 
-#define I2C0_POS							        I2C0_MUX0
+#define I2C0_POS							        I2C0_MUX1
 #define I2C0_DRIVING						        IO_DRIVING_8mA
 
 /* I2C1 PINMUX */
 #define I2C1_MUX0								MUX0//I2C1_SCL_SDA__IOC0_IOC1
 #define I2C1_MUX1								MUX1//I2C1_SCL_SDA__IOD4_IOD5
 
-#define I2C1_POS							    I2C1_MUX0
+#define I2C1_POS							    I2C1_MUX1
 #define I2C1_DRIVING						    IO_DRIVING_8mA
 
 /* I2C2 PINMUX */

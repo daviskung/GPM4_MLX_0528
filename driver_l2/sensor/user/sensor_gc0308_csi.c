@@ -84,6 +84,8 @@ static INT32S gc0308_sccb_open(void)
 	drv_l1_i2c_init(I2C_0);
 	gc0308_handle.slaveAddr = GC0308_ID;
 	gc0308_handle.clkRate = 100;
+	DBG_PRINT("Sccb open in HW_I2C.\r\n");
+	
 #endif
 	return STATUS_OK;
 }
