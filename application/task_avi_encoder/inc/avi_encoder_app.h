@@ -235,6 +235,82 @@ typedef struct capture_s
 	osMessageQId Ack_m;
 } catpure_t;
 
+
+
+typedef struct TH32x32Para_s
+{
+	//sensor input 
+    INT32U  TH32x32_output_format;   // TH32x32 output format
+    INT16U  TH32x32_width;   // TH32x32 width
+    INT16U  TH32x32_height;  // TH32x32 height
+    
+    INT32U  TH32x32_ColorOutputFrame_addr;	// TH32x32 color table output buffer addr
+    INT32U  TH32x32_TmpOutput_format_addr[TH32x32_SCALERUP_BUFFER_NO];   // TH32x32 Temperature output 
+    INT8U   TH32x32_PPU_frame_ON; // 0: none , 1:keep sensor_frame ;
+
+	// data read
+	INT16U  TH32x32_ReadDataBlkSize;   // TH32x32 block size 1282
+    INT16U  TH32x32_ElectOffDataSize;  // TH32x32 Elect offset size 1282
+    INT32U  TH32x32_ReadDataBlk_addr;
+	
+	INT32U  TH32x32_display_frame;
+	INT32U  TH32x32_ThGrad_buffer,TH32x32_ThOff_buffer;
+	INT32U	TH32x32_PixC_buffer;
+	INT32U	TH32x32_VddCompGrad_buffer,TH32x32_VddCompOff_buffer;
+
+	INT32U  TH32x32_PPU_frame;
+	
+    INT32U  TH32x32_ScalerUp_status;      // 0: read E. offset  
+
+	INT16U  TH32x32_sampleCnt;      // for TH32x32_start_timer_isr
+
+	//INT16U  TH32x32_sampleHz;	//  5.7~ 732 Hz
+	INT16U  TH32x32_sampleHz;	//  5.7~ 732 Hz
+
+	INT8U  TH32x32_ReadElecOffset_TA_startON;
+	INT8U  TH32x32_readout_block_startON;
+
+	INT32U  TH32x32_BadPixAdr_buf;
+	INT32U  TH32x32_BadPixMask_buf;
+
+	INT32U  TH32x32_readout_top_block_buf_addr[TH32x32_ReadoutBlockBuf_max][4];	// 
+	INT32U  TH32x32_readout_btm_block_buf_addr[TH32x32_ReadoutBlockBuf_max][4];	// 
+
+
+	INT32U  TH32x32_readout_EOffTop_buf0_addr;
+	INT32U  TH32x32_readout_EOffBtm_buf0_addr;
+	/*
+	INT32U  TH32x32_readout_EOffTop_buf1_addr;
+	INT32U  TH32x32_readout_EOffBtm_buf1_addr;
+	INT32U  TH32x32_readout_EOffTop_buf2_addr;
+	INT32U  TH32x32_readout_EOffBtm_buf2_addr;
+	INT32U  TH32x32_readout_EOffTop_buf3_addr;
+	INT32U  TH32x32_readout_EOffBtm_buf3_addr;
+	*/
+	INT8U   TH32x32_move_dect;	// 0 - 2
+	//INT8U   TH32x32_MaxInd_fun;	// 高/低指示 
+	INT8U   TH32x32_OVR_RoomTemp;
+	INT8U   TH32x32_NOISE_CUTOFF_OVR_RTemp;
+	INT8U   TH32x32_CMOS_OFF;
+	INT8U   TH32x32_TABLE_SCALER_FACTOR;
+	
+	INT16U  TH32x32_TA;	
+	INT16U  TH32x32_TA_AD7314;		
+	INT16U  TH32x32_TMAX;
+	INT16U  TH32x32_Tmin;
+	INT16U	TH32x32_TmaxAvgValue;
+	INT16U	TH32x32_TminAvgValue;
+	
+
+	INT32U  TH32x32_avg_buf_addr[AVG_buf_len];	// TH32x32 temperature buffer addr
+	INT32U  TH32x32_display_background_frame;
+
+	 
+    
+} TH32x32Para_t;
+
+
+
 /**************************************************************************
  *                              M A C R O S                               *
  **************************************************************************/
@@ -300,12 +376,23 @@ extern osMessageQId frame_ts_q;
 extern volatile INT32U vid_global_tick;
 #endif
 
+extern osMessageQId TH32x32_task_q;
+extern osMessageQId TH32x32_readout_task_q;
+extern osMessageQId TH32x32_readout_buf_q;
+
+extern osMessageQId TH32x32_SCALARUP_task_q;
+extern osMessageQId TH32x32_SCALARUP_buf_q;
+
+
 extern AviEncPara_t *pAviEncPara;
 extern AviEncAudPara_t *pAviEncAudPara;
 extern AviEncVidPara_t *pAviEncVidPara;
 extern AviEncPacker_t *pAviEncPacker0, *pAviEncPacker1;
 extern catpure_t *pCap;
 extern volatile INT32S pscaler_exit_0, pscaler_exit_1;
+
+extern TH32x32Para_t *pTH32x32_Para;	//2019.03.28 davis
+
 
 // callback function
 extern INT32S (*pfn_avi_encode_put_data)(void* workmem, unsigned long fourcc, long cbLen, const void *ptr, int nSamples, int ChunkFlag);

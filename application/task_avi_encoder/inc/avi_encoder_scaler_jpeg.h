@@ -127,4 +127,17 @@
 #else
 #define VIDEO_TIMESTAMP					0
 #endif
+
+#define AVG_buf_len			4
+#define TH32x32_ReadoutBlockBuf_max	1
+#define TH32x32_SCALERUP_BUFFER_NO	3
+
+//=====================================================================================================
+// marco
+//
+
+#define TOBigEndian(y)	{y=(y >>8) | (y <<8);}
+
+
+
 #endif //AVI_ENCODER_SCALER_JPEG_H_

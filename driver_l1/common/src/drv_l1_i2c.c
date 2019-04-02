@@ -51,7 +51,7 @@
 *		Definition 									*
 ****************************************************/
 #define I2C_RESTART_WITHOUT_STOP     0x01
-#define DBG_I2C_ENABLE		         1
+#define DBG_I2C_ENABLE		         0
 
 #if DBG_I2C_ENABLE == 1
 #define DRV_I2C_DBG		DBG_PRINT

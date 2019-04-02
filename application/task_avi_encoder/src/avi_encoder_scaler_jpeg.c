@@ -26,6 +26,7 @@
 /* Thermopile Array */
 #include "defs_th32x32.h"
 #include "drv_l1_i2c.h"
+#include <math.h>		// for pow()
 
 
 
@@ -98,6 +99,13 @@ typedef enum
 	MSG_TH32x32_TASK_EXIT
 } TH32x32_SENSOR_ENUM;
 
+typedef enum
+{
+	MSG_TH32x32_SCALARUP_TASK_INIT = 0x2300,
+	MSG_TH32x32_SCALARUP_TASK_STOP,
+	MSG_TH32x32_SCALARUP_TASK_EXIT
+} TH32x32_SCALARUP_ENUM;
+
 
 typedef enum
 {
@@ -115,6 +123,7 @@ static void video_encode_task_entry(void const *parm);
 static void rotate_task_entry(void const* param);
 void scaler_video_init();
 static void TH32x32_task_entry(void const *parm);
+static void TH32x32_SCALARUP_task_entry(void const *parm);
 
 
 /**************************************************************************
@@ -138,6 +147,10 @@ osMessageQId jpeg_fifo_q = NULL;
 
 osMessageQId TH32x32_task_q = NULL;
 osMessageQId TH32x32_task_ack_m = NULL;
+
+osMessageQId TH32x32_SCALARUP_task_q = NULL;
+osMessageQId TH32x32_SCALARUP_task_ack_m = NULL;
+osMessageQId TH32x32_SCALARUP_buf_q = NULL;
 
 
 #if VIDEO_TIMESTAMP
@@ -427,6 +440,132 @@ static void avi_ppu_draw_go(INT32U x, INT32U y, INT32U frame_buffer)
 // TH32x32 I2C calc data task
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+// TH32x32_SCALARUP task
+INT32S TH32x32_SCALARUP_Task_create(INT8U pori)
+{
+	INT32S nRet;
+	osThreadId id;
+	osThreadDef_t TH32x32_SCALARUP_Task = { "TH32x32_SCALARUP_task", TH32x32_SCALARUP_task_entry, osPriorityNormal, 1, C_SCALER_STACK_SIZE };
+
+	if(TH32x32_SCALARUP_task_q == 0) {
+		osMessageQDef_t TH32x32_scalar_q = {C_SCALER_QUEUE_MAX*2, sizeof(INT32U), 0}; //queue size double for possible null frame
+
+		TH32x32_SCALARUP_task_q = osMessageCreate(&TH32x32_scalar_q, NULL);
+		if(TH32x32_SCALARUP_task_q == 0) {
+			RETURN(STATUS_FAIL);
+		}
+	}
+
+	if(TH32x32_SCALARUP_task_ack_m == 0) {
+		osMessageQDef_t TH32x32_scalar_ack_q = {C_ACK_QUEUE_MAX, sizeof(INT32U), 0};
+
+		TH32x32_SCALARUP_task_ack_m = osMessageCreate(&TH32x32_scalar_ack_q, NULL);
+		if(TH32x32_SCALARUP_task_ack_m == 0) {
+			RETURN(STATUS_FAIL);
+		}
+	}
+
+	if(TH32x32_SCALARUP_buf_q == 0) {
+		osMessageQDef_t TH32x32_scalar_f_q = {AVI_ENCODE_SCALER_BUFFER_NO, sizeof(INT32U), 0};
+
+		TH32x32_SCALARUP_buf_q = osMessageCreate(&TH32x32_scalar_f_q, NULL);
+		if(TH32x32_SCALARUP_buf_q == 0) {
+			RETURN(STATUS_FAIL);
+		}
+	}
+
+	id = osThreadCreate(&TH32x32_SCALARUP_Task, (void *)NULL);
+    if(id == 0) {
+        RETURN(STATUS_FAIL);
+    }
+
+	nRet = STATUS_OK;
+Return:
+	return nRet;
+}
+
+static void TH32x32_SCALARUP_task_entry(void const *parm)
+{
+	INT32U msg_id, ack_msg;
+	//INT32U sensor_frame, scaler_frame, display_frame;
+	//ScalerFormat_t scale;
+	//ScalerPara_t para;
+	osEvent result;
+	osThreadId id;
+
+
+    DEBUG_MSG("<<%s>>\r\n", __func__);
+
+	while(1)
+	{
+		result = osMessageGet(TH32x32_SCALARUP_task_q, osWaitForever);
+		msg_id = result.value.v;
+		if((result.status != osEventMessage) || (	msg_id == 0)) {
+			continue;
+		}
+
+		switch(msg_id)
+		{
+		case MSG_TH32x32_SCALARUP_TASK_INIT:
+			DEBUG_MSG("[MSG_TH32x32_SCALARUP_TASK_INIT]\r\n");
+
+
+			ack_msg = ACK_OK;
+			osMessagePut(TH32x32_SCALARUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			break;
+
+		case MSG_TH32x32_SCALARUP_TASK_STOP:
+			DEBUG_MSG("[MSG_TH32x32_SCALARUP_TASK_STOP]\r\n");
+			OSQFlush(TH32x32_SCALARUP_task_q);
+			ack_msg = ACK_OK;
+			osMessagePut(TH32x32_SCALARUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			break;
+
+		case MSG_TH32x32_SCALARUP_TASK_EXIT:
+			DEBUG_MSG("[MSG_TH32x32_SCALARUP_TASK_EXIT]\r\n");
+
+			ack_msg = ACK_OK;
+			osMessagePut(TH32x32_SCALARUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			id = osThreadGetId();
+    		osThreadTerminate(id);
+			break;
+
+		default:
+
+
+		DEFAULT_END:
+
+			break;
+		}
+	}
+}
+
+
+INT32S TH32x32_SCALARUP_task_start(void)
+{
+	INT32S i, nRet;
+
+	//OSQFlush(scaler_frame_q);
+
+	nRet = STATUS_OK;
+	POST_MESSAGE(TH32x32_SCALARUP_task_q, MSG_TH32x32_SCALARUP_TASK_INIT, TH32x32_SCALARUP_task_ack_m, 5000);
+Return:
+	return nRet;
+}
+
+
+INT32S TH32x32_SCALARUP_task_stop(void)
+{
+	INT32S nRet = STATUS_OK;
+
+	POST_MESSAGE(TH32x32_SCALARUP_task_q, MSG_TH32x32_SCALARUP_TASK_STOP, TH32x32_SCALARUP_task_ack_m, 5000);
+
+Return:
+	return nRet;
+}
+
+
 INT32S TH32x32_task_create(INT8U pori)
 {
 	INT32S nRet;
@@ -503,14 +642,45 @@ static void TH32x32_task_entry(void const *parm)
 	INT8U 	EEcopy[8],*pEEcopy;
 	INT8U 	EEaddr[2],*pEEaddr;
 	INT16U	EEaddress16,EEcopy16BIT,*pEEcopy16BIT;
+	INT16U	tmp_i,tmp_i2,tmp_start;
+	INT8U	SetMBITUser;
+	unsigned short	Resolution;
+	INT8U	avg_buf_Enable,check_MAX_pos;
 	INT16U	TA,gradScale,TableNumberSensor,epsilon;
 	unsigned short GlobalGain;	// INT16U
 	char 	GlobalOffset;			// INT8U
 	INT32U	PTATsum;
 	float	PixCMin,PixCMax;
 	INT16U	SetMBITCalib,SetBIASCalib,SetCLKCalib,SetBPACalib,SetPUCalib,VddCalib;
+	INT16S	*pTH32x32_VddCompOff_buffer,*pTH32x32_VddCompGrad_buffer;
+	INT16S	*pTH32x32_ThGrad_buffer,*pTH32x32_ThOff_buffer;
+	INT8U 	*pTH32x32_tmp8B_to16B;
+	INT8U 	NrOfDefPix,VddScaling,VddScalingOff;
 
-	//pEEcopy16BIT = EEcopy16BIT;
+	unsigned long	*pTH32x32_PixC_buffer;
+
+
+	INT16U  *pTH32x32_BadPixAdr_buf;
+	INT8U  	*pTH32x32_BadPixMaskAdr_buf;
+	unsigned long	PixC;		// INT32U
+	INT16U  *pTH32x32_frame_INT16U_buf0;
+	float	tmpPixC;
+	unsigned long long DividerVdd,DividerVdd2;
+	signed long	VoltageLong,PowerGradScale;
+
+	INT16U	read_EValue,offset_EValue,TmpValue;
+
+	INT16U	TimeCnt1,TimeCnt2;
+
+	INT8U	firstRun,SampleTempCnt;
+	//INT8U   data_buf[1];
+
+	INT8U   TH32x32_ReadBlockNum;
+
+	INT16U  *pBlock_data_buf,*pBlock_EoffsetTop_buf,*pBlock_EoffsetBtm_buf;
+
+	INT8U	retValue;
+	INT16U  *pTH32x32_INT16U_avg_buf[AVG_buf_len];
 
     DEBUG_MSG("<<%s>>\r\n", __func__);
 
@@ -532,11 +702,18 @@ static void TH32x32_task_entry(void const *parm)
 			pEEaddr = EEaddr;
 
 
+			TH32x32_TEST_HIGH();
+			TimeCnt1=xTaskGetTickCount();
+			DBG_PRINT("StartTime = %d\r\n", xTaskGetTickCount());	// xTaskGetTickCount() timebase=1ms
 			// =====================================================================
 
 			th32x32_handle.devNumber = I2C_1;
 		    th32x32_handle.slaveAddr = TH32x32_EEPROM_ID << 1 ;
 		    th32x32_handle.clkRate = 800;
+
+
+			pTH32x32_frame_INT16U_buf0 = (INT16U*)pTH32x32_Para->TH32x32_ColorOutputFrame_addr;
+			gp_memset((INT8S *)pTH32x32_Para->TH32x32_ColorOutputFrame_addr,0x00,80*64*2);	// clear 值 
 			//
 			// EEPROM data [ PTATGrad / PTATOff / GlobalGain / GlobalOffset ]
 			//
@@ -590,7 +767,152 @@ static void TH32x32_task_entry(void const *parm)
 			epsilon=(INT16U)EEcopy[2];
 			DBG_PRINT("TableNumberSensor = [%d]/ epsilon = [%d] \r\n", TableNumberSensor,epsilon);
 
+			EEaddress16 = AdrMBITPixC;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pEEcopy,sizeof(char)*5,TH32x32_I2C_RESTART_MODE);
+			SetMBITCalib=(INT16U)EEcopy[0];
+			SetBIASCalib=(INT16U)EEcopy[1];
+			SetCLKCalib=(INT16U)EEcopy[2];
+			SetBPACalib=(INT16U)EEcopy[3];
+			SetPUCalib=(INT16U)EEcopy[4];
+			DBG_PRINT("MBITPixC = [0x%x] , [0x%x], [0x%x], [0x%x], [0x%x] \r\n",SetMBITCalib,SetBIASCalib,SetCLKCalib,SetBPACalib,SetPUCalib);
 
+			//
+			// The corresponding order of ThGrad,ThOffset and P to the Pixelnumber is given by the
+			// following overview:
+			//讀入順序      block0(top) -> block1(top) -> block2(top) -> block3(top)
+			//				-> block0(bottom) -> block1(bottom) -> block2(bottom) -> block3(bottom)
+			//
+
+			gp_memset((INT8S *)pTH32x32_Para->TH32x32_ThOff_buffer,0x00,32*32*2);	// clear 值 
+			gp_memset((INT8S *)pTH32x32_Para->TH32x32_ThGrad_buffer,0x00,32*32*2);	// clear 值 
+			//
+			// 8bit 讀取 pTH32x32_tmp8B_to16B
+			// 16 bit 計算 
+			//
+			pTH32x32_ThOff_buffer = (INT16S*)pTH32x32_Para->TH32x32_ThOff_buffer;
+			pTH32x32_ThGrad_buffer = (INT16S*)pTH32x32_Para->TH32x32_ThGrad_buffer;
+
+			pTH32x32_tmp8B_to16B = (INT8U*)pTH32x32_Para->TH32x32_ThGrad_buffer;
+			EEaddress16 = AdrTh1;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pTH32x32_tmp8B_to16B,sizeof(INT16S)*Pixel,TH32x32_I2C_RESTART_MODE);
+			DBG_PRINT("TH32x32_ThGrad_buffer addr= 0x%x\r\n", pTH32x32_Para->TH32x32_ThGrad_buffer);
+
+
+			pTH32x32_tmp8B_to16B = (INT8U*)pTH32x32_Para->TH32x32_ThOff_buffer;
+			EEaddress16 = AdrTh2;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pTH32x32_tmp8B_to16B,sizeof(INT16S)*Pixel,TH32x32_I2C_RESTART_MODE);
+			DBG_PRINT("TH32x32_ThOff_buffer addr= 0x%x\r\n", pTH32x32_Para->TH32x32_ThOff_buffer);
+
+
+			drv_l1_reg_2byte_data_1byte_read(&th32x32_handle,AdrNrOfDefPix,pEEcopy);//read number of defective pixel
+			NrOfDefPix = EEcopy[0];
+			DBG_PRINT("NrOfDefPix = %d \r\n",NrOfDefPix);
+
+			if(NrOfDefPix == 0)
+				DBG_PRINT("NrOfDefPix is zero %d \r\n",NrOfDefPix);
+			else if(NrOfDefPix > MAXNROFDEFECTS)
+				DBG_PRINT("NrOfDefPix is over MAXNROFDEFECTS %d \r\n",NrOfDefPix);
+			else if(( NrOfDefPix != 0 )&&( NrOfDefPix <= MAXNROFDEFECTS )) {
+				gp_memset((INT8S *)pTH32x32_Para->TH32x32_BadPixAdr_buf,0x00,sizeof(INT16U)*MAXNROFDEFECTS);	// clear 值 
+
+				pTH32x32_tmp8B_to16B = (INT8U*)pTH32x32_Para->TH32x32_BadPixAdr_buf;
+				EEaddress16 = AdrDeadPix;
+				EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+				EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+				drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pTH32x32_tmp8B_to16B,sizeof(INT16S)*NrOfDefPix,TH32x32_I2C_RESTART_MODE);
+				pTH32x32_BadPixAdr_buf = (INT16U*) pTH32x32_Para->TH32x32_BadPixAdr_buf;
+				DBG_PRINT("Dead Pix Adr addr = ");
+				for (tmp_i2 = 0 ; tmp_i2<NrOfDefPix ; tmp_i2++){
+					DBG_PRINT(" %d,",*(pTH32x32_BadPixAdr_buf + tmp_i2) );
+				}
+				DBG_PRINT("\r\n");
+				gp_memset((INT8S *)pTH32x32_Para->TH32x32_BadPixMask_buf,0x00,sizeof(INT8U)*MAXNROFDEFECTS);	// clear 值 
+				EEaddress16 = AdrDeadPixMask;
+				EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+				EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+				drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,(INT8U*)pTH32x32_Para->TH32x32_BadPixMask_buf,sizeof(INT8U)*NrOfDefPix,TH32x32_I2C_RESTART_MODE);
+				pTH32x32_BadPixMaskAdr_buf = (INT8U*) pTH32x32_Para->TH32x32_BadPixMask_buf;
+				DBG_PRINT("Dead Pix mask = ");
+				for (tmp_i2 = 0 ; tmp_i2<NrOfDefPix ; tmp_i2++){
+					DBG_PRINT(" %d,",*(pTH32x32_BadPixMaskAdr_buf + tmp_i2));
+				}
+				DBG_PRINT("\r\n");
+			}
+
+			//
+			// pTH32x32_Para->TH32x32_ColorOutputFrame_addr is tmp buf for AdrPixC
+			//
+
+			pTH32x32_tmp8B_to16B = (INT8U*)pTH32x32_Para->TH32x32_ColorOutputFrame_addr;
+			EEaddress16 = AdrPixC;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pTH32x32_tmp8B_to16B,sizeof(INT16U)*Pixel,TH32x32_I2C_RESTART_MODE);
+
+			DBG_PRINT("Read Pix to pTH32x32_Para->TH32x32_ColorOutputFrame_addr = 0x%x\r\n",
+				pTH32x32_Para->TH32x32_ColorOutputFrame_addr);
+
+			pTH32x32_PixC_buffer =(unsigned long*) pTH32x32_Para->TH32x32_PixC_buffer;
+			for( tmp_i2 = 0 ; tmp_i2<Pixel ; tmp_i2++){
+				PixC = (unsigned long)((((float)*(pTH32x32_frame_INT16U_buf0 + tmp_i2)/65535.0)*(PixCMax-PixCMin)+(float)PixCMin)*(float)epsilon/100.0*(float)GlobalGain/10000.0);	//
+				*(pTH32x32_PixC_buffer+tmp_i2) = PixC;
+			}
+
+
+			pTH32x32_VddCompOff_buffer = (INT16S*)pTH32x32_Para->TH32x32_VddCompOff_buffer;
+			pTH32x32_VddCompGrad_buffer = (INT16S*)pTH32x32_Para->TH32x32_VddCompGrad_buffer;
+
+			gp_memset((INT8S *)pTH32x32_Para->TH32x32_VddCompGrad_buffer,0x00,sizeof(INT16U)*ELAMOUNT); // clear 值 
+
+			pTH32x32_tmp8B_to16B = (INT8U*)pTH32x32_Para->TH32x32_VddCompGrad_buffer;
+			EEaddress16 = AdrVddCompGrad;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pTH32x32_tmp8B_to16B,sizeof(INT16U)*ELAMOUNT,TH32x32_I2C_RESTART_MODE);
+			DBG_PRINT("TH32x32_VddCompGrad_buffer addr= 0x%x\r\n", pTH32x32_Para->TH32x32_VddCompGrad_buffer);
+
+			gp_memset((INT8S *)pTH32x32_Para->TH32x32_VddCompOff_buffer,0x00,sizeof(INT16U)*ELAMOUNT);	// clear 值 
+
+			pTH32x32_tmp8B_to16B = (INT8U*)pTH32x32_Para->TH32x32_VddCompOff_buffer;
+			EEaddress16 = AdrVddCompOff;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pTH32x32_tmp8B_to16B,sizeof(INT16U)*ELAMOUNT,TH32x32_I2C_RESTART_MODE);
+			DBG_PRINT("TH32x32_VddCompOff_buffer addr= 0x%x\r\n", pTH32x32_Para->TH32x32_VddCompOff_buffer);
+
+			drv_l1_reg_2byte_data_1byte_read(&th32x32_handle,AdrVddScaling,pEEcopy);
+			VddScaling = EEcopy[0];
+			drv_l1_reg_2byte_data_1byte_read(&th32x32_handle,AdrVddScalingOff,pEEcopy);
+			VddScalingOff = EEcopy[0];
+			DBG_PRINT("VddScaling = [0x%x] , VddScalingOff = [0x%x]\r\n",VddScaling,VddScalingOff);
+			tmpPixC = pow(2.0,(float)VddScaling);	// Add #include <math.h>
+			DividerVdd=(unsigned long long)tmpPixC;
+			tmpPixC = pow(2.0,(float)VddScalingOff);
+			DividerVdd2=(unsigned long long)tmpPixC;
+
+			EEaddress16 = AdrVddCalib;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,2,pEEcopy,sizeof(INT16U),TH32x32_I2C_RESTART_MODE);
+			VddCalib =  (INT16U)EEcopy[1]<<8;
+			VddCalib += (INT16U)EEcopy[0];
+			DBG_PRINT("VddCalib = [0x%x]\r\n",VddCalib);
+
+			PowerGradScale=(float)pow(2.0,(float)gradScale);	// #include <math.h>
+			DBG_PRINT("PowerGradScale = 0x%x\r\n",PowerGradScale);
+
+			TimeCnt2=xTaskGetTickCount();
+			DBG_PRINT("EndTime = %d\r\n", xTaskGetTickCount());
+			DBG_PRINT("TotalTime = %d ms\r\n",TimeCnt2-TimeCnt1);
+
+			TH32x32_TEST_LOW();
+			//TimeCnt1 = OSTimeGet() ;
 
 			// =====================================================================
 			th32x32_handle.devNumber = I2C_1;
@@ -604,106 +926,164 @@ static void TH32x32_task_entry(void const *parm)
 			sensorCmd.DeviceAdd =(TH32x32_REG_ID << 1);
 		    th32x32_handle.slaveAddr = sensorCmd.DeviceAdd;
 
+			SetMBITUser = CONFIG_REG_WAKEUP;
 			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-			sensorCmd.RegCmd =CONFIG_REG_WAKEUP;
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			sensorCmd.trimValue =SetMBITUser;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
+			DBG_PRINT("Wake up >RegAdd=0x%x trimValue=0x%x\r\n",sensorCmd.RegAdd,sensorCmd.trimValue);
 
 			osDelay(10);
-			sensorCmd.RegAdd =TH32x32_MBIT_TRIM;
-			sensorCmd.RegCmd =MBIT_TRIM_12BIT_DEFAULT;
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			//SetMBITUser = MBIT_TRIM_10BIT_DEFAULT;
+			SetMBITUser = MBIT_TRIM_12BIT_DEFAULT;
+			Resolution=(SetMBITUser&0x0F)+4; //暫不調整 
+			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
+			sensorCmd.trimValue =SetMBITUser;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
+			DBG_PRINT(" **** InitMBITTRIM (%d bit) [0x%x] \r\n",Resolution,SetMBITUser);
 
 			osDelay(10);
 			sensorCmd.RegAdd =TH32x32_BIAS_TRIM_TOP;
-			sensorCmd.RegCmd =BIAS_TRIM_TOP_SAMPLE_VAL;
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			sensorCmd.trimValue =BIAS_TRIM_TOP_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
 
             osDelay(10);
 			sensorCmd.RegAdd =TH32x32_BIAS_TRIM_BOT;
-			sensorCmd.RegCmd =BIAS_TRIM_BOM_SAMPLE_VAL;
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			sensorCmd.trimValue =BIAS_TRIM_BOM_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
 
             osDelay(10);
            	sensorCmd.RegAdd =TH32x32_CLK_TRIM;
-			sensorCmd.RegCmd =CLK_TRIM_SAMPLE_VAL;
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			sensorCmd.trimValue =CLKTRIM_13MHz;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
+			DBG_PRINT(" **** CLKTRIM_13MHz [0x%x] \r\n",sensorCmd.trimValue);
 
 			osDelay(10);
            	sensorCmd.RegAdd =TH32x32_BPA_TRIM_TOP;
-			sensorCmd.RegCmd =BPA_TRIM_TOP_SAMPLE_VAL;
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			sensorCmd.trimValue =BPA_TRIM_TOP_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
 
 			osDelay(10);
            	sensorCmd.RegAdd =TH32x32_BPA_TRIM_BOT;
-			sensorCmd.RegCmd =BPA_TRIM_BOM_SAMPLE_VAL;
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			sensorCmd.trimValue =BPA_TRIM_BOM_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
 
 			osDelay(10);
            	sensorCmd.RegAdd =TH32x32_PU_SDA_TRIM;
-			sensorCmd.RegCmd =PU_SDA_TRIM_SAMPLE_VAL;
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			sensorCmd.trimValue =PU_SDA_TRIM_SAMPLE_VAL;
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
 
+			if( TableNumberSensor != TABLENUMBER )
+				DBG_PRINT(" Error  !! TableNumberSensor[%d] is NOT  TABLENUMBER[%d]",TableNumberSensor,TABLENUMBER);
+
+
+			SampleTempCnt = 0;
+			while(SampleTempCnt == 0)
+			{
 			osDelay(10);
-           	sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-			sensorCmd.RegCmd =CONFIG_REG_START_B0_WAKEUP;
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
+			sensorCmd.trimValue =READ_ELEC_OFFSET;	// start / blink /wake 產生 ReadElecOffset & TA
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
+
+			tmp_i=0;
+			do{
+				osDelay(5);
+				EEaddr[0]=TH32x32_STATUS_REG;
+				drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
+				tmp_i++;
+			}while(((EEcopy[0]&0x03)!=0x03) || (tmp_i > 10) );
+			if (tmp_i > 10)
+				DBG_PRINT("ReadElecOffset fail\r\n "); // 曾經 出現 EEcopy[0]=0x05
+			else{
+				DBG_PRINT("ReadElecOffset 0x%x wait=%d \r\n ",EEcopy[0],tmp_i);
+				SampleTempCnt = 1;
+				}
+			}
+			//
+			// read TH32x32 ReadElecOffset raw data 129*2byte
+			//
+
+			gp_memset((INT8S *)pTH32x32_Para->TH32x32_readout_EOffTop_buf0_addr,0x00,sizeof(INT16U)*(ELAMOUNTHALF+1));	// clear 值 
+			gp_memset((INT8S *)pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr,0x00,sizeof(INT16U)*(ELAMOUNTHALF+1));	// clear 值 
+
+			retValue = I2C_sensor32x32_readDataTop(&th32x32_handle,pTH32x32_Para->TH32x32_readout_EOffTop_buf0_addr);
+			if(retValue<0)
+				DBG_PRINT("ReadElecOffset Top read fail 0x%x \r\n",retValue);
+			retValue = I2C_sensor32x32_readDataBtm(&th32x32_handle,pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr);
+			if(retValue<0)
+				DBG_PRINT("ReadElecOffset Btm read fail 0x%x \r\n",retValue);
 
 
-			osDelay(30);
-			EEaddr[0]=TH32x32_STATUS_REG;
-			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
-			
-			DBG_PRINT("EEcopy B0 = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
-			EEcopy[0]=0xf1;	// why can not change? need use this change !!
-			EEcopy[1]=0xf2;
-			
-			DBG_PRINT("EEcopy check = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
-			EEcopy[2]=0xf3;
-			EEcopy[3]=0;
-			EEcopy[4]=0;
-			EEcopy[5]=0;
-			EEcopy[6]=0;
-			EEcopy[7]=0;
-			
-			EEaddr[0]=TH32x32_READ_DATA_TOP;
-			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,8,TH32x32_I2C_RESTART_MODE);
-			
-			
-			
+			pBlock_EoffsetTop_buf =(INT16U*)pTH32x32_Para->TH32x32_readout_EOffTop_buf0_addr;
+			pBlock_EoffsetBtm_buf =(INT16U*)pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr;
+
+			read_EValue= (INT16U) *(pBlock_EoffsetTop_buf);
+			TOBigEndian(read_EValue);
+			PTATsum = (INT32U) read_EValue;
+			//DBG_PRINT("[PTAT-T %x ,", PTATsum);
+
+			read_EValue= (INT16U) *(pBlock_EoffsetBtm_buf);
+			TOBigEndian(read_EValue);
+			//DBG_PRINT("-B0x%x ," read_EValue);
+			PTATsum = PTATsum + (INT32U) read_EValue;
+			//DBG_PRINT("= 0x%x] ,", PTATsum/2);
+
+			PTATLong =(float) ((PTATsum/2)<<(16-Resolution));
+
+			TA=(unsigned short)((float)(PTATLong*PTATGrad+PTATOff+0.5));
+			DBG_PRINT("[TA=%dC] \r\n",TA-2730);
+
+			// 預先執行 read block cmd -0
+			TH32x32_ReadBlockNum=0;
 
 			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-			sensorCmd.RegCmd = CONFIG_REG_START_B1_WAKEUP; // block1
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			sensorCmd.trimValue =(Read_VDD_MEAS_Block0 | (TH32x32_ReadBlockNum << 4)); // start / VDD_MEAS /wake
+			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
+
+			tmp_i=0;
+			do{
+				osDelay(5);
+				EEaddr[0]=TH32x32_STATUS_REG;
+				drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
+				tmp_i++;
+			}while( ( ((EEcopy[0]&0x35) != ((sensorCmd.trimValue & 0x35) | 0x01)) )|| (tmp_i > 10) );
+			if (tmp_i > 10)
+				DBG_PRINT("Read_VDD_MEAS_Block0 fail\r\n "); // 曾經 出現 EEcopy[0]=0x05
+			else{
+				DBG_PRINT("Read_VDD_MEAS_Block %d ack= 0x%x wait=%d \r\n ",
+					TH32x32_ReadBlockNum,EEcopy[0],tmp_i);
+				SampleTempCnt = 1;
+			}
+
+			//
+			// read TH32x32 Read_VDD_MEAS_Block raw data 129*2byte
+			//
+
+			// 讀取 read block[0]
+			retValue = I2C_sensor32x32_readDataTop(&th32x32_handle,
+				pTH32x32_Para->TH32x32_readout_top_block_buf_addr[0][TH32x32_ReadBlockNum]);
+			if(retValue<0)
+				DBG_PRINT("Read_VDD_MEAS_Block Top read fail 0x%x \r\n",retValue);
+			retValue = I2C_sensor32x32_readDataBtm(&th32x32_handle,
+				pTH32x32_Para->TH32x32_readout_btm_block_buf_addr[0][TH32x32_ReadBlockNum]);
+			if(retValue<0)
+				DBG_PRINT("Read_VDD_MEAS_Block Btm read fail 0x%x \r\n",retValue);
+
+			avg_buf_Enable=0;
+			check_MAX_pos=0;
+			pTH32x32_frame_INT16U_buf0 = (INT16U*)pTH32x32_Para->TH32x32_ColorOutputFrame_addr;
+			pTH32x32_Para->TH32x32_OVR_RoomTemp = COLOR_TABLE_OVR_RoomTemp;
+			pTH32x32_Para->TH32x32_TABLE_SCALER_FACTOR = 18;
+			pTH32x32_Para->TH32x32_NOISE_CUTOFF_OVR_RTemp = NOISE_OVR_RoomTemp;
+			DBG_PRINT("Noise filter =%d \r\n",pTH32x32_Para->TH32x32_NOISE_CUTOFF_OVR_RTemp);
 
 
-			osDelay(10);
-			EEaddr[0]=TH32x32_STATUS_REG;
-			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
-			
-			DBG_PRINT("EEcopy B1 = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
+			for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
+				pTH32x32_INT16U_avg_buf[tmp_i]= (INT16U*)pTH32x32_Para->TH32x32_avg_buf_addr[tmp_i];
+			}
 
-			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-			sensorCmd.RegCmd = CONFIG_REG_START_B2_WAKEUP; // block2
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
+			firstRun = 0;
+			SampleTempCnt = 0;
 
-
-			osDelay(10);
-			EEaddr[0]=TH32x32_STATUS_REG;
-			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
-			
-			DBG_PRINT("EEcopy B2 = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
-
-			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-			sensorCmd.RegCmd = CONFIG_REG_START_B3_WAKEUP; // block3
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.RegCmd);
-
-
-			osDelay(10);
-			EEaddr[0]=TH32x32_STATUS_REG;
-			drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
-			
-			DBG_PRINT("EEcopy B3 = [0x%x] [0x%x]\r\n", EEcopy[0],EEcopy[1]);
-			
 			ack_msg = ACK_OK;
 			osMessagePut(TH32x32_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			break;

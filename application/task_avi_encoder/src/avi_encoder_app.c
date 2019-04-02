@@ -16,6 +16,7 @@
 #include "gplib.h"
 #include "drv_l1_h264.h"
 #include "drv_l2_h264enc.h"
+#include "defs_th32x32.h"
 
 #if (defined APP_VIDEO_ENCODER_EN) && (APP_VIDEO_ENCODER_EN == 1)
 
@@ -34,6 +35,9 @@ GP_AVI_AVISTREAMHEADER	avi_aud_stream_header;
 GP_AVI_AVISTREAMHEADER	avi_vid_stream_header;
 GP_AVI_BITMAPINFO		avi_bitmap_info;
 GP_AVI_PCMWAVEFORMAT	avi_wave_info;
+
+TH32x32Para_t TH32x32_Para, *pTH32x32_Para;	// 2019.03.28 davis
+
 
 static INT8U g_csi_index;
 static INT8U g_pcm_index;
@@ -55,6 +59,9 @@ void avi_encode_init(void)
     memset((INT8S *)pAviEncPacker0, 0, sizeof(AviEncPacker_t));
     pAviEncPacker1 = &AviEncPacker1;
     memset((INT8S *)pAviEncPacker1, 0, sizeof(AviEncPacker_t));
+
+	pTH32x32_Para = &TH32x32_Para;	// 2019.03.28 davis
+    gp_memset((INT8S *)pTH32x32_Para, 0, sizeof(TH32x32Para_t));
 
 	pAviEncPacker0->file_handle = -1;
 	pAviEncPacker0->index_handle = -1;
@@ -496,6 +503,157 @@ Return:
 	return nRet;
 }
 
+
+static INT32S TH32x32_mem_alloc(void)	//davis
+{
+	INT32U buffer_addr;
+	INT32S buffer_size, nRet;
+	INT8U  tmpN1,tmpN2;
+	
+	pTH32x32_Para->TH32x32_width = LINE;
+    pTH32x32_Para->TH32x32_height = COLUMN;
+	pTH32x32_Para->TH32x32_ReadDataBlkSize = (PixelEighth+1)*2; // (128+1)*2;
+	pTH32x32_Para->TH32x32_ElectOffDataSize = (PixelEighth+1)*2; //(128+1)*2;
+
+	// 	1 pixel takes 2 bytes => 32*32 pixel requires 32*32*2
+	buffer_size = pTH32x32_Para->TH32x32_width * pTH32x32_Para->TH32x32_height << 1;
+
+	buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+	//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
+	if(buffer_addr == 0) {
+		RETURN(STATUS_FAIL);	
+	}
+	pTH32x32_Para->TH32x32_ColorOutputFrame_addr = buffer_addr;
+	DBG_PRINT("davis --> TH32x32_ColorOutputFrame_addr = 0x%x\r\n", pTH32x32_Para->TH32x32_ColorOutputFrame_addr);
+
+	for(tmpN1=0; tmpN1<TH32x32_SCALERUP_BUFFER_NO; tmpN1++) {
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_TmpOutput_format_addr[tmpN1] = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_TmpOutput_format_addr[%d] = 0x%x\r\n",tmpN1, pTH32x32_Para->TH32x32_TmpOutput_format_addr[tmpN1]);
+	}
+	
+	
+	for(tmpN1=0;tmpN1<AVG_buf_len;tmpN1++){
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_avg_buf_addr[tmpN1] = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_avg_buf_addr[%d] addr = 0x%x\r\n",tmpN1, pTH32x32_Para->TH32x32_avg_buf_addr[tmpN1]);
+	}
+
+	buffer_size = pTH32x32_Para->TH32x32_ReadDataBlkSize;
+	for(tmpN1=0;tmpN1<TH32x32_ReadoutBlockBuf_max;tmpN1++){
+		for(tmpN2=0;tmpN2<4;tmpN2++){
+			buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+				if(buffer_addr == 0) RETURN(STATUS_FAIL);	
+			pTH32x32_Para->TH32x32_readout_top_block_buf_addr[tmpN1][tmpN2] = buffer_addr;
+				DBG_PRINT("TH32x32_readout_top_block_buf_addr[%d][%d] addr = 0x%x\r\n",tmpN1,tmpN2,
+				pTH32x32_Para->TH32x32_readout_top_block_buf_addr[tmpN1][tmpN2]);		
+		}
+	}
+
+	buffer_size = pTH32x32_Para->TH32x32_ReadDataBlkSize;
+	for(tmpN1=0;tmpN1<TH32x32_ReadoutBlockBuf_max;tmpN1++){
+		for(tmpN2=0;tmpN2<4;tmpN2++){
+			buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+					if(buffer_addr == 0) RETURN(STATUS_FAIL);	
+			pTH32x32_Para->TH32x32_readout_btm_block_buf_addr[tmpN1][tmpN2] = buffer_addr;
+			DBG_PRINT("TH32x32_readout_btm_block_buf_addr[%d][%d] addr = 0x%x\r\n",tmpN1,tmpN2, pTH32x32_Para->TH32x32_readout_btm_block_buf_addr[tmpN1][tmpN2]);
+		}
+	}
+
+	
+	buffer_size = pTH32x32_Para->TH32x32_ElectOffDataSize ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_readout_EOffTop_buf0_addr = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_readout_EOffTop_buf0_addr addr = 0x%x\r\n", pTH32x32_Para->TH32x32_readout_EOffTop_buf0_addr);
+
+	buffer_size = pTH32x32_Para->TH32x32_ElectOffDataSize ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_readout_EOffBtm_buf0_addr addr = 0x%x\r\n", pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr);
+
+
+	buffer_size = pAviEncVidPara->sensor_capture_width * pAviEncVidPara->sensor_capture_height << 1;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_display_frame = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_display_frame addr = 0x%x\r\n", pTH32x32_Para->TH32x32_display_frame);
+
+		
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_display_background_frame = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_display_background_frame addr = 0x%x\r\n", pTH32x32_Para->TH32x32_display_background_frame);
+
+	buffer_size = sizeof(INT16S)*Pixel ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_ThGrad_buffer = buffer_addr;
+		DBG_PRINT("davis --> diff with TH80x64 -> TH32x32_ThGrad_buffer(INT16S) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_ThGrad_buffer);
+
+	buffer_size = sizeof(INT16S)*Pixel;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_ThOff_buffer = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_ThOff_buffer(INT16S) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_ThOff_buffer);
+
+	buffer_size = sizeof(unsigned long)*Pixel ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_PixC_buffer = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_PixC_buffer(unsigned long) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_PixC_buffer);	
+
+	buffer_size = sizeof(INT16U)*ELAMOUNT ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_VddCompGrad_buffer = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_VddCompGrad_buffer(INT16S) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_VddCompGrad_buffer);	
+
+	buffer_size = sizeof(INT16U)*ELAMOUNT ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_VddCompOff_buffer = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_VddCompOff_buffer(INT16S) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_VddCompOff_buffer);	
+
+	buffer_size = sizeof(INT16U)*MAXNROFDEFECTS ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_BadPixAdr_buf = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_BadPixAdr_buf(INT16U) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_BadPixAdr_buf);	
+
+	buffer_size = sizeof(INT8U)*MAXNROFDEFECTS ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pTH32x32_Para->TH32x32_BadPixMask_buf = buffer_addr;
+		DBG_PRINT("davis --> TH32x32_BadPixMask_buf(INT8U) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_BadPixMask_buf);	
+	
+	
+	nRet = STATUS_OK;	
+Return:
+	return nRet;
+}
+ 
+
+
+
+
+
 static INT32S scaler_mem_alloc(void)
 {
 	INT32U buffer_addr;
@@ -843,6 +1001,12 @@ INT32S avi_encode_memory_alloc(void)
 
 #if VIDEO_ENCODE_MODE == C_VIDEO_ENCODE_FIFO_MODE
 	if(jpeg_fifo_mem_alloc()<0){
+		RETURN(STATUS_FAIL);
+	}
+#endif
+
+#if 1
+	if(TH32x32_mem_alloc() < 0) {	// RAM 正常
 		RETURN(STATUS_FAIL);
 	}
 #endif
