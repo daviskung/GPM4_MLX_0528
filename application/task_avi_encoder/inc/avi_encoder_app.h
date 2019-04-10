@@ -380,8 +380,8 @@ extern osMessageQId TH32x32_task_q;
 extern osMessageQId TH32x32_readout_task_q;
 extern osMessageQId TH32x32_readout_buf_q;
 
-extern osMessageQId TH32x32_SCALARUP_task_q;
-extern osMessageQId TH32x32_SCALARUP_buf_q;
+extern osMessageQId TH32x32_SCALERUP_task_q;
+extern osMessageQId TH32x32_SCALERUP_buf_q;
 
 
 extern AviEncPara_t *pAviEncPara;
@@ -509,6 +509,8 @@ extern INT32S TH32x32_task_create(INT8U pori);
 //extern INT32S TH32x32_task_del(void);
 extern INT32S TH32x32_task_start(void);
 extern INT32S TH32x32_task_stop(void);
+extern void   TH80x64_start_timer_isr(void);
+
 
 INT32S h264_encode_start(INT32S width, INT32S height);
 INT32S h264_encode_stop(void);

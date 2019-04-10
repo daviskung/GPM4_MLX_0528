@@ -47,6 +47,8 @@
 #if VIDEO_ENCODE_MODE == C_VIDEO_ENCODE_FRAME_MODE
 	#define AVI_ENCODE_CSI_BUFFER_NO		3	//sensor use buffer number
 	#define AVI_ENCODE_SCALER_BUFFER_NO		6	//scaler use buffer number
+	#define TH32x32_SCALERUP_BUFFER_NO 		3	//scaler use buffer number
+	
 	#define AVI_ENCODE_CSI_FIFO_NO			34	//sensor fifo mode use buffer number
 #elif VIDEO_ENCODE_MODE == C_VIDEO_ENCODE_FIFO_MODE
 	#define AVI_ENCODE_CSI_BUFFER_NO	3  	//fix to 2 when use fifo mode

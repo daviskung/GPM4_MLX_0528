@@ -172,7 +172,7 @@ static INT32S gc0308_init(void)
 
 	ack = gc0308_sccb_write(0xfe, 0x80);
 
-    DBG_PRINT("debug set0a ack=0x%x \r\n",ack);
+    //DBG_PRINT("debug set0a ack=0x%x \r\n",ack);
 
 	gc0308_sccb_write(0xfe, 0x00);  // set page0
 
@@ -678,7 +678,7 @@ void gc0308_csi_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 		csi_Para.target_h = gc0308_sensor_csi_ops.info[index].target_h;
 		csi_Para.hratio = 0;		// No Scale
 		csi_Para.vratio = 0;		// No Scale
-		DBG_PRINT("debug set0 \r\n");
+		//DBG_PRINT("debug set0 \r\n");
 		break;
 
 	case 1:
@@ -704,7 +704,7 @@ void gc0308_csi_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 		DBG_PRINT("gc0308 init fail_davis!!!\r\n");
 	}
 
-	DBG_PRINT("%s = %d\r\n", __func__, index);
+	DBG_PRINT("%s = %d _davis\r\n", __func__, index);
     if(drv_l2_csi_set_fmt(&csi_Para.csi_fmt) < 0)
     {
 		DBG_PRINT("csi set fmt err!!!\r\n");

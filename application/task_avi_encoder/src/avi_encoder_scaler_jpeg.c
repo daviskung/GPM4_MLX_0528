@@ -101,10 +101,10 @@ typedef enum
 
 typedef enum
 {
-	MSG_TH32x32_SCALARUP_TASK_INIT = 0x2300,
-	MSG_TH32x32_SCALARUP_TASK_STOP,
-	MSG_TH32x32_SCALARUP_TASK_EXIT
-} TH32x32_SCALARUP_ENUM;
+	MSG_TH32x32_SCALERUP_TASK_INIT = 0x2300,
+	MSG_TH32x32_SCALERUP_TASK_STOP,
+	MSG_TH32x32_SCALERUP_TASK_EXIT
+} TH32x32_SCALERUP_ENUM;
 
 
 typedef enum
@@ -123,7 +123,7 @@ static void video_encode_task_entry(void const *parm);
 static void rotate_task_entry(void const* param);
 void scaler_video_init();
 static void TH32x32_task_entry(void const *parm);
-static void TH32x32_SCALARUP_task_entry(void const *parm);
+static void TH32x32_SCALERUP_task_entry(void const *parm);
 
 
 /**************************************************************************
@@ -148,9 +148,9 @@ osMessageQId jpeg_fifo_q = NULL;
 osMessageQId TH32x32_task_q = NULL;
 osMessageQId TH32x32_task_ack_m = NULL;
 
-osMessageQId TH32x32_SCALARUP_task_q = NULL;
-osMessageQId TH32x32_SCALARUP_task_ack_m = NULL;
-osMessageQId TH32x32_SCALARUP_buf_q = NULL;
+osMessageQId TH32x32_SCALERUP_task_q = NULL;
+osMessageQId TH32x32_SCALERUP_task_ack_m = NULL;
+osMessageQId TH32x32_SCALERUP_buf_q = NULL;
 
 
 #if VIDEO_TIMESTAMP
@@ -441,41 +441,83 @@ static void avi_ppu_draw_go(INT32U x, INT32U y, INT32U frame_buffer)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// TH32x32_SCALARUP task
-INT32S TH32x32_SCALARUP_Task_create(INT8U pori)
+static void TH32x32_start_timer_isr(void)
+{
+	INT8U err;
+	INT32U frame;
+
+
+	pTH32x32_Para->TH32x32_sampleCnt ++;
+
+
+
+	//if ( pTH32x32_Para->TH32x32_sampleCnt > 10 ){	// per sec
+	//if (( pTH32x32_Para->TH32x32_sampleCnt > 5 )&&(pTH32x32_Para->TH32x32_sample_startON == 0)) {	// per 500ms
+	//if (( pTH32x32_Para->TH32x32_sampleCnt > 2 )&&(pTH32x32_Para->TH32x32_sample_startON == 0)) {	// per 200ms
+
+	if ( pTH32x32_Para->TH32x32_sampleCnt > 500 ){	// per sec
+		pTH32x32_Para->TH32x32_ReadElecOffset_TA_startON = 1;
+		pTH32x32_Para->TH32x32_sampleCnt = 0;
+
+
+	}
+
+
+	if( pTH32x32_Para->TH32x32_readout_block_startON == 0 ){
+
+		
+		frame = avi_encode_get_empty(TH32x32_SCALERUP_buf_q);
+		if(frame == 0) 
+				DEBUG_MSG("L->TH32x32");
+		else{
+			
+			//DEBUG_MSG("davis -->frame = 0x%x in csi_eof_isr \r\n",frame );
+			avi_encode_post_empty(TH32x32_task_q,frame);
+
+			pTH32x32_Para->TH32x32_readout_block_startON = 1;
+		}
+		
+	}
+}
+
+
+
+
+// TH32x32_SCALERUP task
+INT32S TH32x32_SCALERUP_Task_create(INT8U pori)
 {
 	INT32S nRet;
 	osThreadId id;
-	osThreadDef_t TH32x32_SCALARUP_Task = { "TH32x32_SCALARUP_task", TH32x32_SCALARUP_task_entry, osPriorityNormal, 1, C_SCALER_STACK_SIZE };
+	osThreadDef_t TH32x32_SCALERUP_Task = { "TH32x32_SCALERUP_task", TH32x32_SCALERUP_task_entry, osPriorityNormal, 1, C_SCALER_STACK_SIZE };
 
-	if(TH32x32_SCALARUP_task_q == 0) {
+	if(TH32x32_SCALERUP_task_q == 0) {
 		osMessageQDef_t TH32x32_scalar_q = {C_SCALER_QUEUE_MAX*2, sizeof(INT32U), 0}; //queue size double for possible null frame
 
-		TH32x32_SCALARUP_task_q = osMessageCreate(&TH32x32_scalar_q, NULL);
-		if(TH32x32_SCALARUP_task_q == 0) {
+		TH32x32_SCALERUP_task_q = osMessageCreate(&TH32x32_scalar_q, NULL);
+		if(TH32x32_SCALERUP_task_q == 0) {
 			RETURN(STATUS_FAIL);
 		}
 	}
 
-	if(TH32x32_SCALARUP_task_ack_m == 0) {
+	if(TH32x32_SCALERUP_task_ack_m == 0) {
 		osMessageQDef_t TH32x32_scalar_ack_q = {C_ACK_QUEUE_MAX, sizeof(INT32U), 0};
 
-		TH32x32_SCALARUP_task_ack_m = osMessageCreate(&TH32x32_scalar_ack_q, NULL);
-		if(TH32x32_SCALARUP_task_ack_m == 0) {
+		TH32x32_SCALERUP_task_ack_m = osMessageCreate(&TH32x32_scalar_ack_q, NULL);
+		if(TH32x32_SCALERUP_task_ack_m == 0) {
 			RETURN(STATUS_FAIL);
 		}
 	}
 
-	if(TH32x32_SCALARUP_buf_q == 0) {
-		osMessageQDef_t TH32x32_scalar_f_q = {AVI_ENCODE_SCALER_BUFFER_NO, sizeof(INT32U), 0};
+	if(TH32x32_SCALERUP_buf_q == 0) {
+		osMessageQDef_t TH32x32_scalar_f_q = {TH32x32_SCALERUP_BUFFER_NO, sizeof(INT32U), 0};
 
-		TH32x32_SCALARUP_buf_q = osMessageCreate(&TH32x32_scalar_f_q, NULL);
-		if(TH32x32_SCALARUP_buf_q == 0) {
+		TH32x32_SCALERUP_buf_q = osMessageCreate(&TH32x32_scalar_f_q, NULL);
+		if(TH32x32_SCALERUP_buf_q == 0) {
 			RETURN(STATUS_FAIL);
 		}
 	}
 
-	id = osThreadCreate(&TH32x32_SCALARUP_Task, (void *)NULL);
+	id = osThreadCreate(&TH32x32_SCALERUP_Task, (void *)NULL);
     if(id == 0) {
         RETURN(STATUS_FAIL);
     }
@@ -485,9 +527,9 @@ Return:
 	return nRet;
 }
 
-static void TH32x32_SCALARUP_task_entry(void const *parm)
+static void TH32x32_SCALERUP_task_entry(void const *parm)
 {
-	INT32U msg_id, ack_msg;
+	INT32U msg_id,ready_buf, ack_msg;
 	//INT32U sensor_frame, scaler_frame, display_frame;
 	//ScalerFormat_t scale;
 	//ScalerPara_t para;
@@ -499,7 +541,7 @@ static void TH32x32_SCALARUP_task_entry(void const *parm)
 
 	while(1)
 	{
-		result = osMessageGet(TH32x32_SCALARUP_task_q, osWaitForever);
+		result = osMessageGet(TH32x32_SCALERUP_task_q, osWaitForever);
 		msg_id = result.value.v;
 		if((result.status != osEventMessage) || (	msg_id == 0)) {
 			continue;
@@ -507,32 +549,42 @@ static void TH32x32_SCALARUP_task_entry(void const *parm)
 
 		switch(msg_id)
 		{
-		case MSG_TH32x32_SCALARUP_TASK_INIT:
-			DEBUG_MSG("[MSG_TH32x32_SCALARUP_TASK_INIT]\r\n");
+		case MSG_TH32x32_SCALERUP_TASK_INIT:
+			DEBUG_MSG("[MSG_TH32x32_SCALERUP_TASK_INIT]\r\n");
 
+			OSQFlush(TH32x32_SCALERUP_task_q);
 
 			ack_msg = ACK_OK;
-			osMessagePut(TH32x32_SCALARUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			osMessagePut(TH32x32_SCALERUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			break;
 
-		case MSG_TH32x32_SCALARUP_TASK_STOP:
-			DEBUG_MSG("[MSG_TH32x32_SCALARUP_TASK_STOP]\r\n");
-			OSQFlush(TH32x32_SCALARUP_task_q);
+		case MSG_TH32x32_SCALERUP_TASK_STOP:
+			DEBUG_MSG("[MSG_TH32x32_SCALERUP_TASK_STOP]\r\n");
+			OSQFlush(TH32x32_SCALERUP_task_q);
 			ack_msg = ACK_OK;
-			osMessagePut(TH32x32_SCALARUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			osMessagePut(TH32x32_SCALERUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			break;
 
-		case MSG_TH32x32_SCALARUP_TASK_EXIT:
-			DEBUG_MSG("[MSG_TH32x32_SCALARUP_TASK_EXIT]\r\n");
+		case MSG_TH32x32_SCALERUP_TASK_EXIT:
+			DEBUG_MSG("[MSG_TH32x32_SCALERUP_TASK_EXIT]\r\n");
 
 			ack_msg = ACK_OK;
-			osMessagePut(TH32x32_SCALARUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			osMessagePut(TH32x32_SCALERUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			id = osThreadGetId();
     		osThreadTerminate(id);
 			break;
 
 		default:
+			ready_buf = msg_id;
 
+			if( ready_buf != pTH32x32_Para->TH32x32_ColorOutputFrame_addr ){
+				DEBUG_MSG("SCALERUP get wrong frame Fail!!!\r\n");
+				goto DEFAULT_END ;
+			}
+			if(	pTH32x32_Para->TH32x32_ScalerUp_status == 1 ) {
+				DEBUG_MSG("SCALERUP too fast !!!\r\n");
+				goto DEFAULT_END ;
+			}
 
 		DEFAULT_END:
 
@@ -542,24 +594,24 @@ static void TH32x32_SCALARUP_task_entry(void const *parm)
 }
 
 
-INT32S TH32x32_SCALARUP_task_start(void)
+INT32S TH32x32_SCALERUP_task_start(void)
 {
 	INT32S i, nRet;
 
 	//OSQFlush(scaler_frame_q);
 
 	nRet = STATUS_OK;
-	POST_MESSAGE(TH32x32_SCALARUP_task_q, MSG_TH32x32_SCALARUP_TASK_INIT, TH32x32_SCALARUP_task_ack_m, 5000);
+	POST_MESSAGE(TH32x32_SCALERUP_task_q, MSG_TH32x32_SCALERUP_TASK_INIT, TH32x32_SCALERUP_task_ack_m, 5000);
 Return:
 	return nRet;
 }
 
 
-INT32S TH32x32_SCALARUP_task_stop(void)
+INT32S TH32x32_SCALERUP_task_stop(void)
 {
 	INT32S nRet = STATUS_OK;
 
-	POST_MESSAGE(TH32x32_SCALARUP_task_q, MSG_TH32x32_SCALARUP_TASK_STOP, TH32x32_SCALARUP_task_ack_m, 5000);
+	POST_MESSAGE(TH32x32_SCALERUP_task_q, MSG_TH32x32_SCALERUP_TASK_STOP, TH32x32_SCALERUP_task_ack_m, 5000);
 
 Return:
 	return nRet;
@@ -624,12 +676,13 @@ Return:
 
 static void TH32x32_task_entry(void const *parm)
 {
-	INT32U msg_id, ack_msg;
+	INT32U msg_id,ready_buf, ack_msg;
 	//INT32U sensor_frame, scaler_frame, display_frame;
 	//ScalerFormat_t scale;
 	//ScalerPara_t para;
 	osEvent result;
 	osThreadId id;
+	INT8U   i;
 
 	drv_l1_i2c_bus_handle_t th32x32_handle;
 
@@ -697,12 +750,16 @@ static void TH32x32_task_entry(void const *parm)
 		case MSG_TH32x32_TASK_INIT:
 			DEBUG_MSG("[MSG_TH32x32_TASK_INIT]\r\n");
 
+			OSQFlush(TH32x32_task_q);
+
+			for(i=0; i<TH32x32_SCALERUP_BUFFER_NO; i++) {
+		        avi_encode_post_empty(TH32x32_SCALERUP_buf_q, pTH32x32_Para->TH32x32_TmpOutput_format_addr[i]);
+		    }
 
 			pEEcopy = EEcopy;
 			pEEaddr = EEaddr;
 
-
-			TH32x32_TEST_HIGH();
+			//TH32x32_TEST_HIGH();
 			TimeCnt1=xTaskGetTickCount();
 			DBG_PRINT("StartTime = %d\r\n", xTaskGetTickCount());	// xTaskGetTickCount() timebase=1ms
 			// =====================================================================
@@ -1081,6 +1138,16 @@ static void TH32x32_task_entry(void const *parm)
 				pTH32x32_INT16U_avg_buf[tmp_i]= (INT16U*)pTH32x32_Para->TH32x32_avg_buf_addr[tmp_i];
 			}
 
+
+			// start timer_B
+			pTH32x32_Para->TH32x32_sampleCnt = 0;
+			pTH32x32_Para->TH32x32_ReadElecOffset_TA_startON = 1;
+			pTH32x32_Para->TH32x32_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
+
+			retValue = timer_freq_setup(TIMER_B, pTH32x32_Para->TH32x32_sampleHz, 0, TH32x32_start_timer_isr );
+			DBG_PRINT("Set TH32x32_ReadElecOffset_timer_isr ret--> %d \r\n",retValue) ;
+
+
 			firstRun = 0;
 			SampleTempCnt = 0;
 
@@ -1105,6 +1172,14 @@ static void TH32x32_task_entry(void const *parm)
 			break;
 
 		default:
+
+			//sensor_frame = msg_id & 0x7fffffff;
+			ready_buf = msg_id;
+
+			avi_encode_post_empty(TH32x32_SCALERUP_task_q, pTH32x32_Para->TH32x32_ColorOutputFrame_addr);	// 送出 計算好的	通知	 SCALERUP Task
+			avi_encode_post_empty(TH32x32_SCALERUP_buf_q,ready_buf);						// 回收 給 TH32x32_start_timer_isr 
+			if( pTH32x32_Para->TH32x32_readout_block_startON == 1 ) pTH32x32_Para->TH32x32_readout_block_startON = 0;
+		
 			break;
 
 		}
@@ -2541,6 +2616,9 @@ static void scaler_task_entry(void const *parm)
 			#endif
                 scaler_frame = 0;
 			}
+
+			pTH32x32_Para->TH32x32_ScalerUp_status = 0;
+			
 			break;
 		}
 	}

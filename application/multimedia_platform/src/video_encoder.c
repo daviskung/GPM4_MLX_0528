@@ -327,9 +327,9 @@ CODEC_START_STATUS video_encode_preview_start(VIDEO_ARGUMENT arg)
 	 else  DBG_PRINT("TH32x32_task_create success !!! \r\n");
 	 
 #if 1
-	nRet = TH32x32_SCALARUP_Task_create(TH32x32_SCALARUP_PRIORITY);
-    if(nRet < 0) DBG_PRINT("TH32x32_SCALARUP_Task_create fail !!!");
-    else  DBG_PRINT("TH32x32_SCALARUP_Task_create success !!! \r\n");
+	nRet = TH32x32_SCALERUP_Task_create(TH32x32_SCALERUP_PRIORITY);
+    if(nRet < 0) DBG_PRINT("TH32x32_SCALERUP_Task_create fail !!!");
+    else  DBG_PRINT("TH32x32_SCALERUP_Task_create success !!! \r\n");
 #endif
 
    	nRet = vid_enc_preview_start();

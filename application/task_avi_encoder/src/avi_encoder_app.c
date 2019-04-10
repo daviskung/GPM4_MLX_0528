@@ -651,9 +651,6 @@ Return:
  
 
 
-
-
-
 static INT32S scaler_mem_alloc(void)
 {
 	INT32U buffer_addr;

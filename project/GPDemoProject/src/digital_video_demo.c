@@ -182,7 +182,7 @@ void Digital_Video_Demo(void)
 			break;
 		}
 	}
-	
+
 	TH32x32_TEST_HIGH();
 	//tft_init();
 	//tv_init();
@@ -247,14 +247,14 @@ void Digital_Video_Demo(void)
 	th32x32_thermopile_init();
 	TH32x32_TEST_LOW();
 
-	
+
 	// start TH32x32
 
-	if(TH32x32_SCALARUP_task_start() < 0) DBG_PRINT("TH32x32_SCALARUP_task_start  fail \r\n");
-			else	DBG_PRINT("TH32x32_SCALARUP_task_start OK \r\n"); 
+	if(TH32x32_SCALERUP_task_start() < 0) DBG_PRINT("TH32x32_SCALERUP_task_start  fail \r\n");
+			else	DBG_PRINT("TH32x32_SCALERUP_task_start OK \r\n");
 
 	if(TH32x32_task_start() < 0) DEBUG_MSG("d.TH32x32_task start fail !!\r\n");
-		else	DEBUG_MSG("d.TH32x32_task start\r\n");
+		else	DBG_PRINT("d.TH32x32_task start\r\n");
 
 	while(1)
 	{
@@ -267,6 +267,7 @@ void Digital_Video_Demo(void)
 				if(video_decode_status() == VIDEO_CODEC_PROCESSING)
 					video_decode_stop();
 				video_decode_exit();
+				DBG_PRINT("**davis test \r\n");
 				break;
 			case DV_RECORD:
 				zoom_ratio = 10;
