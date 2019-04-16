@@ -247,7 +247,7 @@ int main(void)
 
     osThreadDef(InitTask, osPriorityNormal, 0, STACKSIZE);
 
-    SystemInit();
+    SystemInit(); // test git function
 
     board_init();
 
