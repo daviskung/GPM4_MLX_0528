@@ -509,7 +509,7 @@ static INT32S TH32x32_mem_alloc(void)	//davis
 	INT32U buffer_addr;
 	INT32S buffer_size, nRet;
 	INT8U  tmpN1,tmpN2;
-	
+
 	pTH32x32_Para->TH32x32_width = LINE;
     pTH32x32_Para->TH32x32_height = COLUMN;
 	pTH32x32_Para->TH32x32_ReadDataBlkSize = (PixelEighth+1)*2; // (128+1)*2;
@@ -521,7 +521,7 @@ static INT32S TH32x32_mem_alloc(void)	//davis
 	buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 	//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
 	if(buffer_addr == 0) {
-		RETURN(STATUS_FAIL);	
+		RETURN(STATUS_FAIL);
 	}
 	pTH32x32_Para->TH32x32_ColorOutputFrame_addr = buffer_addr;
 	DBG_PRINT("davis --> TH32x32_ColorOutputFrame_addr = 0x%x\r\n", pTH32x32_Para->TH32x32_ColorOutputFrame_addr);
@@ -533,8 +533,8 @@ static INT32S TH32x32_mem_alloc(void)	//davis
 		pTH32x32_Para->TH32x32_TmpOutput_format_addr[tmpN1] = buffer_addr;
 		DBG_PRINT("davis --> TH32x32_TmpOutput_format_addr[%d] = 0x%x\r\n",tmpN1, pTH32x32_Para->TH32x32_TmpOutput_format_addr[tmpN1]);
 	}
-	
-	
+
+
 	for(tmpN1=0;tmpN1<AVG_buf_len;tmpN1++){
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		if(buffer_addr == 0) {
@@ -547,10 +547,10 @@ static INT32S TH32x32_mem_alloc(void)	//davis
 	for(tmpN1=0;tmpN1<TH32x32_ReadoutBlockBuf_max;tmpN1++){
 		for(tmpN2=0;tmpN2<4;tmpN2++){
 			buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-				if(buffer_addr == 0) RETURN(STATUS_FAIL);	
+				if(buffer_addr == 0) RETURN(STATUS_FAIL);
 			pTH32x32_Para->TH32x32_readout_top_block_buf_addr[tmpN1][tmpN2] = buffer_addr;
 				DBG_PRINT("TH32x32_readout_top_block_buf_addr[%d][%d] addr = 0x%x\r\n",tmpN1,tmpN2,
-				pTH32x32_Para->TH32x32_readout_top_block_buf_addr[tmpN1][tmpN2]);		
+				pTH32x32_Para->TH32x32_readout_top_block_buf_addr[tmpN1][tmpN2]);
 		}
 	}
 
@@ -558,13 +558,13 @@ static INT32S TH32x32_mem_alloc(void)	//davis
 	for(tmpN1=0;tmpN1<TH32x32_ReadoutBlockBuf_max;tmpN1++){
 		for(tmpN2=0;tmpN2<4;tmpN2++){
 			buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-					if(buffer_addr == 0) RETURN(STATUS_FAIL);	
+					if(buffer_addr == 0) RETURN(STATUS_FAIL);
 			pTH32x32_Para->TH32x32_readout_btm_block_buf_addr[tmpN1][tmpN2] = buffer_addr;
 			DBG_PRINT("TH32x32_readout_btm_block_buf_addr[%d][%d] addr = 0x%x\r\n",tmpN1,tmpN2, pTH32x32_Para->TH32x32_readout_btm_block_buf_addr[tmpN1][tmpN2]);
 		}
 	}
 
-	
+
 	buffer_size = pTH32x32_Para->TH32x32_ElectOffDataSize ;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		if(buffer_addr == 0) {
@@ -580,14 +580,15 @@ static INT32S TH32x32_mem_alloc(void)	//davis
 		DBG_PRINT("davis --> TH32x32_readout_EOffBtm_buf0_addr addr = 0x%x\r\n", pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr);
 
 
-	buffer_size = pAviEncVidPara->sensor_capture_width * pAviEncVidPara->sensor_capture_height << 1;
+	//buffer_size = pAviEncVidPara->sensor_capture_width * pAviEncVidPara->sensor_capture_height << 1;
+		buffer_size = pAviEncVidPara->display_width * pAviEncVidPara->display_height << 1;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		if(buffer_addr == 0) {
 			RETURN(STATUS_FAIL);	}
 		pTH32x32_Para->TH32x32_display_frame = buffer_addr;
 		DBG_PRINT("davis --> TH32x32_display_frame addr = 0x%x\r\n", pTH32x32_Para->TH32x32_display_frame);
 
-		
+
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		if(buffer_addr == 0) {
 			RETURN(STATUS_FAIL);	}
@@ -613,42 +614,42 @@ static INT32S TH32x32_mem_alloc(void)	//davis
 		if(buffer_addr == 0) {
 			RETURN(STATUS_FAIL);	}
 		pTH32x32_Para->TH32x32_PixC_buffer = buffer_addr;
-		DBG_PRINT("davis --> TH32x32_PixC_buffer(unsigned long) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_PixC_buffer);	
+		DBG_PRINT("davis --> TH32x32_PixC_buffer(unsigned long) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_PixC_buffer);
 
 	buffer_size = sizeof(INT16U)*ELAMOUNT ;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		if(buffer_addr == 0) {
 			RETURN(STATUS_FAIL);	}
 		pTH32x32_Para->TH32x32_VddCompGrad_buffer = buffer_addr;
-		DBG_PRINT("davis --> TH32x32_VddCompGrad_buffer(INT16S) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_VddCompGrad_buffer);	
+		DBG_PRINT("davis --> TH32x32_VddCompGrad_buffer(INT16S) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_VddCompGrad_buffer);
 
 	buffer_size = sizeof(INT16U)*ELAMOUNT ;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		if(buffer_addr == 0) {
 			RETURN(STATUS_FAIL);	}
 		pTH32x32_Para->TH32x32_VddCompOff_buffer = buffer_addr;
-		DBG_PRINT("davis --> TH32x32_VddCompOff_buffer(INT16S) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_VddCompOff_buffer);	
+		DBG_PRINT("davis --> TH32x32_VddCompOff_buffer(INT16S) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_VddCompOff_buffer);
 
 	buffer_size = sizeof(INT16U)*MAXNROFDEFECTS ;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		if(buffer_addr == 0) {
 			RETURN(STATUS_FAIL);	}
 		pTH32x32_Para->TH32x32_BadPixAdr_buf = buffer_addr;
-		DBG_PRINT("davis --> TH32x32_BadPixAdr_buf(INT16U) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_BadPixAdr_buf);	
+		DBG_PRINT("davis --> TH32x32_BadPixAdr_buf(INT16U) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_BadPixAdr_buf);
 
 	buffer_size = sizeof(INT8U)*MAXNROFDEFECTS ;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		if(buffer_addr == 0) {
 			RETURN(STATUS_FAIL);	}
 		pTH32x32_Para->TH32x32_BadPixMask_buf = buffer_addr;
-		DBG_PRINT("davis --> TH32x32_BadPixMask_buf(INT8U) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_BadPixMask_buf);	
-	
-	
-	nRet = STATUS_OK;	
+		DBG_PRINT("davis --> TH32x32_BadPixMask_buf(INT8U) addr = 0x%x\r\n", pTH32x32_Para->TH32x32_BadPixMask_buf);
+
+
+	nRet = STATUS_OK;
 Return:
 	return nRet;
 }
- 
+
 
 
 static INT32S scaler_mem_alloc(void)
@@ -1003,7 +1004,7 @@ INT32S avi_encode_memory_alloc(void)
 #endif
 
 #if 1
-	if(TH32x32_mem_alloc() < 0) {	// RAM 正常
+	if(TH32x32_mem_alloc() < 0) {	// RAM 正常 
 		RETURN(STATUS_FAIL);
 	}
 #endif
@@ -1172,6 +1173,7 @@ Return:
 void csi_eof_isr(INT32U event)
 {
 	if(event == CSI_SENSOR_FRAME_END_EVENT) {
+        //DBG_PRINT("davis\r\n");
 		if (pscaler_start_1)
 		{
 			pscaler_start_1 = 0;
@@ -1210,6 +1212,7 @@ void cdsp_eof_isr(void)
 
 	if (pscaler_start_1)
 	{
+		//DBG_PRINT("davis\r\n");
 		pscaler_start_1 = 0;
 		drv_l1_pscaler_start(1);//pscaler for MB420 better start at csi or cdsp frame end.
 	}

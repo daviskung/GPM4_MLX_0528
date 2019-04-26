@@ -1058,6 +1058,7 @@
 		<Unit filename="Setup/Flash.ld" />
 		<Unit filename="Setup/startup.S" />
 		<Unit filename="inc/FreeRTOSConfig.h" />
+		<Unit filename="inc/Table113.h" />
 		<Unit filename="inc/application_cfg.h" />
 		<Unit filename="inc/drv_l1_cfg.h" />
 		<Unit filename="inc/drv_l2_cfg.h" />

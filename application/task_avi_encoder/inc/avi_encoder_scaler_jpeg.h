@@ -134,6 +134,11 @@
 #define TH32x32_ReadoutBlockBuf_max	1
 #define TH32x32_SCALERUP_BUFFER_NO	3
 
+#define PRE_READ_DIS		0
+#define PRE_READ_ON			1
+#define PRE_READ_OFF		2
+
+
 //=====================================================================================================
 // marco
 //
