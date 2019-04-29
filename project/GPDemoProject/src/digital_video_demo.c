@@ -247,11 +247,28 @@ void Digital_Video_Demo(void)
 	th32x32_thermopile_init();
 	TH32x32_TEST_LOW();
 
+#if 1
+		
+	nRet = TH32x32_task_create(TH32x32_TASK_PRIORITY);
+	if(nRet < 0)	DEBUG_MSG("TH32x32_task_create fail !!!");
+		 else  DBG_PRINT("TH32x32_task_create success !!! \r\n");
+		 
+    osDelay(20);
+				
+	nRet = TH32x32_SCALERUP_Task_create(TH32x32_SCALERUP_PRIORITY);
+	if(nRet < 0) DBG_PRINT("TH32x32_SCALERUP_Task_create fail !!!");
+		else  DBG_PRINT("TH32x32_SCALERUP_Task_create success !!! \r\n");
+#endif
+
+
+
 
 	// start TH32x32
 
 	if(TH32x32_SCALERUP_task_start() < 0) DBG_PRINT("TH32x32_SCALERUP_task_start  fail \r\n");
 			else	DBG_PRINT("TH32x32_SCALERUP_task_start OK \r\n");
+
+    osDelay(20);
 
 	if(TH32x32_task_start() < 0) DEBUG_MSG("d.TH32x32_task start fail !!\r\n");
 		else	DBG_PRINT("d.TH32x32_task start\r\n");

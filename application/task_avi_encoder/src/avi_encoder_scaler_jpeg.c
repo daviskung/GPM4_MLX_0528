@@ -73,6 +73,8 @@ const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 
 #define TRANSPARENT_COLOR 	0x00	// 無色 
 #define DBG_TOBJ			0
+#define DBG_COLOR_TABLE		0
+
 
 
 const INT16U ColorTable_HOT[10]={
@@ -635,7 +637,7 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 			scale.input_y_addr =pTH32x32_Para->TH32x32_ColorOutputFrame_addr ;
 			scale.input_u_addr = 0;
 			scale.input_v_addr = 0;
-			#if 0
+			#if 1
 			scale.input_b_y_addr =0;
 			scale.input_b_u_addr = 0;
 			scale.input_b_v_addr = 0;
@@ -662,6 +664,8 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 			memset((void *)&para, 0x00, sizeof(para));
 			para.boundary_color = 0x008080;
 
+			nRet = 0;
+			DBG_PRINT("drv_l2_scaler_trigger start nRet= [0x%x] \r\n", nRet);
     		nRet = drv_l2_scaler_trigger(SCALER_0, 1, &scale, &para);
 			DBG_PRINT("drv_l2_scaler_trigger = [0x%x] \r\n", nRet);
 		#endif
@@ -1780,7 +1784,42 @@ static void TH32x32_task_entry(void const *parm)
 		pTH32x32_Para->TH32x32_move_dect = 0;
 
 		//
-		// avg Tobject  (暫不執行) 
+		// avg Tobject 
+		// 
+			if(avg_buf_Enable ==0){ 	// [0] ~ [3] <- new data
+				for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
+					gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i]),
+					(INT8S *)ready_buf,Pixel*2);	
+				}	
+				gp_memcpy((INT8S *)(pTH32x32_TmpOutput_INT16U_buf0),
+					(INT8S *)ready_buf,Pixel*2);	
+				avg_buf_Enable=1;
+				check_MAX_pos=0;
+				
+			}
+			else{
+			// move new data to avg buf
+				for(tmp_i=0;tmp_i<(AVG_buf_len-1);tmp_i++){ 	// [0]<-[1] ,[1]<-[2] ,[2]<-[3] 
+					gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i]),
+						(INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i+1]),Pixel*2);
+				}												
+				gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[AVG_buf_len-1]), // [3] <- new data
+						(INT8S *)ready_buf,Pixel*2);	
+				for(cellNum=0;cellNum<Pixel;cellNum++){
+					Tobject = 0;
+					for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
+						TmpValue=*(pTH32x32_INT16U_avg_buf[tmp_i] + cellNum ); // 
+						Tobject = Tobject +(INT32U)TmpValue;
+					}	
+					Tobject = Tobject/AVG_buf_len;
+					*(pTH32x32_TmpOutput_INT16U_buf0 + cellNum)= Tobject;
+					//if(((Tobject - 3030)>30) ||((3030- Tobject)>30))DBG_PRINT("%d,",Tobject-2730);
+					//if(((Tobject - 3330)>30) ||((3330- Tobject)>30))DBG_PRINT("%d,",Tobject-2730);
+				}
+				
+			}
+
+	
 		// move new data to avg buf
 		//		for(tmp_i=0;tmp_i<(AVG_buf_len-1);tmp_i++){ 	// [0]<-[1] ,[1]<-[2] ,[2]<-[3]
 		//			gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i]),
@@ -1803,23 +1842,36 @@ static void TH32x32_task_entry(void const *parm)
 		//	pTH32x32_Para->TH32x32_NOISE_CUTOFF_OVR_RTemp
 		//
 
-		ReadTempValue = pTH32x32_Para->TH32x32_TA_AD7314 + 2730 ; // 暫定25C
-		DBG_PRINT("Tobject -start \r\n");
+		ReadTempValue = pTH32x32_Para->TH32x32_TA_AD7314 + 2730 ; // 暫定 TA 當 戶外溫度
+		
+			//DBG_PRINT("Tobject -start \r\n");
+			
 		for(cellNum=0;cellNum<Pixel;cellNum++){
 			Tobject = *(pTH32x32_TmpOutput_INT16U_buf0 + cellNum);
-			#if DBG_TOBJ	
+			
+		#if DBG_TOBJ	
 			DBG_PRINT("- %d [%d]",Tobject-2730,cellNum);
 			if((cellNum == 31) || ((cellNum -31 )%32 == 0))
 					DBG_PRINT("\r\n");
-			#endif
+		#endif
+			TmpTbInd=10;	// 
 			if(Tobject > ReadTempValue){
-				TmpTbInd =(Tobject - ReadTempValue)/100 ;	// every 10c
+				TmpTbInd =(Tobject - ReadTempValue)/50 ;	// every 5c
 				if(TmpTbInd>9)	TmpTbInd=9;
 				TmpValue = ColorTable_HOT[TmpTbInd];
 			}
 			else TmpValue = TRANSPARENT_COLOR;
+
+		#if DBG_COLOR_TABLE	
+			DBG_PRINT("- %d= %d [%d]",Tobject-2730,TmpTbInd,cellNum);
+			if((cellNum == 31) || ((cellNum -31 )%32 == 0))
+					DBG_PRINT("\r\n");
+		#endif
+			
+			*(pTH32x32_TmpOutput_INT16U_buf0 + cellNum)
+							=(signed short)TmpValue;
 		}
-		DBG_PRINT("Tobject -End\r\n");
+			//DBG_PRINT("Tobject -End\r\n");
 		//
 		// mirror function (左右 對調) 
 		//
