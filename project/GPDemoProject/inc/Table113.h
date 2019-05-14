@@ -1,4 +1,3 @@
-
 #ifdef HTPA32x32dR1L5_0HiGeF7_7_Gain3k3
 const unsigned int TempTable [NROFADELEMENTS][NROFTAELEMENTS]={
 {	0x0000,	0x0000,	483,	1384,	1759,	2037,	2269	},

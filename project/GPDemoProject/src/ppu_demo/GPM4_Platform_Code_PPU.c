@@ -93,6 +93,7 @@ void GPM4_PPU_Demo(void)
 		//buffer_ptr = (INT32U) gp_malloc_align(frame_size, 64);
 		//gplib_ppu_frame_buffer_add(ppu_register_set, buffer_ptr);
         gplib_ppu_frame_buffer_add(ppu_register_set, (buffer_ptr + (i*frame_size)));
+		DBG_PRINT("gplib_ppu_frame_buffer_add[%d] -> 0x%x\r\n",i,(buffer_ptr + (i*frame_size)));
 	}
 
 	#if(Photo_Disable == 1)

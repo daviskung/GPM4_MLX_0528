@@ -674,6 +674,8 @@ INT32S update_ppu_registers(void)
 
 	flag = new_register_sets_ptr->update_register_flag;
 
+	//DBG_PRINT("update_ppu_registers flag = 0x%x  \r\n ",flag);
+
 	// PPU relative registers
 	if (flag & C_UPDATE_REG_SET_PPU) {
 		R_PPU_BLENDING = new_register_sets_ptr->ppu_blending_level;
@@ -878,6 +880,7 @@ void ppu_vblank_handler(void)
             #elif _OPERATING_SYSTEM == _OS_FREERTOS
             //xQueueSendFromISR( (xQueueHandle) display_frame_buffer_queue, &ppu_current_output_frame, 0);
             message = ppu_current_output_frame;
+			DBG_PRINT("m:0x%X \r\n",message);	// davisppu
             osMessagePut(display_frame_buffer_queue, (uint32_t)&message, 1);
             #endif
 		}
@@ -1267,6 +1270,7 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
             //err = (INT32S) xQueueReceive(display_frame_buffer_queue, &frame, 0);
             result = osMessageGet(display_frame_buffer_queue, 1);
             frame = result.value.v;
+
             if(result.status == osEventMessage) {
                 err = pdPASS;
             }
@@ -1301,7 +1305,7 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
   	}
 
   	//if (R_PPU_ENABLE & C_PPU_CTRL_FRAME_MODE) {		// Current mode is frame base mode
-	if (p_register_set->ppu_enable & C_PPU_CTRL_FRAME_MODE) {		// Frame base mode
+	if (p_register_set->ppu_enable & C_PPU_CTRL_FRAME_MODE) {		// Frame base mode //davis 2019.05.08
 	  	if (p_register_set->ppu_enable & C_PPU_CTRL_FRAME_MODE) {		// Frame base mode
 			// Obtain a frame from free_frame_buffer_queue
 			#if _OPERATING_SYSTEM == _OS_UCOS2
@@ -1322,6 +1326,8 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
                 result = osMessageGet(free_frame_buffer_queue, 1);
 			}
             frame = result.value.v;
+
+			DBG_PRINT("free_frame_buffer_queue =0x%x \r\n",frame);		//davisppu 2019.05.08
             if(result.status == osEventMessage) {
                 err = pdPASS;
             }
@@ -1358,6 +1364,7 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
 
 			ppu_current_output_frame = frame;
 			R_PPU_FBO_ADDR = frame;
+			//DBG_PRINT("R_PPU_FBO_ADDR=  0x%x\r\n ",frame);			//davisppu 2019.05.08
 
 			// Enable interrupt before updating registers
 			if (!(R_PPU_ENABLE & C_PPU_CTRL_ENABLE)) {

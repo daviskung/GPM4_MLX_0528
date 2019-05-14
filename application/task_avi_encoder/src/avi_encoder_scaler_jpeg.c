@@ -27,7 +27,23 @@
 #include "defs_th32x32.h"
 #include "drv_l1_i2c.h"
 #include <math.h>		// for pow()
-#include "TABLE113.h"
+//#include "TABLE113.h"	// for FOV = 33
+//#include "TABLE114.h"	// for FOV = 90
+#ifdef HTPA32x32dR1L1k8_0k7HiGe_Bodo
+#include "TABLE115.h"	// for FOV = 105
+#endif
+
+#ifdef HTPA32x32dR1L5_0HiGeF7_7_Gain3k3
+#include "TABLE113.h"	// for FOV = 33
+#endif
+
+#ifdef HTPA32x32dL2_1HiSiF5_0_Gain3k3
+#include "TABLE114.h"	// for FOV = 90
+#endif
+
+
+
+
 #include "32X32RGB565NEW.h" 	//  davis 2019.04.23
 
 
@@ -75,6 +91,25 @@ const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 #define DBG_TOBJ			0
 #define DBG_COLOR_TABLE		0
 
+#define TH32x32_ReadStatus_WaitTime	2
+#define CHECK_ReadStatus_WAITTIME	0
+#define SHOWTEMP_OFFSET				0
+#define TH32x32IMAGE				1
+#define TH32x32_FUN					1
+
+#define CORE_AREA_limit		4
+#define SENSOR_AREA_WIDTH	32
+#define SENSOR_AREA_HIGH	32
+
+
+typedef struct {
+	INT32U ppu_frame_workmem;
+	INT32U ppu_narray_workmem;
+    INT32U prcess_post_workmem;
+    INT32U disp_prcess_workmem;
+} prcess_mem_t;
+
+static prcess_mem_t *prcess_mem_set;
 
 
 const INT16U ColorTable_HOT[10]={
@@ -285,15 +320,15 @@ static void avi_ppu_draw_init(INT32U avi_h_size, INT32U avi_v_size)
 
     //Frame buffer malloc
     frame_size = (avi_h_size * avi_v_size * 2);
-    PPU_FRAME_BUFFER_BASE = (INT32U) gp_malloc_align(((frame_size*C_PPU_DRV_FRAME_NUM)+128), 64);
-    if(PPU_FRAME_BUFFER_BASE == 0)
+    PPU_buffer_ptr = (INT32U) gp_malloc_align(((frame_size*C_PPU_DRV_FRAME_NUM)+128), 64);
+    if(PPU_buffer_ptr == 0)
     {
-        DBG_PRINT("PPU_FRAME_BUFFER_BASE fail\r\n");
+        DBG_PRINT("PPU_buffer_ptr fail\r\n");
         while(1);
     }
-    PPU_FRAME_BUFFER_BASE = (INT32U)((PPU_FRAME_BUFFER_BASE + FRAME_BUF_ALIGN64) & ~FRAME_BUF_ALIGN64);
+    PPU_buffer_ptr = (INT32U)((PPU_buffer_ptr + FRAME_BUF_ALIGN64) & ~FRAME_BUF_ALIGN64);
     for (i=0; i<C_PPU_DRV_FRAME_NUM; i++) {
-            buffer_ptr = (INT32U)(PPU_FRAME_BUFFER_BASE + (i*frame_size));
+            buffer_ptr = (INT32U)(PPU_buffer_ptr + (i*frame_size));
             gplib_ppu_frame_buffer_add(ppu_register_set, buffer_ptr);
             DBG_PRINT("PPUBuffer:0x%X \r\n",buffer_ptr);
     }
@@ -619,11 +654,13 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 				goto DEFAULT_END ;
 			}
 
-		#if 0
+		#if 1
 		//
 		// TH32x32 sensor scaler -[ first time]
 		//
 
+			gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
+			//drv_l2_scaler_init();
 			//scale.input_format = pAviEncVidPara->sensor_output_format;
 			scale.input_format = C_SCALER_CTRL_IN_RGB565;
 			scale.input_width = pTH32x32_Para->TH32x32_width;
@@ -657,17 +694,22 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 
 
 			scale.fifo_mode = C_SCALER_CTRL_FIFO_DISABLE;
-			scale.scale_mode = C_SCALER_FULL_SCREEN;
+			//scale.scale_mode = C_SCALER_FULL_SCREEN;
+			scale.scale_mode = C_SCALER_BY_RATIO;
 			scale.digizoom_m = 10;
 			scale.digizoom_n = 10;
 			//#endif
 			memset((void *)&para, 0x00, sizeof(para));
 			para.boundary_color = 0x008080;
 
-			nRet = 0;
-			DBG_PRINT("drv_l2_scaler_trigger start nRet= [0x%x] \r\n", nRet);
     		nRet = drv_l2_scaler_trigger(SCALER_0, 1, &scale, &para);
-			DBG_PRINT("drv_l2_scaler_trigger = [0x%x] \r\n", nRet);
+			if(nRet == C_SCALER_STATUS_DONE || nRet == C_SCALER_STATUS_STOP) {
+				drv_l2_scaler_stop(SCALER_0);
+			}
+			else {
+				DBG_PRINT("Scale1 Fail\r\n");
+			while(1);
+			}
 		#endif
 
 			pTH32x32_Para->TH32x32_ScalerUp_status = 1;
@@ -903,8 +945,8 @@ static void TH32x32_task_entry(void const *parm)
 	INT16U  *pTH32x32_INT16U_avg_buf[AVG_buf_len];
 	INT16U  *pTH32x32_TmpOutput_INT16U_buf0;
 	INT8U	sampleCnt;
-	INT16U	 ReadTempValue;
-	signed int	TobjectRange,Tmax,Tmin;	// INT32S
+	INT16U	 ReadTempValue,Tmin_number,Tmax_number,TminTable_number,TmaxTable_number;
+	signed int	TobjectRange,Tmax,Tmin,TminTable,TmaxTable;	// INT32S
 	INT8U   TH32x32_BlockNum , Blk_startIdex;
 	signed long VDD_MEAS_sum,VDD_MEAS_TOP,VDD_MEAS_BTM;
 	unsigned long Vddlong;	// signed long	Vddlong;
@@ -946,7 +988,7 @@ static void TH32x32_task_entry(void const *parm)
 			TimeCnt1=xTaskGetTickCount();
 			DBG_PRINT("StartTime = %d\r\n", xTaskGetTickCount());	// xTaskGetTickCount() timebase=1ms
 			// =====================================================================
-
+#if TH32x32_FUN
 			th32x32_handle.devNumber = I2C_1;
 		    th32x32_handle.slaveAddr = TH32x32_EEPROM_ID << 1 ;
 		    th32x32_handle.clkRate = 800;
@@ -1148,7 +1190,7 @@ static void TH32x32_task_entry(void const *parm)
 
 			PowerGradScale=(float)pow(2.0,(float)gradScale);	// #include <math.h>
 			DBG_PRINT("PowerGradScale = 0x%x\r\n",PowerGradScale);
-
+#endif
 			TimeCnt2 = xTaskGetTickCount();
 			DBG_PRINT("EndTime = %d\r\n", xTaskGetTickCount());
 			DBG_PRINT("TotalTime = %d ms\r\n",TimeCnt2 - TimeCnt1);
@@ -1158,7 +1200,7 @@ static void TH32x32_task_entry(void const *parm)
 
 			// =====================================================================
 			th32x32_handle.devNumber = I2C_1;
-		    th32x32_handle.clkRate = 800;	// 必須 再設定 
+		    th32x32_handle.clkRate = 1000;	// 必須 再設定 
 
 
 			//
@@ -1172,8 +1214,10 @@ static void TH32x32_task_entry(void const *parm)
 			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
 			sensorCmd.trimValue =SetMBITUser;
 			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-			DBG_PRINT("Wake up >RegAdd=0x%x trimValue=0x%x\r\n",sensorCmd.RegAdd,sensorCmd.trimValue);
+#if TH32x32_FUN
 
+			DBG_PRINT("Wake up >RegAdd=0x%x trimValue=0x%x\r\n",sensorCmd.RegAdd,sensorCmd.trimValue);
+#endif
 			osDelay(10);
 			//SetMBITUser = MBIT_TRIM_10BIT_DEFAULT;
 			SetMBITUser = MBIT_TRIM_12BIT_DEFAULT;
@@ -1181,8 +1225,9 @@ static void TH32x32_task_entry(void const *parm)
 			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
 			sensorCmd.trimValue =SetMBITUser;
 			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
+#if TH32x32_FUN
 			DBG_PRINT(" **** InitMBITTRIM (%d bit) [0x%x] \r\n",Resolution,SetMBITUser);
-
+#endif
 			osDelay(10);
 			sensorCmd.RegAdd =TH32x32_BIAS_TRIM_TOP;
 			sensorCmd.trimValue =BIAS_TRIM_TOP_SAMPLE_VAL;
@@ -1197,8 +1242,10 @@ static void TH32x32_task_entry(void const *parm)
            	sensorCmd.RegAdd =TH32x32_CLK_TRIM;
 			sensorCmd.trimValue =CLKTRIM_13MHz;
 			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-			DBG_PRINT(" **** CLKTRIM_13MHz [0x%x] \r\n",sensorCmd.trimValue);
+#if TH32x32_FUN
 
+				DBG_PRINT(" **** CLKTRIM_13MHz [0x%x] \r\n",sensorCmd.trimValue);
+#endif
 			osDelay(10);
            	sensorCmd.RegAdd =TH32x32_BPA_TRIM_TOP;
 			sensorCmd.trimValue =BPA_TRIM_TOP_SAMPLE_VAL;
@@ -1213,11 +1260,13 @@ static void TH32x32_task_entry(void const *parm)
            	sensorCmd.RegAdd =TH32x32_PU_SDA_TRIM;
 			sensorCmd.trimValue =PU_SDA_TRIM_SAMPLE_VAL;
 			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
+#if TH32x32_FUN
 
 			if( TableNumberSensor != TABLENUMBER )
-				DBG_PRINT(" Error  !! TableNumberSensor[%d] is NOT  TABLENUMBER[%d]",TableNumberSensor,TABLENUMBER);
-
-
+				DBG_PRINT(" Error  !! TableNumberSensor[%d] is NOT  TABLENUMBER[%d] \r\n",TableNumberSensor,TABLENUMBER);
+			else
+				DBG_PRINT(" TableNumberSensor[%d] is TABLENUMBER[%d] \r\n",TableNumberSensor,TABLENUMBER);
+#endif
 			SampleTempCnt = 0;
 			while(SampleTempCnt == 0)
 			{
@@ -1283,7 +1332,7 @@ static void TH32x32_task_entry(void const *parm)
 
 			tmp_i=0;
 			do{
-				osDelay(5);
+				osDelay(TH32x32_ReadStatus_WaitTime+5);
 				EEaddr[0]=TH32x32_STATUS_REG;
 				drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
 				tmp_i++;
@@ -1296,6 +1345,7 @@ static void TH32x32_task_entry(void const *parm)
 				SampleTempCnt = 1;
 			}
 
+			DBG_PRINT("Read_VDD_MEAS_Block0 -start \r\n");
 			//
 			// read TH32x32 Read_VDD_MEAS_Block raw data 129*2byte
 			//
@@ -1310,6 +1360,7 @@ static void TH32x32_task_entry(void const *parm)
 			if(retValue<0)
 				DBG_PRINT("Read_VDD_MEAS_Block Btm read fail 0x%x \r\n",retValue);
 
+			DBG_PRINT("Read_VDD_MEAS_Block0 -End \r\n");
 			avg_buf_Enable=0;
 			check_MAX_pos=0;
 			pTH32x32_frame_INT16U_buf0 = (INT16U*)pTH32x32_Para->TH32x32_ColorOutputFrame_addr;
@@ -1328,8 +1379,8 @@ static void TH32x32_task_entry(void const *parm)
 			pTH32x32_Para->TH32x32_sampleCnt = 0;
 			pTH32x32_Para->TH32x32_ReadElecOffset_TA_startON = 1;
 			pTH32x32_Para->TH32x32_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
-			Tmax = 250;
-			Tmin = 250;
+			TmaxTable = 250;
+			TminTable = 250;
 			ReadTempValue = 250; // 先設定 標準溫度 
 			tmpSec=0;
 			retValue = timer_freq_setup(TIMER_B, pTH32x32_Para->TH32x32_sampleHz, 0, TH32x32_start_timer_isr );
@@ -1378,18 +1429,19 @@ static void TH32x32_task_entry(void const *parm)
 
 			tmp_i=0;
 			do{
-				osDelay(5);
+				osDelay(TH32x32_ReadStatus_WaitTime);
 				EEaddr[0]=TH32x32_STATUS_REG;
 				drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
 				tmp_i++;
 			}while( ( ((EEcopy[0]&0x35) != ((sensorCmd.trimValue & 0x35) | 0x01)) )|| (tmp_i > 10) );
 			if (tmp_i > 10)
 				DBG_PRINT("Read_VDD_MEAS_Block %d fail\r\n ",TH32x32_ReadBlockNum); // 曾經 出現 EEcopy[0]=0x05
-			//else{
-				//DBG_PRINT("firstRun = 1,Read_VDD_MEAS_Block %d ack= 0x%x wait=%d \r\n ",
-				//	TH32x32_ReadBlockNum,EEcopy[0],tmp_i);
-			//}
-
+		#if CHECK_ReadStatus_WAITTIME
+			else{
+				DBG_PRINT("firstRun = 1,Read_VDD_MEAS_Block %d ack= 0x%x wait=%d \r\n ",
+					TH32x32_ReadBlockNum,EEcopy[0],tmp_i);
+			}
+		#endif
 			retValue = I2C_sensor32x32_readDataTop(&th32x32_handle,
 					pTH32x32_Para->TH32x32_readout_top_block_buf_addr[0][TH32x32_ReadBlockNum]);
 			if(retValue<0)
@@ -1427,7 +1479,7 @@ static void TH32x32_task_entry(void const *parm)
 
 			tmp_i=0;
 			do{
-				osDelay(5);
+				osDelay(TH32x32_ReadStatus_WaitTime);
 				EEaddr[0]=TH32x32_STATUS_REG;
 				drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
 				tmp_i++;
@@ -1552,14 +1604,14 @@ static void TH32x32_task_entry(void const *parm)
 				dig = (signed short)TmpValue;
 				PiC =(signed long) *(pTH32x32_PixC_buffer+TH32x32_BlockNum*PixelOfBlock + cellNum -1); // PixelOfBlock = 32*4
 				Tobject = (signed int)(TH32x32_calcTO(TA, dig ,PiC ));
-
+#if TH32x32_FUN
 				// OUT of range check
 				if((Tobject == 0 )&&(firstRun==1)) {
 					Tobject_err=1;
-					DBG_PRINT("Tobject error at %d/T=%d  and set 25C \r\n",cellNum + TH32x32_BlockNum*PixelOfBlock -1,(Tobject -2730));
+					DBG_PRINT("Tobject error at top %d/T=%d  and set 25C \r\n",cellNum + TH32x32_BlockNum*PixelOfBlock -1,(Tobject));
 					Tobject = 2730 + 250;
 				}
-
+#endif
 				*(pTH32x32_TmpOutput_INT16U_buf0 + TH32x32_BlockNum*PixelOfBlock + cellNum -1)
 						=Tobject;
 				#if 0
@@ -1573,7 +1625,7 @@ static void TH32x32_task_entry(void const *parm)
 
 			}
 			tmp_start=cellNum;
-			
+
 			//DBG_PRINT("T %d Vdd %d, rowNum = %d \r\n", tmp_start,Vdd_cellNum,rowNum);
 			}
 
@@ -1651,13 +1703,14 @@ static void TH32x32_task_entry(void const *parm)
 						+ cellNum - tmp_start - TH32x32_BlockNum*PixelOfBlock ;
 
 				// OUT of range check
+#if TH32x32_FUN
 
-				if(Tobject == 0 ){
+				if((Tobject == 0 ) && (tmp_i2 != 1023)) {
 					Tobject_err=1;
-					DBG_PRINT("Tobject error at %d/T=%d and set 25C \r\n",tmp_i2,Tobject -2730);
+					DBG_PRINT("Tobject error at %d/T=%d and set 25C \r\n",tmp_i2,Tobject);
 					Tobject = 2730 + 250;
 				}
-
+#endif
 				*(pTH32x32_TmpOutput_INT16U_buf0 + tmp_i2) = Tobject;
 
 			}
@@ -1676,7 +1729,7 @@ static void TH32x32_task_entry(void const *parm)
 				if(TH32x32_ReadBlockNum == TH32x32_BlockNum+1){
 					tmp_i=0;
 					do{
-						osDelay(5);
+						osDelay(TH32x32_ReadStatus_WaitTime);
 						EEaddr[0]=TH32x32_STATUS_REG;
 						drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
 						tmp_i++;
@@ -1725,7 +1778,7 @@ static void TH32x32_task_entry(void const *parm)
 
 					tmp_i=0;
 					do{
-						osDelay(5);
+						osDelay(TH32x32_ReadStatus_WaitTime);
 						EEaddr[0]=TH32x32_STATUS_REG;
 						drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
 						tmp_i++;
@@ -1784,48 +1837,41 @@ static void TH32x32_task_entry(void const *parm)
 		pTH32x32_Para->TH32x32_move_dect = 0;
 
 		//
-		// avg Tobject 
-		// 
+		// avg Tobject
+		//
 			if(avg_buf_Enable ==0){ 	// [0] ~ [3] <- new data
 				for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
 					gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i]),
-					(INT8S *)ready_buf,Pixel*2);	
-				}	
+					(INT8S *)ready_buf,Pixel*2);
+				}
 				gp_memcpy((INT8S *)(pTH32x32_TmpOutput_INT16U_buf0),
-					(INT8S *)ready_buf,Pixel*2);	
+					(INT8S *)ready_buf,Pixel*2);
 				avg_buf_Enable=1;
 				check_MAX_pos=0;
-				
+
 			}
 			else{
 			// move new data to avg buf
-				for(tmp_i=0;tmp_i<(AVG_buf_len-1);tmp_i++){ 	// [0]<-[1] ,[1]<-[2] ,[2]<-[3] 
+				for(tmp_i=0;tmp_i<(AVG_buf_len-1);tmp_i++){ 	// [0]<-[1] ,[1]<-[2] ,[2]<-[3]
 					gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i]),
 						(INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i+1]),Pixel*2);
-				}												
+				}
 				gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[AVG_buf_len-1]), // [3] <- new data
-						(INT8S *)ready_buf,Pixel*2);	
+						(INT8S *)ready_buf,Pixel*2);
 				for(cellNum=0;cellNum<Pixel;cellNum++){
 					Tobject = 0;
 					for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
-						TmpValue=*(pTH32x32_INT16U_avg_buf[tmp_i] + cellNum ); // 
+						TmpValue=*(pTH32x32_INT16U_avg_buf[tmp_i] + cellNum ); //
 						Tobject = Tobject +(INT32U)TmpValue;
-					}	
+					}
 					Tobject = Tobject/AVG_buf_len;
 					*(pTH32x32_TmpOutput_INT16U_buf0 + cellNum)= Tobject;
 					//if(((Tobject - 3030)>30) ||((3030- Tobject)>30))DBG_PRINT("%d,",Tobject-2730);
 					//if(((Tobject - 3330)>30) ||((3330- Tobject)>30))DBG_PRINT("%d,",Tobject-2730);
 				}
-				
+
 			}
-
-	
-		// move new data to avg buf
-		//		for(tmp_i=0;tmp_i<(AVG_buf_len-1);tmp_i++){ 	// [0]<-[1] ,[1]<-[2] ,[2]<-[3]
-		//			gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i]),
-		//				(INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i+1]),Pixel*2);
-		//		}												// [3] <- new data
-
+									
 		//
 		// find Tmax Tmin at CORE area (暫不執行) 
 		//if(cellNum == (CORE_AREA_limit*80+CORE_AREA_limit)){
@@ -1842,36 +1888,64 @@ static void TH32x32_task_entry(void const *parm)
 		//	pTH32x32_Para->TH32x32_NOISE_CUTOFF_OVR_RTemp
 		//
 
-		ReadTempValue = pTH32x32_Para->TH32x32_TA_AD7314 + 2730 ; // 暫定 TA 當 戶外溫度
-		
+		ReadTempValue = pTH32x32_Para->TH32x32_TA_AD7314 + 2730 ; // 暫定 TA 當 戶外溫度 
+		//ReadTempValue = 250 + 2730	;		// 25C  當 戶外溫度 
+
 			//DBG_PRINT("Tobject -start \r\n");
-			
+
 		for(cellNum=0;cellNum<Pixel;cellNum++){
 			Tobject = *(pTH32x32_TmpOutput_INT16U_buf0 + cellNum);
-			
-		#if DBG_TOBJ	
+		//
+		// find Tmin/Tmax
+		//
+			if(cellNum == (CORE_AREA_limit*32+CORE_AREA_limit)){
+					Tmax = Tobject;
+					Tmin = Tobject;
+				}
+			if(((cellNum/32) >CORE_AREA_limit)&&((cellNum/32)<(SENSOR_AREA_HIGH -CORE_AREA_limit))
+					&&((cellNum%32)>CORE_AREA_limit)&&((cellNum%32)<(SENSOR_AREA_WIDTH -CORE_AREA_limit))){
+					if(Tmin > Tobject){ Tmin = Tobject;Tmin_number=cellNum;}
+					if(Tmax < Tobject){	Tmax = Tobject;Tmax_number=cellNum;}
+			}	
+
+		#if DBG_TOBJ
 			DBG_PRINT("- %d [%d]",Tobject-2730,cellNum);
 			if((cellNum == 31) || ((cellNum -31 )%32 == 0))
 					DBG_PRINT("\r\n");
 		#endif
-			TmpTbInd=10;	// 
-			if(Tobject > ReadTempValue){
-				TmpTbInd =(Tobject - ReadTempValue)/50 ;	// every 5c
-				if(TmpTbInd>9)	TmpTbInd=9;
-				TmpValue = ColorTable_HOT[TmpTbInd];
+		
+			TmpTbInd=10;	//
+			if(Tobject > (ReadTempValue+ SHOWTEMP_OFFSET) ){
+				if((TminTable==250) && (TmaxTable==250)){		// initial setting
+					TmpTbInd =(Tobject - ReadTempValue)/20 ;	// every 2c
+					if(TmpTbInd>9)	TmpTbInd=9;
+					TmpValue = ColorTable_HOT[TmpTbInd];
+				}
+				else{
+					// auto Autoscale
+					TmpTbInd =((Tobject - ReadTempValue)*10)/(TmaxTable-ReadTempValue) ;	
+					if(TmpTbInd>9)	TmpTbInd=9;
+						TmpValue = ColorTable_HOT[TmpTbInd];
+				}
 			}
 			else TmpValue = TRANSPARENT_COLOR;
 
-		#if DBG_COLOR_TABLE	
+		#if DBG_COLOR_TABLE
 			DBG_PRINT("- %d= %d [%d]",Tobject-2730,TmpTbInd,cellNum);
 			if((cellNum == 31) || ((cellNum -31 )%32 == 0))
 					DBG_PRINT("\r\n");
 		#endif
-			
+
 			*(pTH32x32_TmpOutput_INT16U_buf0 + cellNum)
 							=(signed short)TmpValue;
 		}
 			//DBG_PRINT("Tobject -End\r\n");
+
+		//
+		// set Tmax/Tmin for next frame, NOT this frame
+		//
+			TminTable=Tmin; TminTable_number=Tmin_number;
+			TmaxTable=Tmax; TmaxTable_number=Tmax_number;
 		//
 		// mirror function (左右 對調) 
 		//
@@ -1901,7 +1975,10 @@ static void TH32x32_task_entry(void const *parm)
 
 
 			if (sampleCnt++ % 60 == 0)
-			DBG_PRINT("[ TH32x32_task_entry t2=%d ] startON-0x%x\r\n",TimeCnt2-TimeCnt1,pTH32x32_Para->TH32x32_readout_block_startON);
+			DBG_PRINT("[ TH32x32_task_entry t2=%d ] tempSet=%d,TminTable=%d[%d-%d],TmaxTable=%d[%d-%d]\r\n",
+				TimeCnt2-TimeCnt1,(ReadTempValue+ SHOWTEMP_OFFSET-2730),
+				TminTable-2730,TminTable_number/32,TminTable_number%32,
+				TmaxTable-2730,TmaxTable_number/32,TmaxTable_number%32);
 			//DBG_PRINT("[TA=%dC, MAX =%d[%d],min =%d[%d],t2=%d ] \r\n",TA-2730,Tmax_number,Tmax,Tmin_number,Tmin,TimeCnt2-TimeCnt1);
 			//if (sampleCnt++ % 20 == 0) DBG_PRINT("TH32x32_READ = %d \r\n", sampleCnt);
 
@@ -3077,6 +3154,13 @@ static void scaler_task_entry(void const *parm)
 	ScalerPara_t para;
 	osEvent result;
 	osThreadId id;
+
+	INT8U	i;
+	INT32U buffer_ptr,frame_size,PPU_buffer_ptr;
+	PPU_REGISTER_SETS ppu_register_structure;
+	PPU_REGISTER_SETS *ppu_register_set;
+	INT32S	nRet;
+
 #if	AVI_ENCODE_SHOW_TIME == 1
 	TIME_T osd_time;
 #endif
@@ -3115,13 +3199,113 @@ static void scaler_task_entry(void const *parm)
 
 			//PPU init start ***
 
+			// initial ppu register parameter set structure /
+			ppu_register_set = (PPU_REGISTER_SETS *) &ppu_register_structure;
+
+			//Initiate PPU hardware engine and PPU register set structure
+			gplib_ppu_init(ppu_register_set);
+
+			//Now configure PPU software structure
+			gplib_ppu_enable_set(ppu_register_set, 1);            // Enable PPU
+
+			//TV frame mode
+			gplib_ppu_non_interlace_set(ppu_register_set, 0);            // Set non-interlace mode
+			gplib_ppu_frame_buffer_mode_set(ppu_register_set, 1, 0);        // Enable TV/TFT frame buffer mode
+
+			//PPU setting
+			gplib_ppu_fb_format_set(ppu_register_set, 1, 1);            // Set PPU output frame buffer format to YUYV
+			gplib_ppu_vga_mode_set(ppu_register_set, 0); // Disable VGA mode
+			gplib_ppu_resolution_set(ppu_register_set, C_TFT_RESOLUTION_320X240);
+			gplib_ppu_free_size_set(ppu_register_set, 1, 320, 240);
+			gplib_ppu_bottom_up_mode_set(ppu_register_set, 1);                      // bottom to top
+			gplib_ppu_long_burst_set(ppu_register_set, 1);
+			gplib_ppu_yuv_type_set(ppu_register_set, 3);// value[1:0]:0=BGRG/VYUY 1=GBGR/YVYU 2=RGBG/UYVY 3=GRGB/YUYV, value[2]:0=UV is unsigned(YCbCr) 1=UV is signed(YUV)
+			gplib_ppu_long_burst_set(ppu_register_set, 1);
+			
+
+			//Frame buffer malloc
+			//frame_size = (PPU_TEXT_SIZE_HPIXEL * PPU_TEXT_SIZE_VPIXEL * 2);
+			frame_size = (320 * 240 * 2);
+			//PPU_buffer_ptr = (INT32U) gp_malloc_align(frame_size*C_PPU_DRV_FRAME_NUM, 64); // from 320B	
+		    PPU_buffer_ptr = (INT32U) gp_malloc_align(((frame_size*C_PPU_DRV_FRAME_NUM)+128), 64);
+			if(!PPU_buffer_ptr)
+			{
+				DBG_PRINT("failed to allocate frame buffer memory =>  PPU_buffer_ptr \r\n");
+				while(1);
+			}
+		    PPU_buffer_ptr = (PPU_buffer_ptr + FRAME_BUF_ALIGN64) & ~FRAME_BUF_ALIGN64;
+			
+			
+			prcess_mem_set->ppu_frame_workmem = PPU_buffer_ptr;
+			for (i=0; i<C_PPU_DRV_FRAME_NUM; i++) {
+				buffer_ptr = (INT32U)(PPU_buffer_ptr + (i*frame_size));
+				gplib_ppu_frame_buffer_add(ppu_register_set, buffer_ptr);
+				DBG_PRINT("PPU_buffer_ptr[%d] -> 0x%x\r\n",i,buffer_ptr);
+			}
+			
+			drv_l2_display_buffer_set(DISPLAY_DEVICE, buffer_ptr);
+
 			// PPU init End ***
 
 			// PPU setting start
+			DBG_PRINT("PPU setting start \r\n");
+
+			// Now configure TEXT relative elements
+			gplib_ppu_text_compress_disable_set(ppu_register_set, 1) ;    // Disable TEXT1/TEXT2 horizontal/vertical compress function
+			gplib_ppu_text_direct_mode_set(ppu_register_set, 0);                //Disable TEXT direct address mode
+
+			//text 1 2D CSI
+			gplib_ppu_text_init(ppu_register_set, C_PPU_TEXT1);
+			buffer_ptr = (INT32U)gp_malloc_align(4096+64,4);
+			if(!buffer_ptr)
+			{
+				DBG_PRINT("gplib_ppu_text_number_array_ptr_set [ C_PPU_TEXT1 ] fail \r\n");
+				while(1);
+			}
+			buffer_ptr = (INT32U)((buffer_ptr + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
+			prcess_mem_set->ppu_narray_workmem = buffer_ptr;
+			gplib_ppu_text_number_array_ptr_set(ppu_register_set, C_PPU_TEXT1, (INT32U)buffer_ptr); // Set TEXT number array address
+			gplib_ppu_text_enable_set(ppu_register_set, C_PPU_TEXT1, 1); // Enable TH TEXT
+			gplib_ppu_text_bitmap_mode_set(ppu_register_set, C_PPU_TEXT1, 1);     // Enable bitmap mode
+			gplib_ppu_text_attribute_source_select(ppu_register_set, C_PPU_TEXT1, 1);    // Get TEXT attribute from register
+			gplib_ppu_text_color_set(ppu_register_set, C_PPU_TEXT1, 1, 3);     // Set TEXT color to  < 1:RGB / 3:YUYV >
+			//gplib_ppu_text_size_set(ppu_register_set, C_PPU_TEXT1, 0);             // Set TEXT size to 512x256
+			gplib_ppu_text_size_set(ppu_register_set, C_PPU_TEXT1, 2);             // Set TEXT size to 1024x512
+
+			gplib_ppu_text_segment_set(ppu_register_set, C_PPU_TEXT1, 0);    // Set TEXT segment address
+			//gplib_ppu_rgb565_transparent_color_set(ppu_register_set, 1, TRANSPARENT_COLOR);	// TRANSPARENT_COLOR = 0x00CD
+			gplib_ppu_rgb565_transparent_color_set(ppu_register_set, 1, TRANSPARENT_COLOR);
+
+			//text 2 2D UI
+			gplib_ppu_text_init(ppu_register_set, C_PPU_TEXT2);
+			buffer_ptr = (INT32U)gp_malloc_align(4096+64,4);
+			if(!buffer_ptr)
+			{
+				DBG_PRINT("gplib_ppu_text_number_array_ptr_set [ C_PPU_TEXT2 ] fail \r\n");
+				while(1);
+			}
+			buffer_ptr = (INT32U)((buffer_ptr + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
+			prcess_mem_set->ppu_narray_workmem = buffer_ptr;
+			gplib_ppu_text_number_array_ptr_set(ppu_register_set, C_PPU_TEXT2, (INT32U)buffer_ptr); // Set TEXT number array address
+			gplib_ppu_text_enable_set(ppu_register_set, C_PPU_TEXT2, 1);                        // Enable CMOS TEXT
+			gplib_ppu_text_bitmap_mode_set(ppu_register_set, C_PPU_TEXT2, 1);     // Enable bitmap mode
+			gplib_ppu_text_attribute_source_select(ppu_register_set, C_PPU_TEXT2, 1);    // Get TEXT attribute from register
+			gplib_ppu_text_color_set(ppu_register_set, C_PPU_TEXT2, 1, 3);     // Set TEXT color to < 1:RGB / 3:YUYV >
+			//gplib_ppu_text_size_set(ppu_register_set, C_PPU_TEXT2, 0);             // Set TEXT size to 512x256
+			gplib_ppu_text_size_set(ppu_register_set, C_PPU_TEXT2, 2);             // Set TEXT size to 1024x512
+
+			gplib_ppu_text_segment_set(ppu_register_set, C_PPU_TEXT2, 0);    // Set TEXT segment address
+			gplib_ppu_text_blend_set(ppu_register_set, C_PPU_TEXT2, 1, 1, 32);  // Set Blend
+
+			//gplib_ppu_text_depth_set(ppu_register_set, C_PPU_TEXT2, 2);      // Set TEXT Depth 1
+
+
+
+			DBG_PRINT("PPU setting End \r\n");
 
 			// PPU setting End
 
-			pTH32x32_Para->TH32x32_ScalerUp_status = 1;
+			//pTH32x32_Para->TH32x32_ScalerUp_status = 1;
 			gp_memcpy((INT8S *)(pTH32x32_Para->TH32x32_ColorOutputFrame_addr),
 				(INT8S *)&(sensor32X32_RGB565),32*32*2);
 
@@ -3266,19 +3450,62 @@ static void scaler_task_entry(void const *parm)
 				cal_time_get(&osd_time);
 				cpu_draw_time_osd(osd_time, display_frame, pAviEncVidPara->display_width);
 			#endif
+
+			#if TH32x32IMAGE
+
+				if(videnc_display) { // davis run this //
+		    		videnc_display(pAviEncVidPara->display_buffer_width,
+		    					   pAviEncVidPara->display_buffer_height,
+		    					   pTH32x32_Para->TH32x32_display_frame);
+					if(pTH32x32_Para->TH32x32_ScalerUp_status == 1)
+						pTH32x32_Para->TH32x32_ScalerUp_status = 0;
+		    	}
+			#else
 		    	if(videnc_display) { // davis run this
+
+			#if 1
+
+					// PPU 處理
+				
+					if(pTH32x32_Para->TH32x32_ScalerUp_status == 1){
+						gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 320, 240, (INT32U)pTH32x32_Para->TH32x32_display_frame); // from TH32x32 sensor 
+						pTH32x32_Para->TH32x32_ScalerUp_status = 0;
+						//DEBUG_MSG(" C \r\n");
+					}
+					//DEBUG_MSG("display_frame=0x%x \r\n",display_frame);
+					gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, 320, 240, (INT32U)display_frame);	 // from CMOS sensor
+					//DEBUG_MSG("PPU-s\r\n");
+					nRet =  gplib_ppu_go(ppu_register_set);	// 2018.07.16 不等待執行結束
+					//nRet =  gplib_ppu_go_and_wait_done(ppu_register_set);
+					
+					
+					
+					//video_encode_display_frame_ready(PPU_buffer_ptr);
+					DEBUG_MSG("PPU-nRet 0x%x \r\n",nRet);
+					//}
+
+					videnc_display(pAviEncVidPara->display_buffer_width,
+		    					   pAviEncVidPara->display_buffer_height,
+		    					   PPU_buffer_ptr);
+			#else
+			
 		    		videnc_display(pAviEncVidPara->display_buffer_width,
 		    					   pAviEncVidPara->display_buffer_height,
 		    					   display_frame);
+			#endif
 		    	}
+
+			#endif
 
 		    	if(videnc_buferr_post)
 		    	{
                     scaler_frame = videnc_buferr_post(display_frame);
                     if(scaler_frame)
                         display_frame = scaler_frame;
+					
 		    	}
-
+				
+				//DEBUG_MSG("post display_frame=0x%x \r\n",display_frame);
 		    	avi_encode_post_empty(display_frame_q, display_frame);
 			} /*else {
 				display_frame = avi_encode_get_empty(display_frame_q);
@@ -3395,7 +3622,7 @@ static void scaler_task_entry(void const *parm)
 			}
 		#endif
 
-			pTH32x32_Para->TH32x32_ScalerUp_status = 0; // 暫時 set 0 ?
+			//pTH32x32_Para->TH32x32_ScalerUp_status = 0; // 暫時 set 0 ?
 			break;
 		}
 	}
