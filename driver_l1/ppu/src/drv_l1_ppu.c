@@ -292,6 +292,7 @@ INT32S ppu_frame_buffer_add(INT32U *frame_buf)
     //xQueueSend (free_frame_buffer_queue, (void *) &frame_buf, portMAX_DELAY);
     event = (INT32U)frame_buf;
     osMessagePut(free_frame_buffer_queue, (uint32_t)&event, osWaitForever);
+	//DBG_PRINT("put free_frame_buffer_queue-0\r\n"); 	//davisppu-1
 #endif
 
   	if (tft_static_display_frame == PPU_NULL && tft_current_display_frame == PPU_NULL) {
@@ -880,7 +881,7 @@ void ppu_vblank_handler(void)
             #elif _OPERATING_SYSTEM == _OS_FREERTOS
             //xQueueSendFromISR( (xQueueHandle) display_frame_buffer_queue, &ppu_current_output_frame, 0);
             message = ppu_current_output_frame;
-			DBG_PRINT("m:0x%X \r\n",message);	// davisppu
+			//DBG_PRINT("m:0x%X \r\n",message);	// davisppu
             osMessagePut(display_frame_buffer_queue, (uint32_t)&message, 1);
             #endif
 		}
@@ -897,12 +898,14 @@ void ppu_vblank_handler(void)
             //xQueueSendFromISR( (xQueueHandle) sem_ppu_frame_output_done, &message, 0);
             message = PPU_FRAME_END;
             osMessagePut(sem_ppu_frame_output_done, (uint32_t)&message, 1);
+			//DBG_PRINT("put sem_ppu_frame_output_done \r\n");	// davisppu
             #endif
 		} else {
 			// Post sem_ppu_engine semaphore to release PPU engine here
 			#if _OPERATING_SYSTEM == _OS_UCOS2
             OSSemPost(sem_ppu_engine);
             #endif
+			
 		}
 		if (ppu_done_notifier) {
 			ppu_done_notifier();
@@ -991,6 +994,7 @@ void ppu_tft_vblank_handler(void)
             //xQueueSendFromISR( (xQueueHandle) free_frame_buffer_queue, &tft_current_display_frame, 0);
             frame = tft_current_display_frame;
             osMessagePut(free_frame_buffer_queue, (uint32_t)&frame, 1);
+			DBG_PRINT("put free_frame_buffer_queue-1\r\n");		//davisppu-1
 		}
 
 		// Update global variable
@@ -1244,6 +1248,7 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
             //xQueueSend (free_frame_buffer_queue, (void *) &tft_current_display_frame, portMAX_DELAY);
             mask = tft_current_display_frame;
             osMessagePut(free_frame_buffer_queue, (uint32_t)&mask, osWaitForever);
+			DBG_PRINT("put free_frame_buffer_queue-2\r\n");		//davisppu-1
             #endif
 			tft_current_display_frame = PPU_NULL;
 		}
@@ -1307,6 +1312,7 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
   	//if (R_PPU_ENABLE & C_PPU_CTRL_FRAME_MODE) {		// Current mode is frame base mode
 	if (p_register_set->ppu_enable & C_PPU_CTRL_FRAME_MODE) {		// Frame base mode //davis 2019.05.08
 	  	if (p_register_set->ppu_enable & C_PPU_CTRL_FRAME_MODE) {		// Frame base mode
+	  		//DBG_PRINT("C_PPU_CTRL_FRAME_MODE\r\n");		//davisppu-1
 			// Obtain a frame from free_frame_buffer_queue
 			#if _OPERATING_SYSTEM == _OS_UCOS2
             if (wait_start) {
@@ -1321,13 +1327,14 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
             if (wait_start) {
                 //err = (INT32S) xQueueReceive(free_frame_buffer_queue, &frame, portMAX_DELAY);
                 result = osMessageGet(free_frame_buffer_queue, osWaitForever);
+				//DBG_PRINT("free_frame_buffer_queue =0x%x \r\n",result.value.v);		//davisppu-1
 			} else {
                 //err = (INT32S) xQueueReceive(free_frame_buffer_queue, &frame, 0);
                 result = osMessageGet(free_frame_buffer_queue, 1);
 			}
             frame = result.value.v;
 
-			DBG_PRINT("free_frame_buffer_queue =0x%x \r\n",frame);		//davisppu 2019.05.08
+			//DBG_PRINT("free_frame_buffer_queue =0x%x \r\n",frame);		//davisppu 2019.05.08
             if(result.status == osEventMessage) {
                 err = pdPASS;
             }
@@ -1387,6 +1394,7 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
                 #elif _OPERATING_SYSTEM == _OS_FREERTOS
                 //xQueueSend (free_frame_buffer_queue, (void *) &frame, portMAX_DELAY);
                 osMessagePut(free_frame_buffer_queue, (uint32_t)&frame, osWaitForever);
+				DBG_PRINT("put free_frame_buffer_queue-3\r\n");		//davisppu-1
                 #endif
 
 				return -1;
@@ -1442,12 +1450,14 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
                 #elif _OPERATING_SYSTEM == _OS_FREERTOS
                 //xQueueSend (free_frame_buffer_queue, (void *) &frame, portMAX_DELAY);
                 osMessagePut(free_frame_buffer_queue, (uint32_t)&frame, osWaitForever);
+				DBG_PRINT("put free_frame_buffer_queue-4\r\n");		//davisppu-1
                 #endif
 
 			} else {
 				// If we want to wait until PPU frame output is done, set this flag
 				if (wait_done) {
 					ppu_control_flag |= C_PPU_CONTROL_WAIT_FRAME_DONE;
+					//DBG_PRINT("FRAME_DONE1 \r\n");	// davisppu
 				} else {
 					ppu_control_flag &= ~C_PPU_CONTROL_WAIT_FRAME_DONE;
 				}
@@ -1489,6 +1499,8 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
                     frame = result.value.v;
                     if(result.status == osEventMessage) {
                         err = pdPASS;
+						
+						//DBG_PRINT("get sem_ppu_frame_output_done \r\n");	// davisppu
                     }
                     else
                         err = pdFAIL;
@@ -1524,6 +1536,7 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
                 #elif _OPERATING_SYSTEM == _OS_FREERTOS
                 //xQueueSend (free_frame_buffer_queue, (void *) &tft_current_display_frame, portMAX_DELAY);
                 osMessagePut(free_frame_buffer_queue, (uint32_t)&tft_current_display_frame, osWaitForever);
+				DBG_PRINT("put free_frame_buffer_queue-5\r\n");		//davisppu-1
                 #endif
                 tft_current_display_frame = PPU_NULL;
 			}
@@ -1549,6 +1562,7 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
                 //err = (INT32S) xQueueReceive(display_frame_buffer_queue, &frame, 0);
                 result = osMessageGet(display_frame_buffer_queue, 1000);
                 frame = result.value.v;
+				DBG_PRINT("display_frame_buffer_queue =0x%x \r\n",frame);		//davisppu
                 if(result.status == osEventMessage) {
                     err = pdPASS;
                 }
@@ -1703,6 +1717,7 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
                 #elif _OPERATING_SYSTEM == _OS_FREERTOS
                 //xQueueSend (free_frame_buffer_queue, (void *) &frame, portMAX_DELAY);
                 osMessagePut(free_frame_buffer_queue, (uint32_t)&frame, osWaitForever);
+				DBG_PRINT("put free_frame_buffer_queue-6\r\n");		//davisppu-1
                 #endif
 			}
             #if _OPERATING_SYSTEM == _OS_UCOS2
@@ -1712,7 +1727,8 @@ static INT32S drv_l1_ppu_go(PPU_REGISTER_SETS *p_register_set, INT32U wait_start
 		} else if (p_register_set->ppu_enable & C_PPU_CTRL_FRAME_MODE) {	// Change from line base mode to frame base mode
 			// If we want to wait until PPU frame output is done, set this flag
 			if (wait_done) {
-				ppu_control_flag |= C_PPU_CONTROL_WAIT_FRAME_DONE;
+				ppu_control_flag |= C_PPU_CONTROL_WAIT_FRAME_DONE;	
+				//DBG_PRINT("FRAME_DONE2 \r\n");	// davisppu
 			} else {
 				ppu_control_flag &= ~C_PPU_CONTROL_WAIT_FRAME_DONE;
 			}

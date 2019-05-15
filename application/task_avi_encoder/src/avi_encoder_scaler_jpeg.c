@@ -123,6 +123,19 @@ const INT16U ColorTable_HOT[10]={
 0xf8e3,// 淺紅 
 };
 
+/*
+// 改成 High byte frist
+const INT16U ColorTable_HOT[10]={
+0xFFFF,	// 白 
+0xFFFF,	// 白 
+0xeaff,0xecff,0xeeff,0xf0ff,   //黃 
+0xf05f, // 淡綠 
+0xea1f,//淺 綠 
+0x08fa,	//淡 紅 
+0xe3f8,// 淺紅 
+};
+*/
+
 
 const INT16U ColorTable_COLD[10]={
 0xc61f,0xb5bf,0xad7f,0xa53f,0x8c7f,	// 淡藍 
@@ -3160,6 +3173,7 @@ static void scaler_task_entry(void const *parm)
 	PPU_REGISTER_SETS ppu_register_structure;
 	PPU_REGISTER_SETS *ppu_register_set;
 	INT32S	nRet;
+	INT32U display_buf;
 
 #if	AVI_ENCODE_SHOW_TIME == 1
 	TIME_T osd_time;
@@ -3226,24 +3240,23 @@ static void scaler_task_entry(void const *parm)
 			//Frame buffer malloc
 			//frame_size = (PPU_TEXT_SIZE_HPIXEL * PPU_TEXT_SIZE_VPIXEL * 2);
 			frame_size = (320 * 240 * 2);
-			//PPU_buffer_ptr = (INT32U) gp_malloc_align(frame_size*C_PPU_DRV_FRAME_NUM, 64); // from 320B	
-		    PPU_buffer_ptr = (INT32U) gp_malloc_align(((frame_size*C_PPU_DRV_FRAME_NUM)+128), 64);
+			PPU_buffer_ptr = (INT32U) gp_malloc_align(frame_size*C_PPU_DRV_FRAME_NUM, 64); // from 320B	
+		    //PPU_buffer_ptr = (INT32U) gp_malloc_align(((frame_size*C_PPU_DRV_FRAME_NUM)+128), 64);
 			if(!PPU_buffer_ptr)
 			{
 				DBG_PRINT("failed to allocate frame buffer memory =>  PPU_buffer_ptr \r\n");
 				while(1);
 			}
-		    PPU_buffer_ptr = (PPU_buffer_ptr + FRAME_BUF_ALIGN64) & ~FRAME_BUF_ALIGN64;
+		    //PPU_buffer_ptr = (PPU_buffer_ptr + FRAME_BUF_ALIGN64) & ~FRAME_BUF_ALIGN64;
 			
 			
-			prcess_mem_set->ppu_frame_workmem = PPU_buffer_ptr;
+			//prcess_mem_set->ppu_frame_workmem = PPU_buffer_ptr;
 			for (i=0; i<C_PPU_DRV_FRAME_NUM; i++) {
-				buffer_ptr = (INT32U)(PPU_buffer_ptr + (i*frame_size));
-				gplib_ppu_frame_buffer_add(ppu_register_set, buffer_ptr);
-				DBG_PRINT("PPU_buffer_ptr[%d] -> 0x%x\r\n",i,buffer_ptr);
+				gplib_ppu_frame_buffer_add(ppu_register_set, PPU_buffer_ptr + (i*frame_size));
+				DBG_PRINT("PPU_buffer_ptr[%d] -> 0x%x\r\n",i,PPU_buffer_ptr + (i*frame_size));
 			}
 			
-			drv_l2_display_buffer_set(DISPLAY_DEVICE, buffer_ptr);
+			DBG_PRINT("PPU_buffer_ptr -> 0x%x\r\n",PPU_buffer_ptr);
 
 			// PPU init End ***
 
@@ -3468,25 +3481,34 @@ static void scaler_task_entry(void const *parm)
 					// PPU 處理
 				
 					if(pTH32x32_Para->TH32x32_ScalerUp_status == 1){
-						gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 320, 240, (INT32U)pTH32x32_Para->TH32x32_display_frame); // from TH32x32 sensor 
+						gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 320, 240, 
+							(INT32U)pTH32x32_Para->TH32x32_display_frame); // from TH32x32 sensor 
 						pTH32x32_Para->TH32x32_ScalerUp_status = 0;
 						//DEBUG_MSG(" C \r\n");
 					}
 					//DEBUG_MSG("display_frame=0x%x \r\n",display_frame);
-					gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, 320, 240, (INT32U)display_frame);	 // from CMOS sensor
+					gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, 320, 240, 
+							(INT32U)display_frame);	 // from CMOS sensor
 					//DEBUG_MSG("PPU-s\r\n");
-					nRet =  gplib_ppu_go(ppu_register_set);	// 2018.07.16 不等待執行結束
-					//nRet =  gplib_ppu_go_and_wait_done(ppu_register_set);
+					//nRet =  gplib_ppu_go(ppu_register_set);	// 不等待執行結束
+					nRet =  gplib_ppu_go_and_wait_done(ppu_register_set);
 					
-					
+					// 解決 free_frame_buffer_queue 未放回-start
+					display_buf = ppu_frame_buffer_display_get();
+					 if(display_buf > 0)
+			            gplib_ppu_frame_buffer_add(ppu_register_set, display_buf);
+					// 解決 free_frame_buffer_queue 未放回-end
 					
 					//video_encode_display_frame_ready(PPU_buffer_ptr);
-					DEBUG_MSG("PPU-nRet 0x%x \r\n",nRet);
+					//DEBUG_MSG("PPU-nRet 0x%x , display_buf 0x%x \r\n",nRet,display_buf);
 					//}
-
+					
+					
 					videnc_display(pAviEncVidPara->display_buffer_width,
 		    					   pAviEncVidPara->display_buffer_height,
-		    					   PPU_buffer_ptr);
+		    					   //PPU_buffer_ptr);
+									display_buf);
+					
 			#else
 			
 		    		videnc_display(pAviEncVidPara->display_buffer_width,

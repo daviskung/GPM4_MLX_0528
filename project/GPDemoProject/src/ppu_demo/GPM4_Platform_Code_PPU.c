@@ -1031,10 +1031,13 @@ void GPM4_PPU_Demo(void)
 	     //Start PPU and wait until PPU operation is done
 	     if(display_buf > 0)
             gplib_ppu_frame_buffer_add(ppu_register_set, display_buf);
+		 
 	     gplib_ppu_go_and_wait_done(ppu_register_set);
 	     display_buf = ppu_frame_buffer_display_get();
 	     if(display_buf > 0)
             drv_l2_display_update(DISPLAY_DEVICE,display_buf);
+		 
+		 DBG_PRINT("display_buf = 0x%x\r\n",display_buf);	 //davisppu-1
 	     frame_count++;
 	}
 #endif
