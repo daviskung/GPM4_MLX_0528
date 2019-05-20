@@ -94,7 +94,7 @@ const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 #define TH32x32_ReadStatus_WaitTime	2
 #define CHECK_ReadStatus_WAITTIME	0
 #define SHOWTEMP_OFFSET				0
-#define TH32x32IMAGE				1
+#define TH32x32IMAGE				0
 #define TH32x32_FUN					1
 
 #define CORE_AREA_limit		4
@@ -1884,7 +1884,7 @@ static void TH32x32_task_entry(void const *parm)
 				}
 
 			}
-									
+
 		//
 		// find Tmax Tmin at CORE area (暫不執行) 
 		//if(cellNum == (CORE_AREA_limit*80+CORE_AREA_limit)){
@@ -1919,14 +1919,14 @@ static void TH32x32_task_entry(void const *parm)
 					&&((cellNum%32)>CORE_AREA_limit)&&((cellNum%32)<(SENSOR_AREA_WIDTH -CORE_AREA_limit))){
 					if(Tmin > Tobject){ Tmin = Tobject;Tmin_number=cellNum;}
 					if(Tmax < Tobject){	Tmax = Tobject;Tmax_number=cellNum;}
-			}	
+			}
 
 		#if DBG_TOBJ
 			DBG_PRINT("- %d [%d]",Tobject-2730,cellNum);
 			if((cellNum == 31) || ((cellNum -31 )%32 == 0))
 					DBG_PRINT("\r\n");
 		#endif
-		
+
 			TmpTbInd=10;	//
 			if(Tobject > (ReadTempValue+ SHOWTEMP_OFFSET) ){
 				if((TminTable==250) && (TmaxTable==250)){		// initial setting
@@ -1936,7 +1936,7 @@ static void TH32x32_task_entry(void const *parm)
 				}
 				else{
 					// auto Autoscale
-					TmpTbInd =((Tobject - ReadTempValue)*10)/(TmaxTable-ReadTempValue) ;	
+					TmpTbInd =((Tobject - ReadTempValue)*10)/(TmaxTable-ReadTempValue) ;
 					if(TmpTbInd>9)	TmpTbInd=9;
 						TmpValue = ColorTable_HOT[TmpTbInd];
 				}
@@ -3230,17 +3230,17 @@ static void scaler_task_entry(void const *parm)
 			gplib_ppu_fb_format_set(ppu_register_set, 1, 1);            // Set PPU output frame buffer format to YUYV
 			gplib_ppu_vga_mode_set(ppu_register_set, 0); // Disable VGA mode
 			gplib_ppu_resolution_set(ppu_register_set, C_TFT_RESOLUTION_320X240);
-			gplib_ppu_free_size_set(ppu_register_set, 1, 320, 240);
+			gplib_ppu_free_size_set(ppu_register_set, 0, 320, 240);
 			gplib_ppu_bottom_up_mode_set(ppu_register_set, 1);                      // bottom to top
 			gplib_ppu_long_burst_set(ppu_register_set, 1);
 			gplib_ppu_yuv_type_set(ppu_register_set, 3);// value[1:0]:0=BGRG/VYUY 1=GBGR/YVYU 2=RGBG/UYVY 3=GRGB/YUYV, value[2]:0=UV is unsigned(YCbCr) 1=UV is signed(YUV)
 			gplib_ppu_long_burst_set(ppu_register_set, 1);
-			
+
 
 			//Frame buffer malloc
 			//frame_size = (PPU_TEXT_SIZE_HPIXEL * PPU_TEXT_SIZE_VPIXEL * 2);
 			frame_size = (320 * 240 * 2);
-			PPU_buffer_ptr = (INT32U) gp_malloc_align(frame_size*C_PPU_DRV_FRAME_NUM, 64); // from 320B	
+			PPU_buffer_ptr = (INT32U) gp_malloc_align(frame_size*C_PPU_DRV_FRAME_NUM, 64); // from 320B
 		    //PPU_buffer_ptr = (INT32U) gp_malloc_align(((frame_size*C_PPU_DRV_FRAME_NUM)+128), 64);
 			if(!PPU_buffer_ptr)
 			{
@@ -3248,14 +3248,14 @@ static void scaler_task_entry(void const *parm)
 				while(1);
 			}
 		    //PPU_buffer_ptr = (PPU_buffer_ptr + FRAME_BUF_ALIGN64) & ~FRAME_BUF_ALIGN64;
-			
-			
+
+
 			//prcess_mem_set->ppu_frame_workmem = PPU_buffer_ptr;
 			for (i=0; i<C_PPU_DRV_FRAME_NUM; i++) {
 				gplib_ppu_frame_buffer_add(ppu_register_set, PPU_buffer_ptr + (i*frame_size));
 				DBG_PRINT("PPU_buffer_ptr[%d] -> 0x%x\r\n",i,PPU_buffer_ptr + (i*frame_size));
 			}
-			
+
 			DBG_PRINT("PPU_buffer_ptr -> 0x%x\r\n",PPU_buffer_ptr);
 
 			// PPU init End ***
@@ -3478,39 +3478,39 @@ static void scaler_task_entry(void const *parm)
 
 			#if 1
 
-					// PPU 處理
-				
+					// PPU 處理 
+
 					if(pTH32x32_Para->TH32x32_ScalerUp_status == 1){
-						gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 320, 240, 
-							(INT32U)pTH32x32_Para->TH32x32_display_frame); // from TH32x32 sensor 
+						gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 320, 240,
+							(INT32U)pTH32x32_Para->TH32x32_display_frame); // from TH32x32 sensor
 						pTH32x32_Para->TH32x32_ScalerUp_status = 0;
 						//DEBUG_MSG(" C \r\n");
 					}
 					//DEBUG_MSG("display_frame=0x%x \r\n",display_frame);
-					gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, 320, 240, 
+					gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, 320, 240,
 							(INT32U)display_frame);	 // from CMOS sensor
 					//DEBUG_MSG("PPU-s\r\n");
-					//nRet =  gplib_ppu_go(ppu_register_set);	// 不等待執行結束
+					//nRet =  gplib_ppu_go(ppu_register_set);	// 不等待執行結束 
 					nRet =  gplib_ppu_go_and_wait_done(ppu_register_set);
-					
+
 					// 解決 free_frame_buffer_queue 未放回-start
 					display_buf = ppu_frame_buffer_display_get();
 					 if(display_buf > 0)
 			            gplib_ppu_frame_buffer_add(ppu_register_set, display_buf);
 					// 解決 free_frame_buffer_queue 未放回-end
-					
+
 					//video_encode_display_frame_ready(PPU_buffer_ptr);
 					//DEBUG_MSG("PPU-nRet 0x%x , display_buf 0x%x \r\n",nRet,display_buf);
 					//}
-					
-					
+
+
 					videnc_display(pAviEncVidPara->display_buffer_width,
 		    					   pAviEncVidPara->display_buffer_height,
 		    					   //PPU_buffer_ptr);
 									display_buf);
-					
+
 			#else
-			
+
 		    		videnc_display(pAviEncVidPara->display_buffer_width,
 		    					   pAviEncVidPara->display_buffer_height,
 		    					   display_frame);
@@ -3524,9 +3524,9 @@ static void scaler_task_entry(void const *parm)
                     scaler_frame = videnc_buferr_post(display_frame);
                     if(scaler_frame)
                         display_frame = scaler_frame;
-					
+
 		    	}
-				
+
 				//DEBUG_MSG("post display_frame=0x%x \r\n",display_frame);
 		    	avi_encode_post_empty(display_frame_q, display_frame);
 			} /*else {
