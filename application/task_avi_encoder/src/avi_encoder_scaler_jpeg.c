@@ -88,18 +88,23 @@
 const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 
 #define TRANSPARENT_COLOR 	0x00	// 無色 
+#define TRANSPARENT_COLOR2 	0x001f	// 無色 
 #define DBG_TOBJ			0
 #define DBG_COLOR_TABLE		0
+
 
 #define TH32x32_ReadStatus_WaitTime	2
 #define CHECK_ReadStatus_WAITTIME	0
 #define SHOWTEMP_OFFSET				0
-#define TH32x32IMAGE				0
+#define TH32x32IMAGE				1
 #define TH32x32_FUN					1
 
 #define CORE_AREA_limit		4
 #define SENSOR_AREA_WIDTH	32
 #define SENSOR_AREA_HIGH	32
+
+#define COLD_DISP_OFF		1
+
 
 
 typedef struct {
@@ -109,9 +114,22 @@ typedef struct {
     INT32U disp_prcess_workmem;
 } prcess_mem_t;
 
+
 static prcess_mem_t *prcess_mem_set;
 
 
+const INT16U ColorTable_HOT[10]={
+0xffe0,0xffea,0xffec,0xffee,//0xfff0,   //黃 
+0xFFFF,	// 白 
+0xFFFF,	// 白 
+//0xffea,0xffec,0xffee,0xfff0,   //黃 
+0x5ff0, // 淡綠 
+0x1fea,//淺 綠 
+0xfa08,	//淡 紅 
+0xf8e3,// 淺紅 
+};
+
+/*
 const INT16U ColorTable_HOT[10]={
 0xFFFF,	// 白 
 //0xffe0,0xffea,0xffec,0xffee,0xfff0,   //黃 
@@ -122,6 +140,7 @@ const INT16U ColorTable_HOT[10]={
 0xfa08,	//淡 紅 
 0xf8e3,// 淺紅 
 };
+*/
 
 /*
 // 改成 High byte frist
@@ -713,7 +732,10 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 			scale.digizoom_n = 10;
 			//#endif
 			memset((void *)&para, 0x00, sizeof(para));
+			
+			//para.gamma_en = 1;
 			para.boundary_color = 0x008080;
+			//para.yuv_type = C_SCALER_CTRL_TYPE_YUV;
 
     		nRet = drv_l2_scaler_trigger(SCALER_0, 1, &scale, &para);
 			if(nRet == C_SCALER_STATUS_DONE || nRet == C_SCALER_STATUS_STOP) {
@@ -1886,13 +1908,6 @@ static void TH32x32_task_entry(void const *parm)
 			}
 
 		//
-		// find Tmax Tmin at CORE area (暫不執行) 
-		//if(cellNum == (CORE_AREA_limit*80+CORE_AREA_limit)){
-		//			Tmax = Tobject;
-		//			Tmin = Tobject;
-		//		}
-
-		//
 		// color table
 		//
 
@@ -1909,7 +1924,7 @@ static void TH32x32_task_entry(void const *parm)
 		for(cellNum=0;cellNum<Pixel;cellNum++){
 			Tobject = *(pTH32x32_TmpOutput_INT16U_buf0 + cellNum);
 		//
-		// find Tmin/Tmax
+		// find Tmax Tmin at CORE area
 		//
 			if(cellNum == (CORE_AREA_limit*32+CORE_AREA_limit)){
 					Tmax = Tobject;
@@ -1941,8 +1956,25 @@ static void TH32x32_task_entry(void const *parm)
 						TmpValue = ColorTable_HOT[TmpTbInd];
 				}
 			}
-			else TmpValue = TRANSPARENT_COLOR;
+	#if COLD_DISP_OFF
+			else TmpValue = TRANSPARENT_COLOR2;
+	#else
+			else{
 
+				if((TminTable==250) && (TmaxTable==250)){		// initial setting
+					TmpTbInd =(ReadTempValue -Tobject)/20 ;	// every 2c
+					if(TmpTbInd>9)	TmpTbInd=9;
+					TmpValue = ColorTable_COLD[TmpTbInd];
+				}
+				else{
+					// auto Autoscale
+					TmpTbInd =((ReadTempValue -Tobject )*10)/(ReadTempValue-TminTable) ;
+					if(TmpTbInd>9)	TmpTbInd=9;
+						TmpValue = ColorTable_COLD[TmpTbInd];
+				}
+			
+			}
+	#endif
 		#if DBG_COLOR_TABLE
 			DBG_PRINT("- %d= %d [%d]",Tobject-2730,TmpTbInd,cellNum);
 			if((cellNum == 31) || ((cellNum -31 )%32 == 0))
