@@ -304,6 +304,8 @@ typedef struct TH32x32Para_s
 
 	INT32U  TH32x32_avg_buf_addr[AVG_buf_len];	// TH32x32 temperature buffer addr
 	INT32U  TH32x32_display_background_frame;
+	INT32U  MLX32x24_EE_READ_8bitBUF;
+	INT32U  MLX32x24_EE_READ_16bitBUF;
 
 	 
     

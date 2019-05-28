@@ -686,9 +686,13 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../driver_l2/sd/inc/drv_l2_sd.h" />
+		<Unit filename="../../driver_l2/sensor/inc/defs_MXL.h" />
 		<Unit filename="../../driver_l2/sensor/inc/defs_th32x32.h" />
 		<Unit filename="../../driver_l2/sensor/inc/drv_l2_sensor.h" />
 		<Unit filename="../../driver_l2/sensor/src/drv_l2_sensor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../driver_l2/sensor/user/sensor_MLX90640_Thermopile.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../driver_l2/sensor/user/sensor_TH32x32_Thermopile.c">

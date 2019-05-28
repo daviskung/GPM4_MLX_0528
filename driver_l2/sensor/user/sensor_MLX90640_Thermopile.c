@@ -13,7 +13,7 @@
 #include "drv_l2_sccb.h"
 #include "gp_aeawb.h"
 //#include "defs_th32x32.h"
-#include	"defs_MXL.h"
+#include	"defs_MLX.h"
 
 //_SENSOR_MLX90640_THERMOPILE
 
@@ -191,10 +191,13 @@ INT32S MLX90640_SetRefreshRate(INT8U refreshRate)
     return error;
 }
 
-int CheckEEPROMValid(uint16_t *eeData)
+int CheckEEPROMValid(INT16U	*pMLX32x32_READ_INT16U_buf)
 {
 	int deviceSelect;
-	deviceSelect = eeData[10] & 0x0040;
+
+
+	DBG_PRINT("pMLX32x32_READ_INT16U_buf addr=0x%0x \r\n", pMLX32x32_READ_INT16U_buf);
+	deviceSelect = *(pMLX32x32_READ_INT16U_buf+10) & 0x0040;
 	if(deviceSelect == 0)
 	{
 		return 0;
@@ -256,34 +259,18 @@ void MXL90640_thermopile_init(void)
 	// request sccb
 	MXL_sccb_open();
 	DBG_PRINT("MXL_sccb_open() \r\n");
-	
+
 	MXL_handle.devNumber = I2C_1;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
 	MXL_handle.clkRate = 800;
-	
+
 	pEEcopy = i2cData;
 	pEEaddr = EEaddr;
 	p_eeData = eeData;
 
-	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_EEAddrstart,pEEcopy16BIT);	// 單筆讀取 
-	EEaddress16 = MLX90640_EEAddrstart;
-	EEaddr[0]=(INT8U)(EEaddress16 >> 8);
-	EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
-	drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pEEcopy,2,MXL_I2C_RESTART_MODE);
-	EEaddress16 = MLX90640_EEAddrstart+1;
-	EEaddr[0]=(INT8U)(EEaddress16 >> 8);
-	EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
-	drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pEEcopy+2,2,MXL_I2C_RESTART_MODE);
-	EEaddress16 = MLX90640_EEAddrstart+2;
-	EEaddr[0]=(INT8U)(EEaddress16 >> 8);
-	EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
-	drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pEEcopy+4,2,MXL_I2C_RESTART_MODE);
 
 
-	DBG_PRINT("EEPROM MLX90640_EEAddrstart addr=0x%04X, data=0x%02X 0x%02X 0x%02X \r\n",
-				MLX90640_EEAddrstart, *(pEEcopy+2),*(pEEcopy+1),*(pEEcopy));
 
-	
 	EEaddress16 = MLX90640_EEAddrstart;
 	EEaddr[0]=(INT8U)(EEaddress16 >> 8);
 	EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
@@ -293,15 +280,14 @@ void MXL90640_thermopile_init(void)
 		i = cnt << 1;
 		*p_eeData++ = (INT16U)i2cData[i]*256 + (INT16U)i2cData[i+1];
 	}
-	
+
 	DBG_PRINT("MLX90640_DumpEE, cnt=%d \r\n", cnt);
 
-	/*
+
 	//MLX90640_ExtractParameters(p_eeData,pMLX_Para);
-	error = CheckEEPROMValid(eeData);
 
-	DBG_PRINT("CheckEEPROMValid, ERROR=%d \r\n", error);
 
+/*
 	if(error == 0)
     {
         ExtractVDDParameters(p_eeData); //, pMLX_Para);
@@ -324,14 +310,14 @@ void MXL90640_thermopile_init(void)
     }
 	*/
 
-	
+
 
 #if 0
 	value16bit = 0x1981;	// refresh rate = 4 Hz
 	drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_EEAddrRegister1,value16bit);
 	DBG_PRINT("Write EEPROM MLX90640_EEAddrRegister1 addr=0x%04X, data=0x%04X \r\n",
 				MLX90640_EEAddrRegister1,value16bit );
-#endif
+
 
 	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,pEEcopy16BIT);
 	DBG_PRINT("EEPROM MLX90640_AdrStatus addr=0x%04X, data=0x%04X \r\n",MLX90640_AdrStatus, *(pEEcopy16BIT));
@@ -367,6 +353,7 @@ void MXL90640_thermopile_init(void)
 		DBG_PRINT("EEPROM MLX90640_EEAddrRegister1 addr=0x%04X, data=0x%04X - 0x%04X - 0x%04X - 0x%04X \r\n",
 			MLX90640_EEAddrRegister1, *(pEEcopy16BIT) ,*(pEEcopy16BIT+1),*(pEEcopy16BIT+2),*(pEEcopy16BIT+3));
 
+#endif
 
 
 }

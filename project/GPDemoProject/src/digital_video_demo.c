@@ -246,9 +246,11 @@ void Digital_Video_Demo(void)
 	
 #if 1
 
-	th32x32_thermopile_init();
+	//th32x32_thermopile_init();
 	TH32x32_TEST_LOW();
 
+	 osDelay(50);
+	MXL90640_thermopile_init();
 
 		
 	nRet = TH32x32_task_create(TH32x32_TASK_PRIORITY);

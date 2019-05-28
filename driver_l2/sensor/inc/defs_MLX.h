@@ -16,7 +16,7 @@
 //mode[in]:i2c restart without stop or not: 
 // 1:I2C_RESTART_WITHOUT_STOP 0:I2C_RESTART_WITH_STOP
 
-#define TH32x32_I2C_RESTART_MODE	    1
+#define MXL_I2C_RESTART_MODE	    1
 #define ReadBlock0				0x09
 #define Read_VDD_MEAS_Block0	0x0D
 
@@ -25,13 +25,13 @@
 #define NOISE_OVR_RoomTemp 				20 // 大於 室溫 3 度
 
 
-#define LINE 32
-#define rowNumEnd_32 32
-#define COLUMN 24
-#define PixelEighth 128
-#define Pixel 768				//=32x24
-#define ELAMOUNT 256
-#define MAXNROFDEFECTS	5
+#define MLX_LINE 32
+//#define MLX_rowNumEnd_32 32
+#define MLX_COLUMN 24
+//#define MLX_PixelEighth 128
+#define MLX_Pixel 768				//=32x24
+//#define ELAMOUNT 256
+//#define MAXNROFDEFECTS	5
 
 
 

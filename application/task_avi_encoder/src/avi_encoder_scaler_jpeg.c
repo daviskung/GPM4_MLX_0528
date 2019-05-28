@@ -41,6 +41,7 @@
 #include "TABLE114.h"	// for FOV = 90
 #endif
 
+#include	"defs_MLX.h"
 
 
 
@@ -98,6 +99,7 @@ const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 #define SHOWTEMP_OFFSET				0
 #define TH32x32IMAGE				0
 #define TH32x32_FUN					0
+#define MLX32x24_FUN				1
 
 #define CORE_AREA_limit		4
 #define SENSOR_AREA_WIDTH	32
@@ -732,7 +734,7 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 			scale.digizoom_n = 10;
 			//#endif
 			memset((void *)&para, 0x00, sizeof(para));
-			
+
 			//para.gamma_en = 1;
 			para.boundary_color = 0x008080;
 			//para.yuv_type = C_SCALER_CTRL_TYPE_YUV;
@@ -926,9 +928,10 @@ static void TH32x32_task_entry(void const *parm)
 	//ScalerPara_t para;
 	osEvent result;
 	osThreadId id;
-	INT8U   i;
+	INT16U   i;
 
 	drv_l1_i2c_bus_handle_t th32x32_handle;
+	drv_l1_i2c_bus_handle_t MXL_handle;
 
 	sensor32x32_cmdCode sensorCmd;
 	INT8U value;
@@ -995,6 +998,15 @@ static void TH32x32_task_entry(void const *parm)
 	INT8U	PreReadBlockFlag;
 	INT8U	TmpTbInd;
 
+#if MLX32x24_FUN
+
+	INT16U	cnt;
+	INT8U  *pMLX32x32_READ_INT8U_buf;
+	INT16U  *pMLX32x32_READ_INT16U_buf;
+	int		error;
+
+#endif
+
     DEBUG_MSG("<<%s>>\r\n", __func__);
 
 	while(1)
@@ -1016,14 +1028,50 @@ static void TH32x32_task_entry(void const *parm)
 		        avi_encode_post_empty(TH32x32_SCALERUP_buf_q, pTH32x32_Para->TH32x32_TmpOutput_format_addr[i]);
 		    }
 
-			pEEcopy = EEcopy;
-			pEEaddr = EEaddr;
+
 
 			//TH32x32_TEST_HIGH();
 			TimeCnt1=xTaskGetTickCount();
 			DBG_PRINT("StartTime = %d\r\n", xTaskGetTickCount());	// xTaskGetTickCount() timebase=1ms
 			// =====================================================================
+
+#if MLX32x24_FUN
+			pEEaddr = EEaddr;
+			pMLX32x32_READ_INT8U_buf = (INT8U*)pTH32x32_Para->MLX32x24_EE_READ_8bitBUF;
+			pMLX32x32_READ_INT16U_buf = (INT16U*)pTH32x32_Para->MLX32x24_EE_READ_16bitBUF;
+
+			MXL_handle.devNumber = I2C_1;
+		    MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
+		    MXL_handle.clkRate = 800;
+
+			EEaddress16 = MLX90640_EEAddrstart;
+			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+			EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+			drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pMLX32x32_READ_INT8U_buf
+				,MLX90640_EEMemAddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 EE
+
+			for(cnt=0; cnt < MLX90640_EEMemAddrRead; cnt++)
+			{
+				i = cnt << 1;
+				*(pMLX32x32_READ_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
+					+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
+			}
+
+			DBG_PRINT("pTH32x32_Para->MLX32x24_EE_READ_8bitBUF addr=0x%0x \r\n", pTH32x32_Para->MLX32x24_EE_READ_8bitBUF);
+			DBG_PRINT("pTH32x32_Para->MLX32x24_EE_READ_16bitBUF addr=0x%0x \r\n", pTH32x32_Para->MLX32x24_EE_READ_16bitBUF);
+
+			error = CheckEEPROMValid(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF);
+
+			DBG_PRINT("CheckEEPROMValid, ERROR=%d \r\n", error);
+
+			
+#endif
+
 #if TH32x32_FUN
+
+			pEEcopy = EEcopy;
+			pEEaddr = EEaddr;
+
 			th32x32_handle.devNumber = I2C_1;
 		    th32x32_handle.slaveAddr = TH32x32_EEPROM_ID << 1 ;
 		    th32x32_handle.clkRate = 800;
@@ -1234,6 +1282,8 @@ static void TH32x32_task_entry(void const *parm)
 			//TimeCnt1 = OSTimeGet() ;
 
 			// =====================================================================
+#if TH32x32_FUN
+
 			th32x32_handle.devNumber = I2C_1;
 		    th32x32_handle.clkRate = 1000;	// 必須 再設定 
 
@@ -1249,10 +1299,8 @@ static void TH32x32_task_entry(void const *parm)
 			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
 			sensorCmd.trimValue =SetMBITUser;
 			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-#if TH32x32_FUN
 
 			DBG_PRINT("Wake up >RegAdd=0x%x trimValue=0x%x\r\n",sensorCmd.RegAdd,sensorCmd.trimValue);
-#endif
 			osDelay(10);
 			//SetMBITUser = MBIT_TRIM_10BIT_DEFAULT;
 			SetMBITUser = MBIT_TRIM_12BIT_DEFAULT;
@@ -1260,9 +1308,8 @@ static void TH32x32_task_entry(void const *parm)
 			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
 			sensorCmd.trimValue =SetMBITUser;
 			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-#if TH32x32_FUN
+
 			DBG_PRINT(" **** InitMBITTRIM (%d bit) [0x%x] \r\n",Resolution,SetMBITUser);
-#endif
 			osDelay(10);
 			sensorCmd.RegAdd =TH32x32_BIAS_TRIM_TOP;
 			sensorCmd.trimValue =BIAS_TRIM_TOP_SAMPLE_VAL;
@@ -1277,10 +1324,9 @@ static void TH32x32_task_entry(void const *parm)
            	sensorCmd.RegAdd =TH32x32_CLK_TRIM;
 			sensorCmd.trimValue =CLKTRIM_13MHz;
 			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-#if TH32x32_FUN
 
 				DBG_PRINT(" **** CLKTRIM_13MHz [0x%x] \r\n",sensorCmd.trimValue);
-#endif
+
 			osDelay(10);
            	sensorCmd.RegAdd =TH32x32_BPA_TRIM_TOP;
 			sensorCmd.trimValue =BPA_TRIM_TOP_SAMPLE_VAL;
@@ -1295,13 +1341,12 @@ static void TH32x32_task_entry(void const *parm)
            	sensorCmd.RegAdd =TH32x32_PU_SDA_TRIM;
 			sensorCmd.trimValue =PU_SDA_TRIM_SAMPLE_VAL;
 			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-#if TH32x32_FUN
+
 
 			if( TableNumberSensor != TABLENUMBER )
 				DBG_PRINT(" Error  !! TableNumberSensor[%d] is NOT  TABLENUMBER[%d] \r\n",TableNumberSensor,TABLENUMBER);
 			else
 				DBG_PRINT(" TableNumberSensor[%d] is TABLENUMBER[%d] \r\n",TableNumberSensor,TABLENUMBER);
-#endif
 			SampleTempCnt = 0;
 			while(SampleTempCnt == 0)
 			{
@@ -1399,10 +1444,14 @@ static void TH32x32_task_entry(void const *parm)
 			avg_buf_Enable=0;
 			check_MAX_pos=0;
 			pTH32x32_frame_INT16U_buf0 = (INT16U*)pTH32x32_Para->TH32x32_ColorOutputFrame_addr;
+
+#endif
+
 			pTH32x32_Para->TH32x32_OVR_RoomTemp = COLOR_TABLE_OVR_RoomTemp;
 			pTH32x32_Para->TH32x32_TABLE_SCALER_FACTOR = 18;
 			pTH32x32_Para->TH32x32_NOISE_CUTOFF_OVR_RTemp = NOISE_OVR_RoomTemp;
 			DBG_PRINT("Noise filter =%d \r\n",pTH32x32_Para->TH32x32_NOISE_CUTOFF_OVR_RTemp);
+
 
 
 			for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
@@ -1453,7 +1502,7 @@ static void TH32x32_task_entry(void const *parm)
 			pTH32x32_TmpOutput_INT16U_buf0 = (INT16U*)ready_buf;
 
 			TimeCnt1 = xTaskGetTickCount();
-
+#if TH32x32_FUN
 			if(firstRun == 1){
 			// read block[0]
 			TH32x32_ReadBlockNum=0;
@@ -1487,7 +1536,7 @@ static void TH32x32_task_entry(void const *parm)
 					DBG_PRINT("firstRun -> read block %d Btm read fail 0x%x \r\n",TH32x32_ReadBlockNum,retValue);
 
 			}
-
+#endif
 			if( pTH32x32_Para->TH32x32_ReadElecOffset_TA_startON == 1 ){
 			tmpSec++;
 			//
@@ -1505,6 +1554,8 @@ static void TH32x32_task_entry(void const *parm)
 			//
 
 			SampleTempCnt = 0;
+#if TH32x32_FUN
+
 			while(SampleTempCnt == 0)
 			{
 			osDelay(10);
@@ -1540,7 +1591,7 @@ static void TH32x32_task_entry(void const *parm)
 			retValue = I2C_sensor32x32_readDataBtm(&th32x32_handle,pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr);
 			if(retValue<0)
 				DBG_PRINT("ReadElecOffset Btm read fail 0x%x \r\n",retValue);
-
+#endif
 
 			//pBlock_EoffsetTop_buf =(INT16U*)pTH32x32_Para->TH32x32_readout_EOffTop_buf0_addr;
 			//pBlock_EoffsetBtm_buf =(INT16U*)pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr;
@@ -1568,6 +1619,7 @@ static void TH32x32_task_entry(void const *parm)
 			}
 
 
+#if TH32x32_FUN
 
 		PreReadBlockFlag = PRE_READ_DIS;
 		for( TH32x32_BlockNum = 0; TH32x32_BlockNum < 4 ; TH32x32_BlockNum++ )
@@ -1639,14 +1691,12 @@ static void TH32x32_task_entry(void const *parm)
 				dig = (signed short)TmpValue;
 				PiC =(signed long) *(pTH32x32_PixC_buffer+TH32x32_BlockNum*PixelOfBlock + cellNum -1); // PixelOfBlock = 32*4
 				Tobject = (signed int)(TH32x32_calcTO(TA, dig ,PiC ));
-#if TH32x32_FUN
 				// OUT of range check
 				if((Tobject == 0 )&&(firstRun==1)) {
 					Tobject_err=1;
 					DBG_PRINT("Tobject error at top %d/T=%d  and set 25C \r\n",cellNum + TH32x32_BlockNum*PixelOfBlock -1,(Tobject));
 					Tobject = 2730 + 250;
 				}
-#endif
 				*(pTH32x32_TmpOutput_INT16U_buf0 + TH32x32_BlockNum*PixelOfBlock + cellNum -1)
 						=Tobject;
 				#if 0
@@ -1738,14 +1788,12 @@ static void TH32x32_task_entry(void const *parm)
 						+ cellNum - tmp_start - TH32x32_BlockNum*PixelOfBlock ;
 
 				// OUT of range check
-#if TH32x32_FUN
 
 				if((Tobject == 0 ) && (tmp_i2 != 1023)) {
 					Tobject_err=1;
 					DBG_PRINT("Tobject error at %d/T=%d and set 25C \r\n",tmp_i2,Tobject);
 					Tobject = 2730 + 250;
 				}
-#endif
 				*(pTH32x32_TmpOutput_INT16U_buf0 + tmp_i2) = Tobject;
 
 			}
@@ -1760,6 +1808,7 @@ static void TH32x32_task_entry(void const *parm)
 			//************************* TH32x32_BlockNum = 0 End********************************************
 
 			// 讀取 前一個 啟動的 read block
+
 			if((PreReadBlockFlag == PRE_READ_ON) && (TH32x32_BlockNum < 3) ){
 				if(TH32x32_ReadBlockNum == TH32x32_BlockNum+1){
 					tmp_i=0;
@@ -1852,7 +1901,7 @@ static void TH32x32_task_entry(void const *parm)
 			}
 
 		}
-
+#endif
 		//
 		// Tobject 轉換完成 
 		//
@@ -1972,7 +2021,7 @@ static void TH32x32_task_entry(void const *parm)
 					if(TmpTbInd>9)	TmpTbInd=9;
 						TmpValue = ColorTable_COLD[TmpTbInd];
 				}
-			
+
 			}
 	#endif
 		#if DBG_COLOR_TABLE

@@ -17,6 +17,7 @@
 #include "drv_l1_h264.h"
 #include "drv_l2_h264enc.h"
 #include "defs_th32x32.h"
+#include "defs_MLX.h"
 
 #if (defined APP_VIDEO_ENCODER_EN) && (APP_VIDEO_ENCODER_EN == 1)
 
@@ -514,6 +515,27 @@ static INT32S TH32x32_mem_alloc(void)	//davis
     pTH32x32_Para->TH32x32_height = COLUMN;
 	pTH32x32_Para->TH32x32_ReadDataBlkSize = (PixelEighth+1)*2; // (128+1)*2;
 	pTH32x32_Para->TH32x32_ElectOffDataSize = (PixelEighth+1)*2; //(128+1)*2;
+
+//	MLX32x24_EE_READ_8bitBUF
+	buffer_size = MLX90640_EEMemAddrRead * 2;
+	
+	buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);
+		}
+		pTH32x32_Para->MLX32x24_EE_READ_8bitBUF = buffer_addr;
+		DBG_PRINT("davis --> MLX32x24_EE_READ_8bitBUF = 0x%x\r\n", pTH32x32_Para->MLX32x24_EE_READ_8bitBUF);
+
+	//	MLX32x24_EE_READ_16bitBUF
+		buffer_size = MLX90640_EEMemAddrRead*2;
+		
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+			if(buffer_addr == 0) {
+				RETURN(STATUS_FAIL);
+			}
+			pTH32x32_Para->MLX32x24_EE_READ_16bitBUF = buffer_addr;
+			DBG_PRINT("davis --> MLX32x24_EE_READ_16bitBUF = 0x%x\r\n", pTH32x32_Para->MLX32x24_EE_READ_16bitBUF);
+
 
 	// 	1 pixel takes 2 bytes => 32*32 pixel requires 32*32*2
 	buffer_size = pTH32x32_Para->TH32x32_width * pTH32x32_Para->TH32x32_height << 1;
