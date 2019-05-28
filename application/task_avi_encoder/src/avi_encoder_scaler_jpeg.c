@@ -96,8 +96,8 @@ const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 #define TH32x32_ReadStatus_WaitTime	2
 #define CHECK_ReadStatus_WAITTIME	0
 #define SHOWTEMP_OFFSET				0
-#define TH32x32IMAGE				1
-#define TH32x32_FUN					1
+#define TH32x32IMAGE				0
+#define TH32x32_FUN					0
 
 #define CORE_AREA_limit		4
 #define SENSOR_AREA_WIDTH	32
@@ -3508,7 +3508,7 @@ static void scaler_task_entry(void const *parm)
 			#else
 		    	if(videnc_display) { // davis run this
 
-			#if 1
+			#if 0
 
 					// PPU 處理 
 

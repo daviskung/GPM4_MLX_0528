@@ -243,11 +243,13 @@ void Digital_Video_Demo(void)
 	DBG_PRINT("===============================\r\n");
 
 	DBG_PRINT("\r\nDEMO in RECORD Mode\r\n");
+	
+#if 1
 
 	th32x32_thermopile_init();
 	TH32x32_TEST_LOW();
 
-#if 1
+
 		
 	nRet = TH32x32_task_create(TH32x32_TASK_PRIORITY);
 	if(nRet < 0)	DEBUG_MSG("TH32x32_task_create fail !!!");
