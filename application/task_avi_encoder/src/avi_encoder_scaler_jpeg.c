@@ -1004,6 +1004,8 @@ static void TH32x32_task_entry(void const *parm)
 	INT8U  *pMLX32x32_READ_INT8U_buf;
 	INT16U  *pMLX32x32_READ_INT16U_buf;
 	int		error;
+	paramsMLX90640_t	mlx90640;
+	INT16U	frameData[833];
 
 #endif
 
@@ -1060,9 +1062,40 @@ static void TH32x32_task_entry(void const *parm)
 			DBG_PRINT("pTH32x32_Para->MLX32x24_EE_READ_8bitBUF addr=0x%0x \r\n", pTH32x32_Para->MLX32x24_EE_READ_8bitBUF);
 			DBG_PRINT("pTH32x32_Para->MLX32x24_EE_READ_16bitBUF addr=0x%0x \r\n", pTH32x32_Para->MLX32x24_EE_READ_16bitBUF);
 
+			
+			gp_memset((INT8S *)pMLX32x24_Para,0x00,sizeof(paramsMLX90640_t));	// clear 值 
+			DBG_PRINT("clear pMLX32x24_Para \r\n");
+			
 			error = CheckEEPROMValid(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF);
 
+
 			DBG_PRINT("CheckEEPROMValid, ERROR=%d \r\n", error);
+			if(error == 0)
+		    {
+		        ExtractVDDParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+				DBG_PRINT("MLX32x24_Para->kVdd=%d, MLX32x24_Para->vdd25=%d \r\n", pMLX32x24_Para->kVdd,pMLX32x24_Para->vdd25);
+				
+				ExtractPTATParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+				DBG_PRINT("MLX32x24_Para->KvPTAT=%f, MLX32x24_Para->KtPTAT=%f ,MLX32x24_Para->vPTAT25= %d ,MLX32x24_Para->alphaPTAT=%f \r\n", 
+					pMLX32x24_Para->KvPTAT,pMLX32x24_Para->KtPTAT,pMLX32x24_Para->vPTAT25,pMLX32x24_Para->alphaPTAT);
+				
+				ExtractGainParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+				DBG_PRINT("MLX32x24_Para->gainEE=%d \r\n",pMLX32x24_Para->gainEE);
+		        
+		        ExtractTgcParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractResolutionParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractKsTaParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractKsToParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractAlphaParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractOffsetParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractKtaPixelParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractKvPixelParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractCPParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractCILCParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        error = ExtractDeviatingPixels(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);  
+        
+		    }
+    
 
 			
 #endif

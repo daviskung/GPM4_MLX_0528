@@ -38,6 +38,7 @@ GP_AVI_BITMAPINFO		avi_bitmap_info;
 GP_AVI_PCMWAVEFORMAT	avi_wave_info;
 
 TH32x32Para_t TH32x32_Para, *pTH32x32_Para;	// 2019.03.28 davis
+paramsMLX90640_t	MLX32x24_Para, *pMLX32x24_Para;
 
 
 static INT8U g_csi_index;
@@ -63,6 +64,9 @@ void avi_encode_init(void)
 
 	pTH32x32_Para = &TH32x32_Para;	// 2019.03.28 davis
     gp_memset((INT8S *)pTH32x32_Para, 0, sizeof(TH32x32Para_t));
+
+	pMLX32x24_Para = &MLX32x24_Para ;	// 2019.05.28 davis
+    gp_memset((INT8S *)pMLX32x24_Para, 0, sizeof(paramsMLX90640_t));
 
 	pAviEncPacker0->file_handle = -1;
 	pAviEncPacker0->index_handle = -1;
@@ -526,7 +530,7 @@ static INT32S TH32x32_mem_alloc(void)	//davis
 		pTH32x32_Para->MLX32x24_EE_READ_8bitBUF = buffer_addr;
 		DBG_PRINT("davis --> MLX32x24_EE_READ_8bitBUF = 0x%x\r\n", pTH32x32_Para->MLX32x24_EE_READ_8bitBUF);
 
-	//	MLX32x24_EE_READ_16bitBUF
+//	MLX32x24_EE_READ_16bitBUF
 		buffer_size = MLX90640_EEMemAddrRead*2;
 		
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);

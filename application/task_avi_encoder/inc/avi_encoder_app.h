@@ -12,6 +12,9 @@
 #include "gp_vfm.h"
 #endif
 
+#include "defs_MLX.h"
+
+
 /**************************************************************************
  *                           C O N S T A N T S                            *
  **************************************************************************/
@@ -394,6 +397,7 @@ extern catpure_t *pCap;
 extern volatile INT32S pscaler_exit_0, pscaler_exit_1;
 
 extern TH32x32Para_t *pTH32x32_Para;	//2019.03.28 davis
+extern paramsMLX90640_t *pMLX32x24_Para;	//2019.05.28 davis
 
 
 // callback function
