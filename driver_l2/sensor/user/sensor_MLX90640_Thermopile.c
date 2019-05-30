@@ -867,41 +867,65 @@ void MXL_TEST_HIGH(void)
 	gpio_write_io(C_ISR_TEST_PIN, 1);
 }
 
-#if 0
-//
-// read MXL ReadElecOffset raw data 129*2byte
-//
-INT32S I2C_sensor32x32_readDataTop(drv_l1_i2c_bus_handle_t *handle,INT8U* Id)
+int MLX90640_GetFrameData(uint8_t slaveAddr, uint16_t *frameData)
 {
-	INT32S	ret = STATUS_OK;
-	INT8U   i;
+    uint16_t dataReady = 1;
+    uint16_t controlRegister1;
+    uint16_t statusRegister;
+    int error = 1;
+    uint8_t cnt = 0;
+    
+    dataReady = 0;
+    while(dataReady == 0)
+    {
+        error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
+        if(error != 0)
+        {
+            return error;
+        }    
+        dataReady = statusRegister & 0x0008;
+    }       
+        
+    while(dataReady != 0 && cnt < 5)
+    { 
+        error = MLX90640_I2CWrite(slaveAddr, 0x8000, 0x0030);
+        if(error == -1)
+        {
+            return error;
+        }
 
-	INT8U 	EEaddr[2],*pEEaddr;
-
-	pEEaddr = EEaddr;
-	//EEaddr[0]=MXL_READ_DATA_TOP;
-	ret = drv_l1_i2c_multi_read(handle,pEEaddr,1,
-		Id,ELAMOUNT+2,MXL_I2C_RESTART_MODE);
-
-	return ret;
+		// read from 0x0400 ~ 0x073F   
+        error = MLX90640_I2CRead(slaveAddr, 0x0400, 832, frameData); 
+        if(error != 0)
+        {
+            return error;
+        }
+                   
+        error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
+        if(error != 0)
+        {
+            return error;
+        }    
+        dataReady = statusRegister & 0x0008;
+        cnt = cnt + 1;
+    }
+    
+    if(cnt > 4)
+    {
+        return -8;
+    }    
+    
+    error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
+    frameData[832] = controlRegister1;
+    frameData[833] = statusRegister & 0x0001;
+    
+    if(error != 0)
+    {
+        return error;
+    }
+    
+    return frameData[833];    
 }
-
-INT32S I2C_sensor32x32_readDataBtm(drv_l1_i2c_bus_handle_t *handle,INT8U* Id)
-{
-	INT32S	ret = STATUS_OK;
-	INT8U   i;
-
-	INT8U 	EEaddr[2],*pEEaddr;
-
-	pEEaddr = EEaddr;
-	//EEaddr[0]=MXL_READ_DATA_BOM;
-	ret = drv_l1_i2c_multi_read(handle,pEEaddr,1,
-		Id,ELAMOUNT+2,MXL_I2C_RESTART_MODE);
-
-	return ret;
-}
-
-#endif
 
 
 
