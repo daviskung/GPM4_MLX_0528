@@ -26,7 +26,7 @@
 #define TH32x32_SCCB_MODE		SCCB_HW_I2C //SCCB_HW_I2C//SCCB_GPIO
 
 
-#define MLX90640_TEST_ON		1
+#define MLX90640_TEST_ON		0
 
 /**************************************************************************
  *                         G L O B A L    D A T A                         *

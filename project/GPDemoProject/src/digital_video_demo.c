@@ -245,21 +245,19 @@ void Digital_Video_Demo(void)
 	DBG_PRINT("\r\nDEMO in RECORD Mode\r\n");
 	
 #if 1
-
-	//th32x32_thermopile_init();
 	TH32x32_TEST_LOW();
 
 	 osDelay(50);
 	MXL90640_thermopile_init();
 
 		
-	nRet = TH32x32_task_create(TH32x32_TASK_PRIORITY);
+	nRet = TH32x32_task_create(MLX32x24_TASK_PRIORITY);
 	if(nRet < 0)	DEBUG_MSG("TH32x32_task_create fail !!!");
 		 else  DBG_PRINT("TH32x32_task_create success !!! \r\n");
 		 
     osDelay(20);
 				
-	nRet = TH32x32_SCALERUP_Task_create(TH32x32_SCALERUP_PRIORITY);
+	nRet = TH32x32_SCALERUP_Task_create(MLX32x24_SCALERUP_PRIORITY);
 	if(nRet < 0) DBG_PRINT("TH32x32_SCALERUP_Task_create fail !!!");
 		else  DBG_PRINT("TH32x32_SCALERUP_Task_create success !!! \r\n");
 #endif

@@ -297,7 +297,7 @@ typedef struct TH32x32Para_s
 	INT8U   TH32x32_CMOS_OFF;
 	INT8U   TH32x32_TABLE_SCALER_FACTOR;
 	
-	INT16U  TH32x32_TA;	
+	float  TH32x32_ta;	
 	INT16U  TH32x32_TA_AD7314;		
 	INT16U  TH32x32_TMAX;
 	INT16U  TH32x32_Tmin;
@@ -309,9 +309,10 @@ typedef struct TH32x32Para_s
 	INT32U  TH32x32_display_background_frame;
 	INT32U  MLX32x24_EE_READ_8bitBUF;
 	INT32U  MLX32x24_EE_READ_16bitBUF;
-
-	 
-    
+	//INT32U  MLX32x24_READ_frameData_BUF; -> 直接以 frameData[834]
+	INT16U	frameData[MLX90640_frameDataSize];
+	
+	float  TH32x32_vdd;	
 } TH32x32Para_t;
 
 

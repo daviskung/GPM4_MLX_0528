@@ -13,16 +13,16 @@
 
 #define CONVERT_WAIT_TIME		15
 
-//mode[in]:i2c restart without stop or not: 
+//mode[in]:i2c restart without stop or not:
 // 1:I2C_RESTART_WITHOUT_STOP 0:I2C_RESTART_WITH_STOP
 
 #define MXL_I2C_RESTART_MODE	    1
 #define ReadBlock0				0x09
 #define Read_VDD_MEAS_Block0	0x0D
 
-#define COLOR_TABLE_OVR_RoomTemp 		20 // 大於 室溫 3 度
-#define COLOR_TABLE_UNDER_RoomTemp 		60 // 低於 室溫 6 度
-#define NOISE_OVR_RoomTemp 				20 // 大於 室溫 3 度
+#define COLOR_TABLE_OVR_RoomTemp 		20 // 大於 室溫 3 度 
+#define COLOR_TABLE_UNDER_RoomTemp 		60 // 低於 室溫 6 度 
+#define NOISE_OVR_RoomTemp 				20 // 大於 室溫 3 度 
 
 
 #define MLX_LINE 32
@@ -48,6 +48,15 @@
 
 #define MLX90640_EEAddrstart 		0x2400
 #define MLX90640_EEMemAddrRead 		832
+#define MLX90640_RAM_AddrRead 		832
+//
+//	增加 
+//	frameData[832] = controlRegister1;
+//  frameData[833] = statusRegister & 0x0001;
+//	配合 demo code API
+//
+#define MLX90640_frameDataSize		834		//
+#define MLX90640_RAMAddrstart 		0x0400
 
 #define MLX90640_RESOLUTION_16B 		0x00
 #define MLX90640_RESOLUTION_17B 		0x01
@@ -63,9 +72,10 @@
 #define MLX90640_REFRESH_RATE_32HZ	 	0x06
 #define MLX90640_REFRESH_RATE_64HZ	 	0x07
 
+
 #ifndef _MLX640_API_H_
 #define _MLX640_API_H_
-    
+
   typedef struct	paramsMLX90640_s
     {
         INT16 kVdd;
@@ -83,15 +93,15 @@
         float KsTa;
         float ksTo[4];
         INT16 ct[4];
-        float alpha[768];    
-        INT16 offset[768];    
-        float kta[768];    
+        float alpha[768];
+        INT16 offset[768];
+        float kta[768];
         float kv[768];
         float cpAlpha[2];
         INT16 cpOffset[2];
-        float ilChessC[3]; 
+        float ilChessC[3];
         INT16U brokenPixels[5];
-        INT16U outlierPixels[5];  
+        INT16U outlierPixels[5];
     } paramsMLX90640_t;
 #endif
 

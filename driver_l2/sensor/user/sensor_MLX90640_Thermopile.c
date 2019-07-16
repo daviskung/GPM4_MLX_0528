@@ -15,7 +15,7 @@
 //#include "defs_th32x32.h"
 #include	"defs_MLX.h"
 #include <math.h>		// for pow()
-
+#include "avi_encoder_app.h" // for MLX90640_GetVdd
 
 //_SENSOR_MLX90640_THERMOPILE
 
@@ -35,6 +35,8 @@
 /**************************************************************************
  *                         G L O B A L    D A T A                         *
  **************************************************************************/
+
+
 #if MXL_SCCB_MODE == SCCB_HW_I2C
 	static drv_l1_i2c_bus_handle_t MXL_handle;
 #endif
@@ -333,7 +335,7 @@ void ExtractKsToParameters(INT16U	*pMLX32x32_READ_INT16U_buf, paramsMLX90640_t *
     mlx90640->ct[3] = mlx90640->ct[2] + mlx90640->ct[3]*step;
 
     KsToScale = (*(pMLX32x32_READ_INT16U_buf+63) & 0x000F) + 8;
-	
+
 	DBG_PRINT("KsToScale = %d, step = %d \r\n",KsToScale,step);
     KsToScale = 1 << KsToScale;
 
@@ -661,11 +663,11 @@ void ExtractCPParameters(INT16U	*pMLX32x32_READ_INT16U_buf, paramsMLX90640_t *ml
     {
         alphaSP[0] = alphaSP[0] - 1024;
     }
-	
+
     alphaSP[0] = alphaSP[0] /  pow(2,(double)alphaScale);
 
     alphaSP[1] = (*(pMLX32x32_READ_INT16U_buf+57) & 0xFC00) >> 10;
-	
+
     if (alphaSP[1] > 31)
     {
         alphaSP[1] = alphaSP[1] - 64;
@@ -729,7 +731,7 @@ void ExtractCILCParameters(INT16U	*pMLX32x32_READ_INT16U_buf, paramsMLX90640_t *
     mlx90640->ilChessC[0] = ilChessC[0];
     mlx90640->ilChessC[1] = ilChessC[1];
     mlx90640->ilChessC[2] = ilChessC[2];
-	DBG_PRINT("calibrationModeEE ?? = %d \r\n",calibrationModeEE);
+	DBG_PRINT("calibrationModeEE ?? = 0x%x \r\n",calibrationModeEE);
 }
 
 //------------------------------------------------------------------------------
@@ -867,66 +869,156 @@ void MXL_TEST_HIGH(void)
 	gpio_write_io(C_ISR_TEST_PIN, 1);
 }
 
-int MLX90640_GetFrameData(uint8_t slaveAddr, uint16_t *frameData)
+//float MLX90640_GetVdd(uint16_t *frameData, paramsMLX90640_t *params)
+void MLX90640_GetVdd(void)
+{
+    float vdd;
+    float resolutionCorrection;
+
+    int resolutionRAM;
+
+	vdd = pTH32x32_Para->frameData[810];
+
+    if(vdd > 32767)
+    {
+        vdd = vdd - 65536;
+    }
+
+	resolutionRAM = (pTH32x32_Para->frameData[832] & 0x0C00) >> 10;
+
+	resolutionCorrection = pow(2, (double)pMLX32x24_Para->resolutionEE) / pow(2, (double)resolutionRAM);
+
+	vdd = (resolutionCorrection * vdd - pMLX32x24_Para->vdd25) / pMLX32x24_Para->kVdd + 3.3;
+
+	pTH32x32_Para->TH32x32_vdd = vdd;
+    return ;
+}
+//------------------------------------------------------------------------------
+
+//float MLX90640_GetTa(uint16_t *frameData, paramsMLX90640_t *params)
+void MLX90640_GetTa(void)
+{
+    float ptat;
+    float ptatArt;
+    float vdd;
+    float ta;
+
+    //MLX90640_GetVdd();
+	vdd = pTH32x32_Para->TH32x32_vdd;
+
+	ptat = pTH32x32_Para->frameData[800];
+	if(ptat > 32767)
+	{
+	  ptat = ptat - 65536;
+	}
+
+	ptatArt = pTH32x32_Para->frameData[768];
+	if(ptatArt > 32767)
+	{
+	    ptatArt = ptatArt - 65536;
+	}
+	ptatArt = (ptat / (ptat * pMLX32x24_Para->alphaPTAT + ptatArt)) * pow(2, (double)18);
+
+	ta = (ptatArt / (1 + pMLX32x24_Para->KvPTAT * (vdd - 3.3)) - pMLX32x24_Para->vPTAT25);
+	ta = ta / pMLX32x24_Para->KtPTAT + 25;
+	pTH32x32_Para->TH32x32_ta = ta;
+	
+    return ;
+}
+
+
+/*
+int MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t *MXL_handle, uint16_t *frameData)
 {
     uint16_t dataReady = 1;
     uint16_t controlRegister1;
     uint16_t statusRegister;
     int error = 1;
-    uint8_t cnt = 0;
-    
+	INT16U	RAMaddress16;
+	INT8U 	RAMaddr[2],*pRAMaddr;
+    INT8U I2C_Data[1664] = {0},*pI2C_Data;
+	INT16U	i,cnt;
+
+	pI2C_Data = I2C_Data;
+	pRAMaddr = RAMaddr;
     dataReady = 0;
+	cnt=0;
     while(dataReady == 0)
     {
-        error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
-        if(error != 0)
-        {
-            return error;
-        }    
+        //error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
+		error = drv_l1_reg_2byte_data_2byte_read(MXL_handle,MLX90640_AdrStatus,&statusRegister);
+		DBG_PRINT("read return error = %d \r\n",error);
+        //if(error != 0)
+        //{
+        //    return error;
+        //}
         dataReady = statusRegister & 0x0008;
-    }       
-        
-    while(dataReady != 0 && cnt < 5)
-    { 
-        error = MLX90640_I2CWrite(slaveAddr, 0x8000, 0x0030);
-        if(error == -1)
-        {
-            return error;
-        }
+    }
 
-		// read from 0x0400 ~ 0x073F   
-        error = MLX90640_I2CRead(slaveAddr, 0x0400, 832, frameData); 
-        if(error != 0)
-        {
-            return error;
-        }
-                   
-        error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
-        if(error != 0)
-        {
-            return error;
-        }    
+    while(dataReady != 0 && cnt < 5)
+    {
+        //error = MLX90640_I2CWrite(slaveAddr, 0x8000, 0x0030);
+		error = drv_l1_reg_2byte_data_2byte_write(MXL_handle,MLX90640_AdrStatus,0x0030);
+
+		DBG_PRINT("write return error = %d \r\n",error);
+        //if(error == -1)
+        //{
+        //    return error;
+        //}
+
+		// read from 0x0400 ~ 0x073F
+        //error = MLX90640_I2CRead(slaveAddr, 0x0400, 832, frameData);
+
+		RAMaddress16 = MLX90640_RAMAddrstart;
+		RAMaddr[0]=(INT8U)(RAMaddress16 >> 8);
+		RAMaddr[1]=(INT8U)(RAMaddress16 & 0xff);
+		error = drv_l1_i2c_multi_read(MXL_handle,pRAMaddr,2,pI2C_Data
+				,MLX90640_EEMemAddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
+
+		DBG_PRINT("multi_read return error = %d \r\n",error);
+
+		for(cnt=0; cnt < MLX90640_EEMemAddrRead; cnt++)
+		{
+			i = cnt << 1;
+			*frameData++ = (uint16_t)I2C_Data[i]*256 + (uint16_t)I2C_Data[i+1];
+
+		}
+
+        //if(error != 0)
+        //{
+        //    return error;
+        //}
+
+       // error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
+		error = drv_l1_reg_2byte_data_2byte_read(MXL_handle,MLX90640_AdrStatus,&statusRegister);
+		DBG_PRINT("read return error = %d \r\n",error);
+        //if(error != 0)
+        //{
+        //    return error;
+        //}
         dataReady = statusRegister & 0x0008;
         cnt = cnt + 1;
     }
-    
+
     if(cnt > 4)
     {
         return -8;
-    }    
-    
-    error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
+    }
+
+    //error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
+	error = drv_l1_reg_2byte_data_2byte_read(MXL_handle,MLX90640_AdrRegister1,&controlRegister1);
     frameData[832] = controlRegister1;
     frameData[833] = statusRegister & 0x0001;
-    
-    if(error != 0)
-    {
-        return error;
-    }
-    
-    return frameData[833];    
-}
 
+	DBG_PRINT("read return error = %d \r\n",error);
+    //if(error != 0)
+    //{
+    //    return error;
+    //}
+
+    return;
+}
+*/
 
 
 
