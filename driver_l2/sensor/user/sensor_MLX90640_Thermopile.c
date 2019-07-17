@@ -877,20 +877,20 @@ void MLX90640_GetVdd(void)
 
     int resolutionRAM;
 
-	vdd = pTH32x32_Para->frameData[810];
+	vdd = pMLX_TH32x24_Para->frameData[810];
 
     if(vdd > 32767)
     {
         vdd = vdd - 65536;
     }
 
-	resolutionRAM = (pTH32x32_Para->frameData[832] & 0x0C00) >> 10;
+	resolutionRAM = (pMLX_TH32x24_Para->frameData[832] & 0x0C00) >> 10;
 
 	resolutionCorrection = pow(2, (double)pMLX32x24_Para->resolutionEE) / pow(2, (double)resolutionRAM);
 
 	vdd = (resolutionCorrection * vdd - pMLX32x24_Para->vdd25) / pMLX32x24_Para->kVdd + 3.3;
 
-	pTH32x32_Para->TH32x32_vdd = vdd;
+	pMLX_TH32x24_Para->MLX_TH32x24_vdd = vdd;
     return ;
 }
 //------------------------------------------------------------------------------
@@ -904,15 +904,15 @@ void MLX90640_GetTa(void)
     float ta;
 
     //MLX90640_GetVdd();
-	vdd = pTH32x32_Para->TH32x32_vdd;
+	vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
 
-	ptat = pTH32x32_Para->frameData[800];
+	ptat = pMLX_TH32x24_Para->frameData[800];
 	if(ptat > 32767)
 	{
 	  ptat = ptat - 65536;
 	}
 
-	ptatArt = pTH32x32_Para->frameData[768];
+	ptatArt = pMLX_TH32x24_Para->frameData[768];
 	if(ptatArt > 32767)
 	{
 	    ptatArt = ptatArt - 65536;
@@ -921,104 +921,109 @@ void MLX90640_GetTa(void)
 
 	ta = (ptatArt / (1 + pMLX32x24_Para->KvPTAT * (vdd - 3.3)) - pMLX32x24_Para->vPTAT25);
 	ta = ta / pMLX32x24_Para->KtPTAT + 25;
-	pTH32x32_Para->TH32x32_ta = ta;
+	pMLX_TH32x24_Para->MLX_TH32x24_ta = ta;
 	
     return ;
 }
 
 
-/*
-int MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t *MXL_handle, uint16_t *frameData)
+
+void MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t MXL_handle)
 {
     uint16_t dataReady = 1;
     uint16_t controlRegister1;
     uint16_t statusRegister;
     int error = 1;
-	INT16U	RAMaddress16;
-	INT8U 	RAMaddr[2],*pRAMaddr;
-    INT8U I2C_Data[1664] = {0},*pI2C_Data;
-	INT16U	i,cnt;
+	INT16U	EEaddress16,*pEEcopy16BIT;
+	INT8U 	EEaddr[2],*pEEaddr;
+	INT16U	cnt,i,frameData_cnt;
+	
+	INT16U  *pMLX32x32_READ_INT16U_buf,*pMLX32x32_frameData_INT16U_buf;
+	INT8U  *pMLX32x32_READ_INT8U_buf;
 
-	pI2C_Data = I2C_Data;
-	pRAMaddr = RAMaddr;
-    dataReady = 0;
-	cnt=0;
-    while(dataReady == 0)
-    {
-        //error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
-		error = drv_l1_reg_2byte_data_2byte_read(MXL_handle,MLX90640_AdrStatus,&statusRegister);
-		DBG_PRINT("read return error = %d \r\n",error);
-        //if(error != 0)
-        //{
-        //    return error;
-        //}
-        dataReady = statusRegister & 0x0008;
-    }
+    pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
+	dataReady = 0;
+	frameData_cnt=0;
 
-    while(dataReady != 0 && cnt < 5)
-    {
-        //error = MLX90640_I2CWrite(slaveAddr, 0x8000, 0x0030);
-		error = drv_l1_reg_2byte_data_2byte_write(MXL_handle,MLX90640_AdrStatus,0x0030);
+	
+	DBG_PRINT("MLX90640_GetFrameData \r\n");	// return data length , if error = -1
+	
+	while(dataReady == 0)
+	{
+	    //error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
+		error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
+		DBG_PRINT("read return  = %d \r\n",error);	// return data length , if error = -1
 
-		DBG_PRINT("write return error = %d \r\n",error);
-        //if(error == -1)
-        //{
-        //    return error;
-        //}
+	    dataReady = statusRegister & 0x0008; // 1 : A new data is available in RAM ?
+
+		DBG_PRINT(" 1. dataReady = 0x%04x,frameData_cnt = %d \r\n",dataReady,frameData_cnt);
+	}
+
+	while(dataReady != 0 && frameData_cnt < 5)
+	{
+    	//error = MLX90640_I2CWrite(slaveAddr, 0x8000, 0x0030);
+    	// 0x0030 :
+    	// 1 Data in RAM overwrite is enabled
+    	// 1 In step mode - start of measurement
+    	//		(set by the customer and cleared once the measurement is done)
+    	//
+		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
+
+		DBG_PRINT("write return = %d \r\n",error);	// return data length , if error = -1
+
 
 		// read from 0x0400 ~ 0x073F
-        //error = MLX90640_I2CRead(slaveAddr, 0x0400, 832, frameData);
+	    //error = MLX90640_I2CRead(slaveAddr, 0x0400, 832, frameData);
 
-		RAMaddress16 = MLX90640_RAMAddrstart;
-		RAMaddr[0]=(INT8U)(RAMaddress16 >> 8);
-		RAMaddr[1]=(INT8U)(RAMaddress16 & 0xff);
-		error = drv_l1_i2c_multi_read(MXL_handle,pRAMaddr,2,pI2C_Data
-				,MLX90640_EEMemAddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
+		EEaddress16 = MLX90640_RAMAddrstart;
+		EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+		EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+		error = drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pMLX32x32_READ_INT8U_buf
+			,MLX90640_RAM_AddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
 
-		DBG_PRINT("multi_read return error = %d \r\n",error);
+		DBG_PRINT("multi_read return = %d \r\n",error);// return data length , if error = -1
 
-		for(cnt=0; cnt < MLX90640_EEMemAddrRead; cnt++)
+		for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
 		{
 			i = cnt << 1;
-			*frameData++ = (uint16_t)I2C_Data[i]*256 + (uint16_t)I2C_Data[i+1];
-
+			*(pMLX32x32_frameData_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
+				+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
 		}
+		// error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
+		error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
+		DBG_PRINT("read return = %d \r\n",error);
 
-        //if(error != 0)
-        //{
-        //    return error;
-        //}
+		//  需要 重新讀取 !! 改成 副程式 檢查 
+		if( error == -1)
+			DBG_PRINT(" vdd/ta error !! \r\n");
 
-       // error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
-		error = drv_l1_reg_2byte_data_2byte_read(MXL_handle,MLX90640_AdrStatus,&statusRegister);
-		DBG_PRINT("read return error = %d \r\n",error);
-        //if(error != 0)
-        //{
-        //    return error;
-        //}
-        dataReady = statusRegister & 0x0008;
-        cnt = cnt + 1;
-    }
+	    dataReady = statusRegister & 0x0008;
+	    frameData_cnt = frameData_cnt + 1;
 
-    if(cnt > 4)
-    {
-        return -8;
-    }
+		DBG_PRINT(" 2. dataReady = 0x%04x,frameData_cnt = %d \r\n",dataReady,frameData_cnt);
 
-    //error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
-	error = drv_l1_reg_2byte_data_2byte_read(MXL_handle,MLX90640_AdrRegister1,&controlRegister1);
-    frameData[832] = controlRegister1;
-    frameData[833] = statusRegister & 0x0001;
+	}
+	if(frameData_cnt > 4)
+	{
+    	//return -8;
+    	DBG_PRINT("GetFrameData => frameData_cnt > 4 error  \r\n");
+	}
 
-	DBG_PRINT("read return error = %d \r\n",error);
-    //if(error != 0)
-    //{
-    //    return error;
-    //}
+	//error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
+	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,&controlRegister1);
+	//frameData[832] = controlRegister1;
+	pMLX_TH32x24_Para->frameData[832] = controlRegister1;
+	//frameData[833] = statusRegister & 0x0001;
+	pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
+
+	DBG_PRINT(" GetFrameData read return = %d \r\n",error);
+
+	DBG_PRINT(" 3. frameData[832] = 0x%04x,subpage -> frameData[833] = 0x%04x \r\n",
+		pMLX_TH32x24_Para->frameData[832],pMLX_TH32x24_Para->frameData[833]);
 
     return;
 }
-*/
+
 
 
 

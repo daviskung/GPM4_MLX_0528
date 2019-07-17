@@ -183,7 +183,7 @@ void Digital_Video_Demo(void)
 		}
 	}
 
-	TH32x32_TEST_HIGH();
+	//MLX_TH32x24_TEST_HIGH();
 	//tft_init();
 	//tv_init();
 
@@ -243,37 +243,37 @@ void Digital_Video_Demo(void)
 	DBG_PRINT("===============================\r\n");
 
 	DBG_PRINT("\r\nDEMO in RECORD Mode\r\n");
-	
+
 #if 1
-	TH32x32_TEST_LOW();
+	//MLX_TH32x24_TEST_LOW();
 
 	 osDelay(50);
 	MXL90640_thermopile_init();
 
-		
-	nRet = TH32x32_task_create(MLX32x24_TASK_PRIORITY);
-	if(nRet < 0)	DEBUG_MSG("TH32x32_task_create fail !!!");
-		 else  DBG_PRINT("TH32x32_task_create success !!! \r\n");
-		 
+
+	nRet = MLX_TH32x24_task_create(MLX32x24_TASK_PRIORITY);
+	if(nRet < 0)	DEBUG_MSG("MLX_TH32x24_task_create fail !!!");
+		 else  DBG_PRINT("MLX_TH32x24_task_create success !!! \r\n");
+
     osDelay(20);
-				
-	nRet = TH32x32_SCALERUP_Task_create(MLX32x24_SCALERUP_PRIORITY);
-	if(nRet < 0) DBG_PRINT("TH32x32_SCALERUP_Task_create fail !!!");
-		else  DBG_PRINT("TH32x32_SCALERUP_Task_create success !!! \r\n");
+
+	nRet = MLX_TH32x24_SCALERUP_Task_create(MLX32x24_SCALERUP_PRIORITY);
+	if(nRet < 0) DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create fail !!!");
+		else  DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create success !!! \r\n");
 #endif
 
 
 
 
-	// start TH32x32
+	// start MLX_TH32x24
 
-	if(TH32x32_SCALERUP_task_start() < 0) DBG_PRINT("TH32x32_SCALERUP_task_start  fail \r\n");
-			else	DBG_PRINT("TH32x32_SCALERUP_task_start OK \r\n");
+	if(MLX_TH32x24_SCALERUP_task_start() < 0) DBG_PRINT("MLX_TH32x24_SCALERUP_task_start  fail \r\n");
+			else	DBG_PRINT("MLX_TH32x24_SCALERUP_task_start OK \r\n");
 
     osDelay(20);
 
-	if(TH32x32_task_start() < 0) DEBUG_MSG("d.TH32x32_task start fail !!\r\n");
-		else	DBG_PRINT("d.TH32x32_task start\r\n");
+	if(MLX_TH32x24_task_start() < 0) DEBUG_MSG("d.MLX_TH32x24_task start fail !!\r\n");
+		else	DBG_PRINT("d.MLX_TH32x24_task start\r\n");
 
 	while(1)
 	{

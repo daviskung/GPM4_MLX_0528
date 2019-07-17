@@ -94,13 +94,16 @@ const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 #define DBG_COLOR_TABLE		0
 
 
-#define TH32x32_ReadStatus_WaitTime	2
+#define MLX_TH32x24_ReadStatus_WaitTime	2
 #define CHECK_ReadStatus_WAITTIME	0
 #define SHOWTEMP_OFFSET				0
-#define TH32x32IMAGE				0
-#define TH32x32_FUN					0
+#define MLX_TH32x24IMAGE				0
+#define MLX_TH32x24_FUN					0
 #define MLX32x24_FUN				1
-#define	frame1_ON					0
+#define	frame1_ON					1
+
+#define	emissivity_byUser	0.95
+#define	TA_SHIFT			8
 
 
 #define CORE_AREA_limit		4
@@ -198,17 +201,17 @@ typedef enum
 
 typedef enum
 {
-	MSG_TH32x32_TASK_INIT = 0x2200,
-	MSG_TH32x32_TASK_STOP,
-	MSG_TH32x32_TASK_EXIT
-} TH32x32_SENSOR_ENUM;
+	MSG_MLX_TH32x24_TASK_INIT = 0x2200,
+	MSG_MLX_TH32x24_TASK_STOP,
+	MSG_MLX_TH32x24_TASK_EXIT
+} MLX_TH32x24_SENSOR_ENUM;
 
 typedef enum
 {
-	MSG_TH32x32_SCALERUP_TASK_INIT = 0x2300,
-	MSG_TH32x32_SCALERUP_TASK_STOP,
-	MSG_TH32x32_SCALERUP_TASK_EXIT
-} TH32x32_SCALERUP_ENUM;
+	MSG_MLX_TH32x24_SCALERUP_TASK_INIT = 0x2300,
+	MSG_MLX_TH32x24_SCALERUP_TASK_STOP,
+	MSG_MLX_TH32x24_SCALERUP_TASK_EXIT
+} MLX_TH32x24_SCALERUP_ENUM;
 
 
 typedef enum
@@ -226,8 +229,8 @@ static void scaler_task_entry(void const *parm);
 static void video_encode_task_entry(void const *parm);
 static void rotate_task_entry(void const* param);
 void scaler_video_init();
-static void TH32x32_task_entry(void const *parm);
-static void TH32x32_SCALERUP_task_entry(void const *parm);
+static void MLX_TH32x24_task_entry(void const *parm);
+static void MLX_TH32x24_SCALERUP_task_entry(void const *parm);
 
 
 /**************************************************************************
@@ -249,12 +252,12 @@ osMessageQId vid_enc_task_ack_m = NULL;
 osMessageQId video_stream_q = NULL;
 osMessageQId jpeg_fifo_q = NULL;
 
-osMessageQId TH32x32_task_q = NULL;
-osMessageQId TH32x32_task_ack_m = NULL;
+osMessageQId MLX_TH32x24_task_q = NULL;
+osMessageQId MLX_TH32x24_task_ack_m = NULL;
 
-osMessageQId TH32x32_SCALERUP_task_q = NULL;
-osMessageQId TH32x32_SCALERUP_task_ack_m = NULL;
-osMessageQId TH32x32_SCALERUP_buf_q = NULL;
+osMessageQId MLX_TH32x24_SCALERUP_task_q = NULL;
+osMessageQId MLX_TH32x24_SCALERUP_task_ack_m = NULL;
+osMessageQId MLX_TH32x24_SCALERUP_buf_q = NULL;
 
 
 #if VIDEO_TIMESTAMP
@@ -541,44 +544,44 @@ static void avi_ppu_draw_go(INT32U x, INT32U y, INT32U frame_buffer)
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-// TH32x32 I2C calc data task
+// MLX_TH32x24 I2C calc data task
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-static void TH32x32_start_timer_isr(void)
+static void MLX_TH32x24_start_timer_isr(void)
 {
 	INT8U err;
 	INT32U frame;
 
 
-	pTH32x32_Para->TH32x32_sampleCnt ++;
+	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt ++;
 
 
 
-	//if ( pTH32x32_Para->TH32x32_sampleCnt > 10 ){	// per sec
-	//if (( pTH32x32_Para->TH32x32_sampleCnt > 5 )&&(pTH32x32_Para->TH32x32_sample_startON == 0)) {	// per 500ms
-	//if (( pTH32x32_Para->TH32x32_sampleCnt > 2 )&&(pTH32x32_Para->TH32x32_sample_startON == 0)) {	// per 200ms
+	//if ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 10 ){	// per sec
+	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 5 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 500ms
+	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 2 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 200ms
 
-	if ( pTH32x32_Para->TH32x32_sampleCnt > 500 ){	// per 5 sec
-		pTH32x32_Para->TH32x32_ReadElecOffset_TA_startON = 1;
-		pTH32x32_Para->TH32x32_sampleCnt = 0;
+	if ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 500 ){	// per 5 sec
+		pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
+		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
 
 
 	}
 
 
-	if( pTH32x32_Para->TH32x32_readout_block_startON == 0 ){
+	if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ){
 
 
-		frame = avi_encode_get_empty(TH32x32_SCALERUP_buf_q);
+		frame = avi_encode_get_empty(MLX_TH32x24_SCALERUP_buf_q);
 		if(frame == 0)
-				DEBUG_MSG("L->TH32x32");
+				DEBUG_MSG("L->MLX_TH32x24");
 		else{
 
 			//DEBUG_MSG("davis -->frame = 0x%x in csi_eof_isr \r\n",frame );
-			avi_encode_post_empty(TH32x32_task_q,frame);
+			avi_encode_post_empty(MLX_TH32x24_task_q,frame);
 
-			pTH32x32_Para->TH32x32_readout_block_startON = 1;
+			pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 1;
 		}
 
 	}
@@ -587,41 +590,41 @@ static void TH32x32_start_timer_isr(void)
 
 
 
-// TH32x32_SCALERUP task
-INT32S TH32x32_SCALERUP_Task_create(INT8U pori)
+// MLX_TH32x24_SCALERUP task
+INT32S MLX_TH32x24_SCALERUP_Task_create(INT8U pori)
 {
 	INT32S nRet;
 	osThreadId id;
-	osThreadDef_t TH32x32_SCALERUP_Task = { "TH32x32_SCALERUP_task", TH32x32_SCALERUP_task_entry, osPriorityNormal, 1, C_SCALER_STACK_SIZE };
+	osThreadDef_t MLX_TH32x24_SCALERUP_Task = { "MLX_TH32x24_SCALERUP_task", MLX_TH32x24_SCALERUP_task_entry, osPriorityNormal, 1, C_SCALER_STACK_SIZE };
 
-	if(TH32x32_SCALERUP_task_q == 0) {
-		osMessageQDef_t TH32x32_scalar_q = {C_SCALER_QUEUE_MAX*2, sizeof(INT32U), 0}; //queue size double for possible null frame
+	if(MLX_TH32x24_SCALERUP_task_q == 0) {
+		osMessageQDef_t MLX_TH32x24_scalar_q = {C_SCALER_QUEUE_MAX*2, sizeof(INT32U), 0}; //queue size double for possible null frame
 
-		TH32x32_SCALERUP_task_q = osMessageCreate(&TH32x32_scalar_q, NULL);
-		if(TH32x32_SCALERUP_task_q == 0) {
+		MLX_TH32x24_SCALERUP_task_q = osMessageCreate(&MLX_TH32x24_scalar_q, NULL);
+		if(MLX_TH32x24_SCALERUP_task_q == 0) {
 			RETURN(STATUS_FAIL);
 		}
 	}
 
-	if(TH32x32_SCALERUP_task_ack_m == 0) {
-		osMessageQDef_t TH32x32_scalar_ack_q = {C_ACK_QUEUE_MAX, sizeof(INT32U), 0};
+	if(MLX_TH32x24_SCALERUP_task_ack_m == 0) {
+		osMessageQDef_t MLX_TH32x24_scalar_ack_q = {C_ACK_QUEUE_MAX, sizeof(INT32U), 0};
 
-		TH32x32_SCALERUP_task_ack_m = osMessageCreate(&TH32x32_scalar_ack_q, NULL);
-		if(TH32x32_SCALERUP_task_ack_m == 0) {
+		MLX_TH32x24_SCALERUP_task_ack_m = osMessageCreate(&MLX_TH32x24_scalar_ack_q, NULL);
+		if(MLX_TH32x24_SCALERUP_task_ack_m == 0) {
 			RETURN(STATUS_FAIL);
 		}
 	}
 
-	if(TH32x32_SCALERUP_buf_q == 0) {
-		osMessageQDef_t TH32x32_scalar_f_q = {TH32x32_SCALERUP_BUFFER_NO, sizeof(INT32U), 0};
+	if(MLX_TH32x24_SCALERUP_buf_q == 0) {
+		osMessageQDef_t MLX_TH32x24_scalar_f_q = {MLX_TH32x24_SCALERUP_BUFFER_NO, sizeof(INT32U), 0};
 
-		TH32x32_SCALERUP_buf_q = osMessageCreate(&TH32x32_scalar_f_q, NULL);
-		if(TH32x32_SCALERUP_buf_q == 0) {
+		MLX_TH32x24_SCALERUP_buf_q = osMessageCreate(&MLX_TH32x24_scalar_f_q, NULL);
+		if(MLX_TH32x24_SCALERUP_buf_q == 0) {
 			RETURN(STATUS_FAIL);
 		}
 	}
 
-	id = osThreadCreate(&TH32x32_SCALERUP_Task, (void *)NULL);
+	id = osThreadCreate(&MLX_TH32x24_SCALERUP_Task, (void *)NULL);
     if(id == 0) {
         RETURN(STATUS_FAIL);
     }
@@ -631,7 +634,7 @@ Return:
 	return nRet;
 }
 
-static void TH32x32_SCALERUP_task_entry(void const *parm)
+static void MLX_TH32x24_SCALERUP_task_entry(void const *parm)
 {
 	INT32U msg_id,ready_buf, ack_msg;
 	//INT32U sensor_frame, scaler_frame, display_frame;
@@ -646,7 +649,7 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 
 	while(1)
 	{
-		result = osMessageGet(TH32x32_SCALERUP_task_q, osWaitForever);
+		result = osMessageGet(MLX_TH32x24_SCALERUP_task_q, osWaitForever);
 		msg_id = result.value.v;
 		if((result.status != osEventMessage) || (	msg_id == 0)) {
 			continue;
@@ -654,27 +657,27 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 
 		switch(msg_id)
 		{
-		case MSG_TH32x32_SCALERUP_TASK_INIT:
-			DEBUG_MSG("[MSG_TH32x32_SCALERUP_TASK_INIT]\r\n");
+		case MSG_MLX_TH32x24_SCALERUP_TASK_INIT:
+			DEBUG_MSG("[MSG_MLX_TH32x24_SCALERUP_TASK_INIT]\r\n");
 
-			OSQFlush(TH32x32_SCALERUP_task_q);
+			OSQFlush(MLX_TH32x24_SCALERUP_task_q);
 
 			ack_msg = ACK_OK;
-			osMessagePut(TH32x32_SCALERUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			osMessagePut(MLX_TH32x24_SCALERUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			break;
 
-		case MSG_TH32x32_SCALERUP_TASK_STOP:
-			DEBUG_MSG("[MSG_TH32x32_SCALERUP_TASK_STOP]\r\n");
-			OSQFlush(TH32x32_SCALERUP_task_q);
+		case MSG_MLX_TH32x24_SCALERUP_TASK_STOP:
+			DEBUG_MSG("[MSG_MLX_TH32x24_SCALERUP_TASK_STOP]\r\n");
+			OSQFlush(MLX_TH32x24_SCALERUP_task_q);
 			ack_msg = ACK_OK;
-			osMessagePut(TH32x32_SCALERUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			osMessagePut(MLX_TH32x24_SCALERUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			break;
 
-		case MSG_TH32x32_SCALERUP_TASK_EXIT:
-			DEBUG_MSG("[MSG_TH32x32_SCALERUP_TASK_EXIT]\r\n");
+		case MSG_MLX_TH32x24_SCALERUP_TASK_EXIT:
+			DEBUG_MSG("[MSG_MLX_TH32x24_SCALERUP_TASK_EXIT]\r\n");
 
 			ack_msg = ACK_OK;
-			osMessagePut(TH32x32_SCALERUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			osMessagePut(MLX_TH32x24_SCALERUP_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			id = osThreadGetId();
     		osThreadTerminate(id);
 			break;
@@ -682,33 +685,33 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 		default:
 			ready_buf = msg_id;
 
-			if( ready_buf != pTH32x32_Para->TH32x32_ColorOutputFrame_addr ){
+			if( ready_buf != pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ){
 				DEBUG_MSG("SCALERUP get wrong frame Fail!!!\r\n");
 				goto DEFAULT_END ;
 			}
-			if(	pTH32x32_Para->TH32x32_ScalerUp_status == 1 ) {
+			if(	pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1 ) {
 				DEBUG_MSG("SCALERUP too fast !!!\r\n");
 				goto DEFAULT_END ;
 			}
 
 		#if 1
 		//
-		// TH32x32 sensor scaler -[ first time]
+		// MLX_TH32x24 sensor scaler -[ first time]
 		//
 
 			gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
 			//drv_l2_scaler_init();
 			//scale.input_format = pAviEncVidPara->sensor_output_format;
 			scale.input_format = C_SCALER_CTRL_IN_RGB565;
-			scale.input_width = pTH32x32_Para->TH32x32_width;
-			scale.input_height = pTH32x32_Para->TH32x32_height;
-			scale.input_visible_width = pTH32x32_Para->TH32x32_width;
-			scale.input_visible_height = pTH32x32_Para->TH32x32_height;
+			scale.input_width = pMLX_TH32x24_Para->MLX_TH32x24_width;
+			scale.input_height = pMLX_TH32x24_Para->MLX_TH32x24_height;
+			scale.input_visible_width = pMLX_TH32x24_Para->MLX_TH32x24_width;
+			scale.input_visible_height = pMLX_TH32x24_Para->MLX_TH32x24_height;
 			scale.input_x_offset = 0;
 			scale.input_y_offset = 0;
 
 			//scale.input_y_addr = sensor_frame;
-			scale.input_y_addr =pTH32x32_Para->TH32x32_ColorOutputFrame_addr ;
+			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
 			scale.input_u_addr = 0;
 			scale.input_v_addr = 0;
 			#if 1
@@ -725,7 +728,7 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 			scale.output_x_offset = 0;
 
 			//scale.output_y_addr = scaler_frame;
-			scale.output_y_addr = pTH32x32_Para->TH32x32_display_frame;
+			scale.output_y_addr = pMLX_TH32x24_Para->MLX_TH32x24_display_frame;
 			scale.output_u_addr = 0;
 			scale.output_v_addr = 0;
 
@@ -752,7 +755,7 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 			}
 		#endif
 
-			pTH32x32_Para->TH32x32_ScalerUp_status = 1;
+			pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 1;
 
 		DEFAULT_END:
 
@@ -762,24 +765,24 @@ static void TH32x32_SCALERUP_task_entry(void const *parm)
 }
 
 
-INT32S TH32x32_SCALERUP_task_start(void)
+INT32S MLX_TH32x24_SCALERUP_task_start(void)
 {
 	INT32S i, nRet;
 
 	//OSQFlush(scaler_frame_q);
 
 	nRet = STATUS_OK;
-	POST_MESSAGE(TH32x32_SCALERUP_task_q, MSG_TH32x32_SCALERUP_TASK_INIT, TH32x32_SCALERUP_task_ack_m, 5000);
+	POST_MESSAGE(MLX_TH32x24_SCALERUP_task_q, MSG_MLX_TH32x24_SCALERUP_TASK_INIT, MLX_TH32x24_SCALERUP_task_ack_m, 5000);
 Return:
 	return nRet;
 }
 
 
-INT32S TH32x32_SCALERUP_task_stop(void)
+INT32S MLX_TH32x24_SCALERUP_task_stop(void)
 {
 	INT32S nRet = STATUS_OK;
 
-	POST_MESSAGE(TH32x32_SCALERUP_task_q, MSG_TH32x32_SCALERUP_TASK_STOP, TH32x32_SCALERUP_task_ack_m, 5000);
+	POST_MESSAGE(MLX_TH32x24_SCALERUP_task_q, MSG_MLX_TH32x24_SCALERUP_TASK_STOP, MLX_TH32x24_SCALERUP_task_ack_m, 5000);
 
 Return:
 	return nRet;
@@ -787,96 +790,35 @@ Return:
 
 
 
-/********************************************************************
- * Function:        void calcTO(unsigned int TAmb, signed int dig, unsigned long PiC)
- *
- * Description:     calculate the object temperature via look-up table
- *
- * Dependencies:    ambient temperature (TAmb), pixel voltage (dig), pixel sensitivity coefficients (PiC)
- *******************************************************************/
-
-unsigned int TH32x32_calcTO(unsigned int TAmb, signed int dig, signed long PiC){
-	unsigned int Tobject,y;
-	signed int val;
-	signed long vx,vy,ydist;
-	static unsigned int CurTACol;
-	static signed int dTA;
-	signed long long scale;
 
 
-	//first check the position in x-axis of table
-
-	for(CurTACol=0;CurTACol<NROFTAELEMENTS;CurTACol++){
-		if((XTATemps[CurTACol]<=TAmb)&&(XTATemps[CurTACol+1]>TAmb))
-				break;
-			}
-	dTA=TAmb-XTATemps[CurTACol];
-
-
-	if((CurTACol>=NROFTAELEMENTS-1))
-			return 0;
-
-
-	//now scale dig to PCSCALEVAL
-	scale=(signed long long)PCSCALEVAL*(signed long long)dig;
-	vx=(signed long)(scale/((signed long long)PiC));
-	//vx=((signed long long)dig * (signed long long)PiC)/10 ;	// 放大 10 後 再 縮小 10
-
-	val=vx+TABLEOFFSET;
-	//now determine row
-	y=val>>ADEXPBITS;
-	ydist=(signed long)ADEQUIDISTANCE;
-	if(y<(NROFADELEMENTS-1)){
-		if(TempTable[y][CurTACol]){
-			vx=((((signed long)TempTable[y][CurTACol+1]-(signed long)TempTable[y][CurTACol])*(signed long)dTA)/(signed long)TAEQUIDISTANCE)+(signed long)TempTable[y][CurTACol];
-			vy=((((signed long)TempTable[y+1][CurTACol+1]-(signed long)TempTable[y+1][CurTACol])*(signed long)dTA)/(signed long)TAEQUIDISTANCE)+(signed long)TempTable[y+1][CurTACol];
-			Tobject=(unsigned int)((vy-vx)*((signed long)val-(signed long)YADValues[y])/ydist+(signed long)vx);
-			}
-		else
-			return 0;
-		}
-	else
-		return 0;
-
-#ifdef AdjustOffsetGain
-	val=(signed int)Tobject;
-	val+=(signed int)GlobalOffset;
-	Tobject=(unsigned short)val;
-#endif
-
-	return (unsigned short)Tobject;
-}
-
-
-
-
-INT32S TH32x32_task_create(INT8U pori)
+INT32S MLX_TH32x24_task_create(INT8U pori)
 {
 	INT32S nRet;
 	osThreadId id;
-	osThreadDef_t TH32x32_task = { "TH32x32_task", TH32x32_task_entry, osPriorityNormal, 1, C_SCALER_STACK_SIZE };
+	osThreadDef_t MLX_TH32x24_task = { "MLX_TH32x24_task", MLX_TH32x24_task_entry, osPriorityNormal, 1, C_SCALER_STACK_SIZE };
 
 
-	if(TH32x32_task_q == 0) {
-		osMessageQDef_t TH32x32_q = {C_SCALER_QUEUE_MAX*2, sizeof(INT32U), 0}; //queue size double for possible null frame
+	if(MLX_TH32x24_task_q == 0) {
+		osMessageQDef_t MLX_TH32x24_q = {C_SCALER_QUEUE_MAX*2, sizeof(INT32U), 0}; //queue size double for possible null frame
 
-		TH32x32_task_q = osMessageCreate(&TH32x32_q, NULL);
-		if(TH32x32_task_q == 0) {
+		MLX_TH32x24_task_q = osMessageCreate(&MLX_TH32x24_q, NULL);
+		if(MLX_TH32x24_task_q == 0) {
 			RETURN(STATUS_FAIL);
 		}
 	}
 
-	if(TH32x32_task_ack_m == 0) {
-		osMessageQDef_t TH32x32_ack_q = {C_ACK_QUEUE_MAX, sizeof(INT32U), 0};
+	if(MLX_TH32x24_task_ack_m == 0) {
+		osMessageQDef_t MLX_TH32x24_ack_q = {C_ACK_QUEUE_MAX, sizeof(INT32U), 0};
 
-		TH32x32_task_ack_m = osMessageCreate(&TH32x32_ack_q, NULL);
-		if(TH32x32_task_ack_m == 0) {
+		MLX_TH32x24_task_ack_m = osMessageCreate(&MLX_TH32x24_ack_q, NULL);
+		if(MLX_TH32x24_task_ack_m == 0) {
 			RETURN(STATUS_FAIL);
 		}
 	}
 
 
-	id = osThreadCreate(&TH32x32_task, (void *)NULL);
+	id = osThreadCreate(&MLX_TH32x24_task, (void *)NULL);
     if(id == 0) {
         RETURN(STATUS_FAIL);
     }
@@ -886,21 +828,21 @@ Return:
 	return nRet;
 }
 
-INT32S TH32x32_task_start(void)
+INT32S MLX_TH32x24_task_start(void)
 {
 	INT32S nRet;
 
 	nRet = STATUS_OK;
-	POST_MESSAGE(TH32x32_task_q, MSG_TH32x32_TASK_INIT, TH32x32_task_ack_m, 5000);
+	POST_MESSAGE(MLX_TH32x24_task_q, MSG_MLX_TH32x24_TASK_INIT, MLX_TH32x24_task_ack_m, 5000);
 Return:
 	return nRet;
 }
 
-INT32S TH32x32_task_stop(void)
+INT32S MLX_TH32x24_task_stop(void)
 {
 	INT32S nRet = STATUS_OK;
 
-	POST_MESSAGE(TH32x32_task_q, MSG_TH32x32_TASK_STOP, TH32x32_task_ack_m, 5000);
+	POST_MESSAGE(MLX_TH32x24_task_q, MSG_MLX_TH32x24_TASK_STOP, MLX_TH32x24_task_ack_m, 5000);
 
 Return:
 	return nRet;
@@ -922,9 +864,150 @@ Return:
 }
 */
 
+//------------------------------------------------------------------------------
+// example1:
+// Calculate  the  object  temperatures  for  all  the  pixels  in  a  frame,
+// object  emissivity  is  0.95  and  the reflected temperature is 23.15°C (measured by the user):
+// example2:
+// Calculate  the  object  temperatures  for  all  the  pixels  in  a  frame,
+// object  emissivity  is  0.95  and  the reflected temperature is the sensor ambient temperature:
 
-/*
-void MLX90640_GetImage(float *result)
+void MLX90640_CalculateTo(float emissivity, float tr)
+{
+    float vdd;
+    float ta;
+    float ta4;
+    float tr4;
+    float taTr;
+    float gain;
+    float irDataCP[2];
+    float irData;
+    float alphaCompensated;
+    uint8_t mode;
+    int8_t ilPattern;
+    int8_t chessPattern;
+    int8_t pattern;
+    int8_t conversionPattern;
+    float Sx;
+    float To;
+    float alphaCorrR[4];
+    int8_t range;
+    uint16_t subPage;
+    int i,pixelNumber;
+
+
+	subPage = pMLX_TH32x24_Para->frameData[833];
+    vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
+    ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
+
+    ta4 = pow((ta + 273.15), (double)4);
+    tr4 = pow((tr + 273.15), (double)4);
+    taTr = tr4 - (tr4-ta4)/emissivity;
+
+    alphaCorrR[0] = 1 / (1 + pMLX32x24_Para->ksTo[0] * 40);
+    alphaCorrR[1] = 1 ;
+    alphaCorrR[2] = (1 + pMLX32x24_Para->ksTo[2] * pMLX32x24_Para->ct[2]);
+    alphaCorrR[3] = alphaCorrR[2] * (1 + pMLX32x24_Para->ksTo[3] * (pMLX32x24_Para->ct[3] - pMLX32x24_Para->ct[2]));
+
+//------------------------- Gain calculation -----------------------------------
+    gain = pMLX_TH32x24_Para->frameData[778];
+    if(gain > 32767)
+    {
+        gain = gain - 65536;
+    }
+
+    gain = pMLX32x24_Para->gainEE / gain;
+
+//------------------------- To calculation -------------------------------------
+    mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
+
+    irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
+    irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
+    for( i = 0; i < 2; i++)
+    {
+        if(irDataCP[i] > 32767)
+        {
+            irDataCP[i] = irDataCP[i] - 65536;
+        }
+        irDataCP[i] = irDataCP[i] * gain;
+    }
+    irDataCP[0] = irDataCP[0] - pMLX32x24_Para->cpOffset[0] * (1 + pMLX32x24_Para->cpKta * (ta - 25)) * (1 + pMLX32x24_Para->cpKv * (vdd - 3.3));
+    if( mode ==  pMLX32x24_Para->calibrationModeEE)
+    {
+        irDataCP[1] = irDataCP[1] - pMLX32x24_Para->cpOffset[1] * (1 + pMLX32x24_Para->cpKta * (ta - 25)) * (1 + pMLX32x24_Para->cpKv * (vdd - 3.3));
+    }
+    else
+    {
+      irDataCP[1] = irDataCP[1] - (pMLX32x24_Para->cpOffset[1] + pMLX32x24_Para->ilChessC[0]) * (1 + pMLX32x24_Para->cpKta * (ta - 25)) * (1 + pMLX32x24_Para->cpKv * (vdd - 3.3));
+    }
+
+    for( pixelNumber = 0; pixelNumber < 768; pixelNumber++)
+    {
+        ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
+        chessPattern = ilPattern ^ (pixelNumber - (pixelNumber/2)*2);
+        conversionPattern = ((pixelNumber + 2) / 4 - (pixelNumber + 3) / 4 + (pixelNumber + 1) / 4 - pixelNumber / 4) * (1 - 2 * ilPattern);
+
+        if(mode == 0)
+        {
+          pattern = ilPattern;
+        }
+        else
+        {
+          pattern = chessPattern;
+        }
+
+        if(pattern == pMLX_TH32x24_Para->frameData[833])
+        {
+            irData = pMLX_TH32x24_Para->frameData[pixelNumber];
+            if(irData > 32767)
+            {
+                irData = irData - 65536;
+            }
+            irData = irData * gain;
+
+            irData = irData - pMLX32x24_Para->offset[pixelNumber]*(1 + pMLX32x24_Para->kta[pixelNumber]*(ta - 25))*(1 + pMLX32x24_Para->kv[pixelNumber]*(vdd - 3.3));
+            if(mode !=  pMLX32x24_Para->calibrationModeEE)
+            {
+              irData = irData + pMLX32x24_Para->ilChessC[2] * (2 * ilPattern - 1) - pMLX32x24_Para->ilChessC[1] * conversionPattern;
+            }
+
+            irData = irData / emissivity;
+
+            irData = irData - pMLX32x24_Para->tgc * irDataCP[subPage];
+
+            alphaCompensated = (pMLX32x24_Para->alpha[pixelNumber] - pMLX32x24_Para->tgc * pMLX32x24_Para->cpAlpha[subPage])*(1 + pMLX32x24_Para->KsTa * (ta - 25));
+
+            Sx = pow((double)alphaCompensated, (double)3) * (irData + alphaCompensated * taTr);
+            Sx = sqrt(sqrt(Sx)) * pMLX32x24_Para->ksTo[1];
+
+            To = sqrt(sqrt(irData/(alphaCompensated * (1 - pMLX32x24_Para->ksTo[1] * 273.15) + Sx) + taTr)) - 273.15;
+
+            if(To < pMLX32x24_Para->ct[1])
+            {
+                range = 0;
+            }
+            else if(To < pMLX32x24_Para->ct[2])
+            {
+                range = 1;
+            }
+            else if(To < pMLX32x24_Para->ct[3])
+            {
+                range = 2;
+            }
+            else
+            {
+                range = 3;
+            }
+
+            To = sqrt(sqrt(irData / (alphaCompensated * alphaCorrR[range] * (1 + pMLX32x24_Para->ksTo[range] * (To - pMLX32x24_Para->ct[range]))) + taTr)) - 273.15;
+
+            pMLX_TH32x24_Para->result[pixelNumber] = To;
+        }
+    }
+}
+
+
+void MLX90640_GetImage(void)
 {
     float vdd;
     float ta;
@@ -939,13 +1022,14 @@ void MLX90640_GetImage(float *result)
     int8_t conversionPattern;
     float image;
     uint16_t subPage;
+    int i,pixelNumber;
 
-    subPage = frameData[833];
-    vdd = pTH32x32_Para->TH32x32_vdd;
-    ta = pTH32x32_Para->TH32x32_ta;
+    subPage = pMLX_TH32x24_Para->frameData[833];
+    vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
+    ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
 
 //------------------------- Gain calculation -----------------------------------
-    gain = pTH32x32_Para->frameData[778];
+    gain = pMLX_TH32x24_Para->frameData[778];
     if(gain > 32767)
     {
         gain = gain - 65536;
@@ -954,7 +1038,9 @@ void MLX90640_GetImage(float *result)
     gain = pMLX32x24_Para->gainEE / gain; // K-gain
 
 //------------------------- Image calculation -------------------------------------
-    mode = (pTH32x32_Para->frameData[832] & 0x1000) >> 5;
+    mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
+	DBG_PRINT(" GetImage mode = 0x%04x \r\n",mode);
+
 //
 // mode 決定 是 0 Interleaved (TV) mode / 1 Chess pattern (default)
 //
@@ -962,9 +1048,9 @@ void MLX90640_GetImage(float *result)
 // to  filter  the  CP  readings  at  this  point  of calculation.
 // A good practice would be to apply a Moving Average Filter with length of 16 or higher.
 //
-    irDataCP[0] = pTH32x32_Para->frameData[776];
-    irDataCP[1] = pTH32x32_Para->frameData[808];
-    for( int i = 0; i < 2; i++)
+    irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
+    irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
+    for( i = 0; i < 2; i++)
     {
         if(irDataCP[i] > 32767)
         {
@@ -980,6 +1066,8 @@ void MLX90640_GetImage(float *result)
 
     if( mode ==  pMLX32x24_Para->calibrationModeEE)
     {
+
+		DBG_PRINT(" GetImage mode == calibrationModeEE \r\n");
         irDataCP[1] = irDataCP[1] - pMLX32x24_Para->cpOffset[1] * (1 + pMLX32x24_Para->cpKta * (ta - 25)) * (1 + pMLX32x24_Para->cpKv * (vdd - 3.3));
     }
     else
@@ -987,7 +1075,7 @@ void MLX90640_GetImage(float *result)
       irDataCP[1] = irDataCP[1] - (pMLX32x24_Para->cpOffset[1] + pMLX32x24_Para->ilChessC[0]) * (1 + pMLX32x24_Para->cpKta * (ta - 25)) * (1 + pMLX32x24_Para->cpKv * (vdd - 3.3));
     }
 
-    for( int pixelNumber = 0; pixelNumber < 768; pixelNumber++)
+    for( pixelNumber = 0; pixelNumber < 768; pixelNumber++)
     {
         ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
         chessPattern = ilPattern ^ (pixelNumber - (pixelNumber/2)*2);
@@ -1002,9 +1090,9 @@ void MLX90640_GetImage(float *result)
           pattern = chessPattern; // use -> Chess patter
         }
 
-        if(pattern == pTH32x32_Para->frameData[833]) // frameData[833] 定義 subpage 0 or 1
+        if(pattern == pMLX_TH32x24_Para->frameData[833]) // frameData[833] 定義 subpage 0 or 1
         {
-            irData = pTH32x32_Para->frameData[pixelNumber];
+            irData = pMLX_TH32x24_Para->frameData[pixelNumber];
             if(irData > 32767)
             {
                 irData = irData - 65536;
@@ -1023,14 +1111,14 @@ void MLX90640_GetImage(float *result)
 
             image = irData/alphaCompensated;
 
-            result[pixelNumber] = image;
+            pMLX_TH32x24_Para->result[pixelNumber] = image;
         }
     }
 }
 
-*/
 
-static void TH32x32_task_entry(void const *parm)
+
+static void MLX_TH32x24_task_entry(void const *parm)
 {
 	INT32U msg_id,ready_buf, ack_msg;
 	//INT32U sensor_frame, scaler_frame, display_frame;
@@ -1060,18 +1148,18 @@ static void TH32x32_task_entry(void const *parm)
 	INT32U	PTATsum;
 	float	PixCMin,PixCMax;
 	INT16U	SetMBITCalib,SetBIASCalib,SetCLKCalib,SetBPACalib,SetPUCalib,VddCalib;
-	INT16S	*pTH32x32_VddCompOff_buffer,*pTH32x32_VddCompGrad_buffer;
-	INT16S	*pTH32x32_ThGrad_buffer,*pTH32x32_ThOff_buffer;
-	INT8U 	*pTH32x32_tmp8B_to16B;
+	INT16S	*pMLX_TH32x24_VddCompOff_buffer,*pMLX_TH32x24_VddCompGrad_buffer;
+	INT16S	*pMLX_TH32x24_ThGrad_buffer,*pMLX_TH32x24_ThOff_buffer;
+	INT8U 	*pMLX_TH32x24_tmp8B_to16B;
 	INT8U 	NrOfDefPix,VddScaling,VddScalingOff;
 
-	unsigned long	*pTH32x32_PixC_buffer;
+	unsigned long	*pMLX_TH32x24_PixC_buffer;
 
 
-	INT16U  *pTH32x32_BadPixAdr_buf;
-	INT8U  	*pTH32x32_BadPixMaskAdr_buf;
+	INT16U  *pMLX_TH32x24_BadPixAdr_buf;
+	INT8U  	*pMLX_TH32x24_BadPixMaskAdr_buf;
 	unsigned long	PixC;		// INT32U
-	INT16U  *pTH32x32_frame_INT16U_buf0;
+	INT16U  *pMLX_TH32x24_frame_INT16U_buf0;
 	float	tmpPixC;
 	unsigned long long DividerVdd,DividerVdd2;
 	signed long	VoltageLong,PowerGradScale;
@@ -1083,17 +1171,17 @@ static void TH32x32_task_entry(void const *parm)
 	INT8U	firstRun,SampleTempCnt;
 	//INT8U   data_buf[1];
 
-	INT8U   TH32x32_ReadBlockNum;
+	INT8U   MLX_TH32x24_ReadBlockNum;
 
 	INT16U  *pBlock_data_buf,*pBlock_EoffsetTop_buf,*pBlock_EoffsetBtm_buf;
 
 	INT8U	retValue;
-	INT16U  *pTH32x32_INT16U_avg_buf[AVG_buf_len];
-	INT16U  *pTH32x32_TmpOutput_INT16U_buf0;
+	INT16U  *pMLX_TH32x24_INT16U_avg_buf[AVG_buf_len];
+	INT16U  *pMLX_TH32x24_TmpOutput_INT16U_buf0;
 	INT8U	sampleCnt;
 	INT16U	 ReadTempValue,Tmin_number,Tmax_number,TminTable_number,TmaxTable_number;
 	signed int	TobjectRange,Tmax,Tmin,TminTable,TmaxTable;	// INT32S
-	INT8U   TH32x32_BlockNum , Blk_startIdex;
+	INT8U   MLX_TH32x24_BlockNum , Blk_startIdex;
 	signed long VDD_MEAS_sum,VDD_MEAS_TOP,VDD_MEAS_BTM;
 	unsigned long Vddlong;	// signed long	Vddlong;
 	signed short	DeltaVdd;
@@ -1119,19 +1207,19 @@ static void TH32x32_task_entry(void const *parm)
 
     INT16U 	dataReady,statusRegister,controlRegister1 ;
 
-    float ta,vdd;
+    float ta,vdd,tr_byUser;
 	int resolutionRAM;
     float resolutionCorrection;
     float ptat;
     float ptatArt;
-
+	INT16U pixelNumber;
 #endif
 
     DEBUG_MSG("<<%s>>\r\n", __func__);
 
 	while(1)
 	{
-		result = osMessageGet(TH32x32_task_q, osWaitForever);
+		result = osMessageGet(MLX_TH32x24_task_q, osWaitForever);
 		msg_id = result.value.v;
 		if((result.status != osEventMessage) || (	msg_id == 0)) {
 			continue;
@@ -1139,18 +1227,18 @@ static void TH32x32_task_entry(void const *parm)
 
 		switch(msg_id)
 		{
-		case MSG_TH32x32_TASK_INIT:
-			DEBUG_MSG("[MSG_TH32x32_TASK_INIT]\r\n");
+		case MSG_MLX_TH32x24_TASK_INIT:
+			DEBUG_MSG("[MSG_MLX_TH32x24_TASK_INIT]\r\n");
 
-			OSQFlush(TH32x32_task_q);
+			OSQFlush(MLX_TH32x24_task_q);
 
-			for(i=0; i<TH32x32_SCALERUP_BUFFER_NO; i++) {
-		        avi_encode_post_empty(TH32x32_SCALERUP_buf_q, pTH32x32_Para->TH32x32_TmpOutput_format_addr[i]);
+			for(i=0; i<MLX_TH32x24_SCALERUP_BUFFER_NO; i++) {
+		        avi_encode_post_empty(MLX_TH32x24_SCALERUP_buf_q, pMLX_TH32x24_Para->MLX_TH32x24_TmpOutput_format_addr[i]);
 		    }
 
 
 
-			//TH32x32_TEST_HIGH();
+			//MLX_TH32x24_TEST_HIGH();
 			TimeCnt1=xTaskGetTickCount();
 			DBG_PRINT("StartTime = %d\r\n", xTaskGetTickCount());	// xTaskGetTickCount() timebase=1ms
 
@@ -1158,8 +1246,8 @@ static void TH32x32_task_entry(void const *parm)
 
 			pEEcopy16BIT = EEcopy16BIT;
 			pEEaddr = EEaddr;
-			pMLX32x32_READ_INT8U_buf = (INT8U*)pTH32x32_Para->MLX32x24_EE_READ_8bitBUF;
-			pMLX32x32_READ_INT16U_buf = (INT16U*)pTH32x32_Para->MLX32x24_EE_READ_16bitBUF;
+			pMLX32x32_READ_INT8U_buf = (INT8U*)pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF;
+			pMLX32x32_READ_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF;
 
 			MXL_handle.devNumber = I2C_1;
 		    MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
@@ -1213,59 +1301,56 @@ static void TH32x32_task_entry(void const *parm)
 					+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
 			}
 			DBG_PRINT("************************************************** \r\n");
-			DBG_PRINT("pTH32x32_Para->MLX32x24_EE_READ_8bitBUF addr=0x%0x \r\n", pTH32x32_Para->MLX32x24_EE_READ_8bitBUF);
-			DBG_PRINT("pTH32x32_Para->MLX32x24_EE_READ_16bitBUF addr=0x%0x \r\n", pTH32x32_Para->MLX32x24_EE_READ_16bitBUF);
+			DBG_PRINT("pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF addr=0x%0x \r\n", pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF);
+			DBG_PRINT("pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF addr=0x%0x \r\n", pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF);
 
 			gp_memset((INT8S *)pMLX32x24_Para,0x00,sizeof(paramsMLX90640_t));	// clear 值 
 			DBG_PRINT("clear pMLX32x24_Para \r\n");
 
-			error = CheckEEPROMValid(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF);
+			error = CheckEEPROMValid(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF);
 
 
 			DBG_PRINT("CheckEEPROMValid, ERROR=%d \r\n", error);
 			if(error == 0)
 		    {
-		        ExtractVDDParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractVDDParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
 				DBG_PRINT("MLX32x24_Para->kVdd=%d, MLX32x24_Para->vdd25=%d \r\n", pMLX32x24_Para->kVdd,pMLX32x24_Para->vdd25);
 
-				ExtractPTATParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+				ExtractPTATParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
 				DBG_PRINT("MLX32x24_Para->KvPTAT=%f, MLX32x24_Para->KtPTAT=%f ,MLX32x24_Para->vPTAT25= %d ,MLX32x24_Para->alphaPTAT=%f \r\n",
 					pMLX32x24_Para->KvPTAT,pMLX32x24_Para->KtPTAT,pMLX32x24_Para->vPTAT25,pMLX32x24_Para->alphaPTAT);
 
-				ExtractGainParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+				ExtractGainParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
 				DBG_PRINT("MLX32x24_Para->gainEE=%d \r\n",pMLX32x24_Para->gainEE);
 
-		        ExtractTgcParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-        		ExtractResolutionParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-		        ExtractKsTaParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-        		ExtractKsToParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-		        ExtractAlphaParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-        		ExtractOffsetParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-		        ExtractKtaPixelParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-        		ExtractKvPixelParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-		        ExtractCPParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-        		ExtractCILCParameters(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
-		        error = ExtractDeviatingPixels(pTH32x32_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractTgcParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractResolutionParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractKsTaParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractKsToParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractAlphaParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractOffsetParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractKtaPixelParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractKvPixelParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        ExtractCPParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+        		ExtractCILCParameters(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
+		        error = ExtractDeviatingPixels(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF, pMLX32x24_Para);
 
 		    }
 
 
-			gp_memset((INT8S *)pTH32x32_Para->frameData,0x00,MLX90640_frameDataSize*2);	// clear 值 
+			gp_memset((INT8S *)pMLX_TH32x24_Para->frameData,0x00,MLX90640_frameDataSize*2);	// clear 值 
 			DBG_PRINT("clear frameData \r\n");
 
-			// 可以 與 pTH32x32_Para->MLX32x24_EE_READ_8bitBUF 共用 ??
+			// 可以 與 pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF 共用 ??
 
 			DBG_PRINT("************ GetFrameData frame 0 ************************************** \r\n");
-			//MLX90640_GetFrameData(&MXL_handle, pMLX32x32_frameData_INT16U_buf);
+			//MLX90640_GetFrameData(&MXL_handle); 暫不執行 
 
-
-
-			pMLX32x32_frameData_INT16U_buf = (INT16U*)pTH32x32_Para->frameData;
+			pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
 		    dataReady = 0;
 			frameData_cnt=0;
 		    while(dataReady == 0)
 		    {
-		        //error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
 				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
 				DBG_PRINT("read return  = %d \r\n",error);	// return data length , if error = -1
 
@@ -1276,7 +1361,6 @@ static void TH32x32_task_entry(void const *parm)
 
 		    while(dataReady != 0 && frameData_cnt < 5)
 		    {
-        		//error = MLX90640_I2CWrite(slaveAddr, 0x8000, 0x0030);
         		// 0x0030 :
         		// 1 Data in RAM overwrite is enabled
         		// 1 In step mode - start of measurement
@@ -1304,7 +1388,6 @@ static void TH32x32_task_entry(void const *parm)
 					*(pMLX32x32_frameData_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
 						+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
 				}
-				// error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
 				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
 				DBG_PRINT("read return = %d \r\n",error);
 
@@ -1327,42 +1410,56 @@ static void TH32x32_task_entry(void const *parm)
 		    //error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
 			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,&controlRegister1);
 		    //frameData[832] = controlRegister1;
-			pTH32x32_Para->frameData[832] = controlRegister1;
+			pMLX_TH32x24_Para->frameData[832] = controlRegister1;
 		    //frameData[833] = statusRegister & 0x0001;
-			pTH32x32_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
+			pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
 
 			DBG_PRINT(" GetFrameData read return = %d \r\n",error);
 
 			DBG_PRINT(" 3. frameData[832] = 0x%04x,subpage -> frameData[833] = 0x%04x \r\n",
-				pTH32x32_Para->frameData[832],pTH32x32_Para->frameData[833]);
+				pMLX_TH32x24_Para->frameData[832],pMLX_TH32x24_Para->frameData[833]);
+
+
 
 			MLX90640_GetVdd();
 
-			DBG_PRINT(" pTH32x32_Para->TH32x32_vdd = 0x%04x (%f) \r\n"
-				,pTH32x32_Para->TH32x32_vdd,pTH32x32_Para->TH32x32_vdd);
+			DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd = 0x%04x (%f) \r\n"
+				,pMLX_TH32x24_Para->MLX_TH32x24_vdd,pMLX_TH32x24_Para->MLX_TH32x24_vdd);
 
 			MLX90640_GetTa();
 
-			DBG_PRINT(" pTH32x32_Para->TH32x32_ta = 0x%04x (%f) \r\n"
-				,pTH32x32_Para->TH32x32_ta,pTH32x32_Para->TH32x32_ta);
+			DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
+				,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
 
+			tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
 
-			//MLX90640_GetImage(uint16_t *frameData, const paramsMLX90640 *params, float *result);
+			//MLX90640_GetImage();
+			//DBG_PRINT(" MLX90640_GetImage-> End \r\n");
+
+			MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
+			DBG_PRINT(" MLX90640_CalculateTo-> End \r\n");
+			for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+				
+				if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+				DBG_PRINT("(%d)",(int)pMLX_TH32x24_Para->result[pixelNumber]);
+				
+			}
+
 
 #if frame1_ON
-			DBG_PRINT("************ GetFrameData frame 1 ************************************** \r\n");
+			DBG_PRINT("\r\n ************ GetFrameData frame 1 ************************************** \r\n");
 			//MLX90640_GetFrameData(&MXL_handle, pMLX32x32_frameData_INT16U_buf);
 
 
 
-			pMLX32x32_frameData_INT16U_buf = (INT16U*)pTH32x32_Para->frameData;
+			pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
 		    dataReady = 0;
 			frameData_cnt=0;
 		    while(dataReady == 0)
 		    {
 		        //error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
 				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
-				DBG_PRINT("read return error = %d \r\n",error);
+				DBG_PRINT("read return = %d \r\n",error);
 
 		        dataReady = statusRegister & 0x0008; // 1 : A new data is available in RAM ?
 
@@ -1379,7 +1476,7 @@ static void TH32x32_task_entry(void const *parm)
         		//
 				error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
 
-				DBG_PRINT("write return error = %d \r\n",error);
+				DBG_PRINT("write return  = %d \r\n",error);
 
 
 				// read from 0x0400 ~ 0x073F
@@ -1391,7 +1488,7 @@ static void TH32x32_task_entry(void const *parm)
 				error = drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pMLX32x32_READ_INT8U_buf
 					,MLX90640_RAM_AddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
 
-				DBG_PRINT("multi_read return error = %d \r\n",error);
+				DBG_PRINT("multi_read return = %d \r\n",error);
 
 				for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
 				{
@@ -1401,7 +1498,7 @@ static void TH32x32_task_entry(void const *parm)
 				}
 				// error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
 				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
-				DBG_PRINT("read return error = %d \r\n",error);
+				DBG_PRINT("read return = %d \r\n",error);
 
 		        dataReady = statusRegister & 0x0008;
 		        frameData_cnt = frameData_cnt + 1;
@@ -1418,23 +1515,50 @@ static void TH32x32_task_entry(void const *parm)
 		    //error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
 			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,&controlRegister1);
 		    //frameData[832] = controlRegister1;
-			pTH32x32_Para->frameData[832] = controlRegister1;
+			pMLX_TH32x24_Para->frameData[832] = controlRegister1;
 		    //frameData[833] = statusRegister & 0x0001;
-			pTH32x32_Para->frameData[833] = statusRegister & 0x0001;
+			pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;
 
-			DBG_PRINT(" GetFrameData read return error = %d \r\n",error);
+			DBG_PRINT(" GetFrameData read return = %d \r\n",error);
 
-			DBG_PRINT(" frame 1->3. frameData[832] = 0x%04x,frameData[833] = 0x%04x \r\n",
-				pTH32x32_Para->frameData[832],pTH32x32_Para->frameData[833]);
+			DBG_PRINT(" frame 1->3. frameData[832] = 0x%04x,subpage ->frameData[833] = 0x%04x \r\n",
+				pMLX_TH32x24_Para->frameData[832],pMLX_TH32x24_Para->frameData[833]);
+
+			MLX90640_GetVdd();
+
+			DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd = 0x%04x (%f) \r\n"
+				,pMLX_TH32x24_Para->MLX_TH32x24_vdd,pMLX_TH32x24_Para->MLX_TH32x24_vdd);
+
+			MLX90640_GetTa();
+
+			DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
+				,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
+
+
+			//MLX90640_GetImage();
+			//DBG_PRINT(" frame 1-> MLX90640_GetImage-> End \r\n");
+
+			tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
+
+			MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
+			DBG_PRINT(" frame 1-> MLX90640_CalculateTo-> End \r\n");
+			
+			for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+				
+				if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+				DBG_PRINT("(%d)",(int)pMLX_TH32x24_Para->result[pixelNumber]);
+				
+			}
+			
 #endif
 
 #endif
 
 			TimeCnt2 = xTaskGetTickCount();
-			DBG_PRINT("EndTime = %d\r\n", xTaskGetTickCount());
+			DBG_PRINT("\r\n EndTime = %d\r\n", xTaskGetTickCount());
 			DBG_PRINT("TotalTime = %d ms\r\n",TimeCnt2 - TimeCnt1);
 
-			TH32x32_TEST_LOW();
+			//MLX_TH32x24_TEST_LOW();
 			//TimeCnt1 = OSTimeGet() ;
 
 			// =====================================================================
@@ -1450,49 +1574,49 @@ static void TH32x32_task_entry(void const *parm)
 
 
 			// *************************
-			pTH32x32_Para->TH32x32_OVR_RoomTemp = COLOR_TABLE_OVR_RoomTemp;
-			pTH32x32_Para->TH32x32_TABLE_SCALER_FACTOR = 18;
-			pTH32x32_Para->TH32x32_NOISE_CUTOFF_OVR_RTemp = NOISE_OVR_RoomTemp;
-			DBG_PRINT("Noise filter =%d \r\n",pTH32x32_Para->TH32x32_NOISE_CUTOFF_OVR_RTemp);
+			pMLX_TH32x24_Para->MLX_TH32x24_OVR_RoomTemp = COLOR_TABLE_OVR_RoomTemp;
+			pMLX_TH32x24_Para->MLX_TH32x24_TABLE_SCALER_FACTOR = 18;
+			pMLX_TH32x24_Para->MLX_TH32x24_NOISE_CUTOFF_OVR_RTemp = NOISE_OVR_RoomTemp;
+			DBG_PRINT("Noise filter =%d \r\n",pMLX_TH32x24_Para->MLX_TH32x24_NOISE_CUTOFF_OVR_RTemp);
 
 
 
 			for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
-				pTH32x32_INT16U_avg_buf[tmp_i]= (INT16U*)pTH32x32_Para->TH32x32_avg_buf_addr[tmp_i];
+				pMLX_TH32x24_INT16U_avg_buf[tmp_i]= (INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmp_i];
 			}
 
 
 			// start timer_B
-			pTH32x32_Para->TH32x32_sampleCnt = 0;
-			pTH32x32_Para->TH32x32_ReadElecOffset_TA_startON = 1;
-			pTH32x32_Para->TH32x32_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
+			pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
+			pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
+			pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
 			TmaxTable = 250;
 			TminTable = 250;
 			ReadTempValue = 250; // 先設定 標準溫度 
 			tmpSec=0;
-			retValue = timer_freq_setup(TIMER_B, pTH32x32_Para->TH32x32_sampleHz, 0, TH32x32_start_timer_isr );
-			DBG_PRINT("Set TH32x32_ReadElecOffset_timer_isr ret--> %d \r\n",retValue) ;
+			retValue = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
+			DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d \r\n",retValue) ;
 
 
 			firstRun = 0;
 			SampleTempCnt = 0;
 
 			ack_msg = ACK_OK;
-			osMessagePut(TH32x32_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			osMessagePut(MLX_TH32x24_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			break;
 
-		case MSG_TH32x32_TASK_STOP:
-			DEBUG_MSG("[MSG_TH32x32_TASK_STOP]\r\n");
-			OSQFlush(TH32x32_task_q);
+		case MSG_MLX_TH32x24_TASK_STOP:
+			DEBUG_MSG("[MSG_MLX_TH32x24_TASK_STOP]\r\n");
+			OSQFlush(MLX_TH32x24_task_q);
 			ack_msg = ACK_OK;
-			osMessagePut(TH32x32_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			osMessagePut(MLX_TH32x24_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			break;
 
-		case MSG_TH32x32_TASK_EXIT:
-			DEBUG_MSG("[MSG_TH32x32_TASK_EXIT]\r\n");
+		case MSG_MLX_TH32x24_TASK_EXIT:
+			DEBUG_MSG("[MSG_MLX_TH32x24_TASK_EXIT]\r\n");
 
 			ack_msg = ACK_OK;
-			osMessagePut(TH32x32_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			osMessagePut(MLX_TH32x24_task_ack_m, (INT32U)&ack_msg, osWaitForever);
 			id = osThreadGetId();
     		osThreadTerminate(id);
 			break;
@@ -1502,54 +1626,20 @@ static void TH32x32_task_entry(void const *parm)
 			//sensor_frame = msg_id & 0x7fffffff;
 			ready_buf = msg_id;
 
-			pTH32x32_TmpOutput_INT16U_buf0 = (INT16U*)ready_buf;
+			pMLX_TH32x24_TmpOutput_INT16U_buf0 = (INT16U*)ready_buf;
 
 			TimeCnt1 = xTaskGetTickCount();
-#if TH32x32_FUN
-			if(firstRun == 1){
-			// read block[0]
-			TH32x32_ReadBlockNum=0;
 
-			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-			sensorCmd.trimValue =(Read_VDD_MEAS_Block0 | (TH32x32_ReadBlockNum << 4)); // start / VDD_MEAS /wake
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-
-			tmp_i=0;
-			do{
-				osDelay(TH32x32_ReadStatus_WaitTime);
-				EEaddr[0]=TH32x32_STATUS_REG;
-				drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
-				tmp_i++;
-			}while( ( ((EEcopy[0]&0x35) != ((sensorCmd.trimValue & 0x35) | 0x01)) )|| (tmp_i > 10) );
-			if (tmp_i > 10)
-				DBG_PRINT("Read_VDD_MEAS_Block %d fail\r\n ",TH32x32_ReadBlockNum); // 曾經 出現 EEcopy[0]=0x05
-		#if CHECK_ReadStatus_WAITTIME
-			else{
-				DBG_PRINT("firstRun = 1,Read_VDD_MEAS_Block %d ack= 0x%x wait=%d \r\n ",
-					TH32x32_ReadBlockNum,EEcopy[0],tmp_i);
-			}
-		#endif
-			retValue = I2C_sensor32x32_readDataTop(&th32x32_handle,
-					pTH32x32_Para->TH32x32_readout_top_block_buf_addr[0][TH32x32_ReadBlockNum]);
-			if(retValue<0)
-					DBG_PRINT("firstRun -> read block %d Top read fail 0x%x \r\n",TH32x32_ReadBlockNum,retValue);
-			retValue = I2C_sensor32x32_readDataBtm(&th32x32_handle,
-					pTH32x32_Para->TH32x32_readout_btm_block_buf_addr[0][TH32x32_ReadBlockNum]);
-			if(retValue<0)
-					DBG_PRINT("firstRun -> read block %d Btm read fail 0x%x \r\n",TH32x32_ReadBlockNum,retValue);
-
-			}
-#endif
-			if( pTH32x32_Para->TH32x32_ReadElecOffset_TA_startON == 1 ){
+			if( pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON == 1 ){
 			tmpSec++;
 			//
 			// 每5秒 一次 AD7314_readTempature(暫不執行) 
 			//
 			ReadTempValue = TA-2730; // 先設定 TA 為標準溫度 
-			pTH32x32_Para->TH32x32_TA_AD7314 = ReadTempValue;
-			pTH32x32_Para->TH32x32_TMAX = Tmax;	// Tmax Tmin initial value 250 25C
-			pTH32x32_Para->TH32x32_Tmin = Tmin;
-			//pTH32x32_Para->TH32x32_TA = TA-2730;
+			pMLX_TH32x24_Para->MLX_TH32x24_TA_AD7314 = ReadTempValue;
+			pMLX_TH32x24_Para->MLX_TH32x24_TMAX = Tmax;	// Tmax Tmin initial value 250 25C
+			pMLX_TH32x24_Para->MLX_TH32x24_Tmin = Tmin;
+			//pMLX_TH32x24_Para->MLX_TH32x24_TA = TA-2730;
 
 			//
 			// 每5秒 一次 產生 	  ReadElecOffset & TA
@@ -1557,44 +1647,7 @@ static void TH32x32_task_entry(void const *parm)
 			//
 
 			SampleTempCnt = 0;
-#if TH32x32_FUN
 
-			while(SampleTempCnt == 0)
-			{
-			osDelay(10);
-			sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-			sensorCmd.trimValue =READ_ELEC_OFFSET;	// start / blink /wake 產生 ReadElecOffset & TA
-			drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-
-			tmp_i=0;
-			do{
-				osDelay(TH32x32_ReadStatus_WaitTime);
-				EEaddr[0]=TH32x32_STATUS_REG;
-				drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
-				tmp_i++;
-			}while(((EEcopy[0]&0x03)!=0x03) || (tmp_i > 10) );
-			if (tmp_i > 10)
-				DBG_PRINT("ReadElecOffset fail\r\n "); // 曾經 出現 EEcopy[0]=0x05
-			else{
-				//DBG_PRINT("ReadElecOffset 0x%x wait=%d \r\n ",EEcopy[0],tmp_i);
-				SampleTempCnt = 1;
-				}
-			}
-			//
-			// read TH32x32 ReadElecOffset raw data 129*2byte
-			//
-
-			// clear for test only
-			//gp_memset((INT8S *)pTH32x32_Para->TH32x32_readout_EOffTop_buf0_addr,0x00,sizeof(INT16U)*(ELAMOUNTHALF+1));	// clear 值 
-			//gp_memset((INT8S *)pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr,0x00,sizeof(INT16U)*(ELAMOUNTHALF+1));	// clear 值 
-
-			retValue = I2C_sensor32x32_readDataTop(&th32x32_handle,pTH32x32_Para->TH32x32_readout_EOffTop_buf0_addr);
-			if(retValue<0)
-				DBG_PRINT("ReadElecOffset Top read fail 0x%x \r\n",retValue);
-			retValue = I2C_sensor32x32_readDataBtm(&th32x32_handle,pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr);
-			if(retValue<0)
-				DBG_PRINT("ReadElecOffset Btm read fail 0x%x \r\n",retValue);
-#endif
 
 			//pBlock_EoffsetTop_buf =(INT16U*)pTH32x32_Para->TH32x32_readout_EOffTop_buf0_addr;
 			//pBlock_EoffsetBtm_buf =(INT16U*)pTH32x32_Para->TH32x32_readout_EOffBtm_buf0_addr;
@@ -1617,294 +1670,11 @@ static void TH32x32_task_entry(void const *parm)
 
 			// 每5秒 一次 ReadElecOffset	& TA -> end
 
-			pTH32x32_Para->TH32x32_ReadElecOffset_TA_startON = 0;
+			pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 0;
 
 			}
 
 
-#if TH32x32_FUN
-
-		PreReadBlockFlag = PRE_READ_DIS;
-		for( TH32x32_BlockNum = 0; TH32x32_BlockNum < 4 ; TH32x32_BlockNum++ )
-		{
-			//
-			//************************* TOP Block ***********************************************
-			//
-			pBlock_data_buf = (INT16U*)pTH32x32_Para->TH32x32_readout_top_block_buf_addr[0][TH32x32_BlockNum];
-			//
-			// ****************** 計算 Block0 Top0 與 offset 差值 以 INT16U 格式計算 *****
-			//
-			read_EValue= (INT16U) *(pBlock_data_buf);
-			TOBigEndian(read_EValue);
-			//DBG_PRINT("block[%d] read_EValue=0x%x \r\n",TH32x32_BlockNum,read_EValue);
-
-			VDD_MEAS_TOP=(read_EValue<<(16-Resolution));
-			Vddlong = (unsigned long)VDD_MEAS_TOP;
-			//DBG_PRINT("< VDD= T[%d] 0x%x ,",TH32x32_BlockNum, VDD_MEAS_TOP);
-
-			DeltaVdd = (signed short) ((signed long)Vddlong-(signed long)VddCalib);
-			//DBG_PRINT("[T%d-0x%x ,",TH32x32_BlockNum, Vddlong);
-
-			tmp_start = 1;
-			for (rowNum = rowNumEnd_32 * 1+1; rowNum < rowNumEnd_32*5+1; rowNum = rowNum+ rowNumEnd_32) // rowNum from 32*1 to 32*4
-			{
-				//DBG_PRINT("loop start rowNum = %d \r\n",rowNum);
-			for(cellNum = tmp_start;cellNum < rowNum ; cellNum++){	// cellNum form  1 to 32 /every row
-
-				read_EValue= (INT16U) *(pBlock_data_buf+cellNum);
-				TOBigEndian(read_EValue);
-				offset_EValue=(INT16U) *(pBlock_EoffsetTop_buf + cellNum);
-				TOBigEndian(offset_EValue);
-
-
-				//if((TH32x32_BlockNum*640 + cellNum -1) == 21) {
-				//	DBG_PRINT("[cellNumber = %d",(TH32x32_BlockNum*640 + cellNum -1));
-				//}
-
-				// ****************** Block0 Top0 *****
-				// tmp_start=1;
-				// TH32x32 byte1/byte2 is PTAT or VDD , is not data !!
-				// cell[0]	 ~ cell[31]
-				//	.....
-				// cell[96] ~ cell[127]
-
-				// Top substract the thermal Offsets
-				Th_cellNum = cellNum + TH32x32_BlockNum*PixelOfBlock -1 ; // PixelOfBlock = 32*4
-				//chkValue = *(pTH32x32_ThGrad_buffer+Th_cellNum);
-				VoltageLong=(signed long)((signed short)*(pTH32x32_ThGrad_buffer+Th_cellNum));
-				VoltageLong*=(signed long)PTATLong;
-				VoltageLong/=PowerGradScale;
-				VoltageLong+=(signed long)*(pTH32x32_ThOff_buffer+Th_cellNum);
-
-				// Top VDD Compensation
-				Vdd_cellNum = cellNum - 1 ;
-				VoltageLongLong=(signed long long)*(pTH32x32_VddCompGrad_buffer + Vdd_cellNum);
-				VoltageLongLong*=(signed long long)PTATLong;
-				VoltageLongLong/=(signed long long)DividerVdd;
-				VoltageLongLong+=(signed long long)*(pTH32x32_VddCompOff_buffer + Vdd_cellNum);
-				VoltageLongLong*=(signed long long)DeltaVdd;
-				VoltageLongLong/=(signed long long)DividerVdd2;
-				VoltageLong+=(signed long)VoltageLongLong;
-
-
-				TmpValue = (signed short)( (read_EValue<<(16-Resolution)) - (signed short)VoltageLong );
-				//  Top substract the elect. Offsets
-				TmpValue = TmpValue - (signed short)(offset_EValue<<(16-Resolution));
-
-				dig = (signed short)TmpValue;
-				PiC =(signed long) *(pTH32x32_PixC_buffer+TH32x32_BlockNum*PixelOfBlock + cellNum -1); // PixelOfBlock = 32*4
-				Tobject = (signed int)(TH32x32_calcTO(TA, dig ,PiC ));
-				// OUT of range check
-				if((Tobject == 0 )&&(firstRun==1)) {
-					Tobject_err=1;
-					DBG_PRINT("Tobject error at top %d/T=%d  and set 25C \r\n",cellNum + TH32x32_BlockNum*PixelOfBlock -1,(Tobject));
-					Tobject = 2730 + 250;
-				}
-				*(pTH32x32_TmpOutput_INT16U_buf0 + TH32x32_BlockNum*PixelOfBlock + cellNum -1)
-						=Tobject;
-				#if 0
-				if(cellNum == 95)
-					DBG_PRINT("cell %d blk %d  -TH %d > Vdd %d \r\n",cellNum, TH32x32_BlockNum,Th_cellNum,Vdd_cellNum);
-				if(cellNum == 96)
-					DBG_PRINT("cell %d blk %d  -TH %d > Vdd %d \r\n",cellNum, TH32x32_BlockNum,Th_cellNum,Vdd_cellNum);
-				if(cellNum == 97)
-					DBG_PRINT("cell %d blk %d  -TH %d > Vdd %d \r\n",cellNum, TH32x32_BlockNum,Th_cellNum,Vdd_cellNum);
-				#endif
-
-			}
-			tmp_start=cellNum;
-
-			//DBG_PRINT("T %d Vdd %d, rowNum = %d \r\n", tmp_start,Vdd_cellNum,rowNum);
-			}
-
-			//
-			//************************* BOTTOM Block ***********************************************
-			//
-			pBlock_data_buf = (INT16U*)pTH32x32_Para->TH32x32_readout_btm_block_buf_addr[0][TH32x32_BlockNum];
-			read_EValue= (INT16U) *(pBlock_data_buf);
-			TOBigEndian(read_EValue);
-			VDD_MEAS_BTM=(read_EValue<<(16-Resolution));
-			Vddlong = (unsigned long)VDD_MEAS_BTM;
-			DeltaVdd = (signed short) ((signed long)Vddlong-(signed long)VddCalib);
-			//DBG_PRINT(" B%d-0x%x ]",TH32x32_BlockNum, Vddlong);
-			//DBG_PRINT(" B[%d] 0x%x>" ,TH32x32_BlockNum,VDD_MEAS_BTM);
-
-			tmp_start=1;
-			Blk_startIdex = 0;
-
-			for (rowNum = rowNumEnd_32*1+1; rowNum < rowNumEnd_32*5+1; rowNum = rowNum+ rowNumEnd_32) // rowNum from 32*1 to 32*4
-			{
-
-			for(cellNum = tmp_start;cellNum < rowNum ; cellNum++){	// cellNum form  1 to 32 /every row
-
-				read_EValue= (INT16U) *(pBlock_data_buf+cellNum);
-				TOBigEndian(read_EValue);
-
-				offset_EValue=(INT16U) *(pBlock_EoffsetBtm_buf+cellNum);
-				TOBigEndian(offset_EValue);
-
-				// ****************** Block0 Bottom 0 *****
-				// tmp_start=1
-				// TH32x32 byte1/byte2 is PTAT or VDD , is not data
-				// cell[31*32+1]=[992+1]代表 cell 992的資料      ~ cell[32*32]=[1023+1]代表 cell 1023的資料 
-				//	.....
-				// cell[16*32+1]   ~ cell[17*32]
-
-				//
-				// Bottom substract the thermal Offsets
-				// (ThGrad/ThOff/Pij 存放資料位置 與 pix data 讀取順序相同 )
-				// PixelOfBlock = 32*4 , PixelOfBlock * 4 block = 128 * 4
-				//
-				Th_cellNum =PixelOfBlock*4 + TH32x32_BlockNum*PixelOfBlock + cellNum - 1 ;
-				VoltageLong=(signed long)((signed short)*(pTH32x32_ThGrad_buffer+Th_cellNum));
-				VoltageLong*=(signed long)PTATLong;
-				VoltageLong/=PowerGradScale;
-				VoltageLong+=(signed long)*(pTH32x32_ThOff_buffer+Th_cellNum);
-
-
-				// Bottom VDD Compensation
-				Vdd_cellNum = PixelOfBlock + cellNum - 1 ;;
-				VoltageLongLong=(signed long long)*(pTH32x32_VddCompGrad_buffer + Vdd_cellNum);
-				VoltageLongLong*=(signed long long)PTATLong;
-				VoltageLongLong/=(signed long long)DividerVdd;
-				VoltageLongLong+=(signed long long)*(pTH32x32_VddCompOff_buffer + Vdd_cellNum);
-				VoltageLongLong*=(signed long long)DeltaVdd;
-				VoltageLongLong/=(signed long long)DividerVdd2;
-				VoltageLong+=(signed long)VoltageLongLong;
-
-
-				TmpValue = (signed short)( (read_EValue<<(16-Resolution)) - (signed short)VoltageLong );
-				// Bottom substract the elect. Offsets
-				TmpValue = TmpValue - (signed short)(offset_EValue<<(16-Resolution));
-
-				// ambient temperature (TAmb), pixel voltage (dig), pixel sensitivity coefficients (PiC)
-				//TH32x32_calcTO(unsigned int TAmb, signed int dig, signed long PiC)
-				dig = (signed short)TmpValue;
-				//PiC =(signed long) *(pTH32x32_PixC_buffer+ 2560 + TH32x32_BlockNum*640 + cellNum -1);
-				// 改成 
-				//PiC =(signed long) *(pTH32x32_PixC_buffer+ PixelOfBlock*4 + TH32x32_BlockNum*PixelOfBlock + cellNum -1);
-				//
-				PiC =(signed long) *(pTH32x32_PixC_buffer+ Th_cellNum);
-				Tobject = (signed int)(TH32x32_calcTO(TA, dig ,PiC ));
-
-				tmp_i2 =Blk_start_ary[Blk_startIdex]
-						+ cellNum - tmp_start - TH32x32_BlockNum*PixelOfBlock ;
-
-				// OUT of range check
-
-				if((Tobject == 0 ) && (tmp_i2 != 1023)) {
-					Tobject_err=1;
-					DBG_PRINT("Tobject error at %d/T=%d and set 25C \r\n",tmp_i2,Tobject);
-					Tobject = 2730 + 250;
-				}
-				*(pTH32x32_TmpOutput_INT16U_buf0 + tmp_i2) = Tobject;
-
-			}
-			tmp_start = cellNum;
-			Blk_startIdex++;
-			//DBG_PRINT("THb %d,", Th_cellNum);
-			//DBG_PRINT("B %d-THb %d > Vdd %d,", tmp_start,Th_cellNum,Vdd_cellNum);
-			//DBG_PRINT("\r\n");
-			}
-
-
-			//************************* TH32x32_BlockNum = 0 End********************************************
-
-			// 讀取 前一個 啟動的 read block
-
-			if((PreReadBlockFlag == PRE_READ_ON) && (TH32x32_BlockNum < 3) ){
-				if(TH32x32_ReadBlockNum == TH32x32_BlockNum+1){
-					tmp_i=0;
-					do{
-						osDelay(TH32x32_ReadStatus_WaitTime);
-						EEaddr[0]=TH32x32_STATUS_REG;
-						drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
-						tmp_i++;
-					}while( ( ((EEcopy[0]&0x35) != ((sensorCmd.trimValue & 0x35) | 0x01)) )|| (tmp_i > 10) );
-					if (tmp_i > 10)
-						DBG_PRINT("Read_VDD_MEAS_Block %d fail\r\n ",TH32x32_ReadBlockNum); // 曾經 出現 EEcopy[0]=0x05
-					//else{
-						//DBG_PRINT("PRE_READ_ON,Read_VDD_MEAS_Block %d ack= 0x%x wait=%d \r\n ",
-						//	TH32x32_ReadBlockNum,EEcopy[0],tmp_i);
-					//}
-
-					retValue = I2C_sensor32x32_readDataTop(&th32x32_handle,
-						pTH32x32_Para->TH32x32_readout_top_block_buf_addr[0][TH32x32_ReadBlockNum]);
-					if(retValue<0)
-						DBG_PRINT("Read_VDD_MEAS_Block Top read fail 0x%x \r\n",retValue);
-					retValue = I2C_sensor32x32_readDataBtm(&th32x32_handle,
-						pTH32x32_Para->TH32x32_readout_btm_block_buf_addr[0][TH32x32_ReadBlockNum]);
-					if(retValue<0)
-						DBG_PRINT("Read_VDD_MEAS_Block Btm read fail 0x%x \r\n",retValue);
-				}
-
-				//
-				// 預先執行   next block  "starts a conversion"	   -TH32x32_ReadBlockNum=3
-				//
-
-				TH32x32_ReadBlockNum++;
-				if(TH32x32_ReadBlockNum < 4 ){
-				sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-				sensorCmd.trimValue =(Read_VDD_MEAS_Block0 | (TH32x32_ReadBlockNum << 4)); // start / VDD_MEAS /wake
-				drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-				}
-
-			}
-
-
-			//
-			// 讀取 read next block -1 (第一次進入 loop TH32x32_BlockNum = 0 )
-			//
-
-			if(PreReadBlockFlag == PRE_READ_DIS){
-				TH32x32_ReadBlockNum=TH32x32_BlockNum + 1;	// TH32x32_ReadBlockNum = 1
-				if( TH32x32_ReadBlockNum < 4 ){
-					sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-					sensorCmd.trimValue =(Read_VDD_MEAS_Block0 | (TH32x32_ReadBlockNum << 4)); // start / VDD_MEAS /wake
-					drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-
-					tmp_i=0;
-					do{
-						osDelay(TH32x32_ReadStatus_WaitTime);
-						EEaddr[0]=TH32x32_STATUS_REG;
-						drv_l1_i2c_multi_read(&th32x32_handle,pEEaddr,1,pEEcopy,2,TH32x32_I2C_RESTART_MODE);
-						tmp_i++;
-					}while( ( ((EEcopy[0]&0x35) != ((sensorCmd.trimValue & 0x35) | 0x01)) )|| (tmp_i > 10) );
-					if (tmp_i > 10)
-						DBG_PRINT("Read_VDD_MEAS_Block %d fail\r\n ",TH32x32_ReadBlockNum); // 曾經 出現 EEcopy[0]=0x05
-					//else{
-						//DBG_PRINT("PRE_READ_DIS,Read_VDD_MEAS_Block %d ack= 0x%x wait=%d \r\n ",
-						//TH32x32_ReadBlockNum,EEcopy[0],tmp_i);
-					//}
-
-				// 讀取 read block
-					retValue = I2C_sensor32x32_readDataTop(&th32x32_handle,
-						pTH32x32_Para->TH32x32_readout_top_block_buf_addr[0][TH32x32_ReadBlockNum]);
-					if(retValue<0)
-						DBG_PRINT("Read_VDD_MEAS_Block Top read fail 0x%x \r\n",retValue);
-					retValue = I2C_sensor32x32_readDataBtm(&th32x32_handle,
-						pTH32x32_Para->TH32x32_readout_btm_block_buf_addr[0][TH32x32_ReadBlockNum]);
-					if(retValue<0)
-						DBG_PRINT("Read_VDD_MEAS_Block Btm read fail 0x%x \r\n",retValue);
-				}
-
-
-
-			// 預先 執行     next block "starts a conversion" cmd	   -2
-
-				TH32x32_ReadBlockNum=TH32x32_BlockNum + 2;	// TH32x32_ReadBlockNum = 2
-				PreReadBlockFlag = PRE_READ_ON;
-
-				sensorCmd.RegAdd =TH32x32_CONFIG_REG;
-				sensorCmd.trimValue =(Read_VDD_MEAS_Block0 | (TH32x32_ReadBlockNum << 4)); // start / VDD_MEAS /wake
-				drv_l1_reg_1byte_data_1byte_write(&th32x32_handle,sensorCmd.RegAdd,sensorCmd.trimValue);
-			//
-			// 讀取 read next block -1 (第一次進入 loop) 結束 
-			//
-			}
-
-		}
-#endif
 		//
 		// Tobject 轉換完成 
 		//
@@ -1921,17 +1691,17 @@ static void TH32x32_task_entry(void const *parm)
 		// diff temp at the same top 8 arrary
 		// 偵測 移動 (暫不執行) 
 		//
-		pTH32x32_Para->TH32x32_move_dect = 0;
+		pMLX_TH32x24_Para->MLX_TH32x24_move_dect = 0;
 
 		//
 		// avg Tobject
 		//
 			if(avg_buf_Enable ==0){ 	// [0] ~ [3] <- new data
 				for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
-					gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i]),
+					gp_memcpy((INT8S *)(pMLX_TH32x24_INT16U_avg_buf[tmp_i]),
 					(INT8S *)ready_buf,Pixel*2);
 				}
-				gp_memcpy((INT8S *)(pTH32x32_TmpOutput_INT16U_buf0),
+				gp_memcpy((INT8S *)(pMLX_TH32x24_TmpOutput_INT16U_buf0),
 					(INT8S *)ready_buf,Pixel*2);
 				avg_buf_Enable=1;
 				check_MAX_pos=0;
@@ -1940,19 +1710,19 @@ static void TH32x32_task_entry(void const *parm)
 			else{
 			// move new data to avg buf
 				for(tmp_i=0;tmp_i<(AVG_buf_len-1);tmp_i++){ 	// [0]<-[1] ,[1]<-[2] ,[2]<-[3]
-					gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i]),
-						(INT8S *)(pTH32x32_INT16U_avg_buf[tmp_i+1]),Pixel*2);
+					gp_memcpy((INT8S *)(pMLX_TH32x24_INT16U_avg_buf[tmp_i]),
+						(INT8S *)(pMLX_TH32x24_INT16U_avg_buf[tmp_i+1]),Pixel*2);
 				}
-				gp_memcpy((INT8S *)(pTH32x32_INT16U_avg_buf[AVG_buf_len-1]), // [3] <- new data
+				gp_memcpy((INT8S *)(pMLX_TH32x24_INT16U_avg_buf[AVG_buf_len-1]), // [3] <- new data
 						(INT8S *)ready_buf,Pixel*2);
 				for(cellNum=0;cellNum<Pixel;cellNum++){
 					Tobject = 0;
 					for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
-						TmpValue=*(pTH32x32_INT16U_avg_buf[tmp_i] + cellNum ); //
+						TmpValue=*(pMLX_TH32x24_INT16U_avg_buf[tmp_i] + cellNum ); //
 						Tobject = Tobject +(INT32U)TmpValue;
 					}
 					Tobject = Tobject/AVG_buf_len;
-					*(pTH32x32_TmpOutput_INT16U_buf0 + cellNum)= Tobject;
+					*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + cellNum)= Tobject;
 					//if(((Tobject - 3030)>30) ||((3030- Tobject)>30))DBG_PRINT("%d,",Tobject-2730);
 					//if(((Tobject - 3330)>30) ||((3330- Tobject)>30))DBG_PRINT("%d,",Tobject-2730);
 				}
@@ -1968,13 +1738,13 @@ static void TH32x32_task_entry(void const *parm)
 		//	pTH32x32_Para->TH32x32_NOISE_CUTOFF_OVR_RTemp
 		//
 
-		ReadTempValue = pTH32x32_Para->TH32x32_TA_AD7314 + 2730 ; // 暫定 TA 當 戶外溫度 
+		ReadTempValue = pMLX_TH32x24_Para->MLX_TH32x24_TA_AD7314 + 2730 ; // 暫定 TA 當 戶外溫度 
 		//ReadTempValue = 250 + 2730	;		// 25C  當 戶外溫度 
 
 			//DBG_PRINT("Tobject -start \r\n");
 
 		for(cellNum=0;cellNum<Pixel;cellNum++){
-			Tobject = *(pTH32x32_TmpOutput_INT16U_buf0 + cellNum);
+			Tobject = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + cellNum);
 		//
 		// find Tmax Tmin at CORE area
 		//
@@ -2033,7 +1803,7 @@ static void TH32x32_task_entry(void const *parm)
 					DBG_PRINT("\r\n");
 		#endif
 
-			*(pTH32x32_TmpOutput_INT16U_buf0 + cellNum)
+			*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + cellNum)
 							=(signed short)TmpValue;
 		}
 			//DBG_PRINT("Tobject -End\r\n");
@@ -2048,10 +1818,10 @@ static void TH32x32_task_entry(void const *parm)
 		//
 
 		for(cellNum=0;cellNum<Pixel;cellNum++){
-				Tobject = *(pTH32x32_TmpOutput_INT16U_buf0 + cellNum);
+				Tobject = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + cellNum);
 				tmp_i = cellNum/rowNumEnd_32;
 				tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
-				*(pTH32x32_frame_INT16U_buf0 + tmp_i2 ) //
+				*(pMLX_TH32x24_frame_INT16U_buf0 + tmp_i2 ) //
 							=Tobject;
 		}
 
@@ -2060,9 +1830,9 @@ static void TH32x32_task_entry(void const *parm)
 			//
 			// pTH32x32_frame_INT16U_buf0 不能放入 avi_encode_post_empty()
 			//
-			avi_encode_post_empty(TH32x32_SCALERUP_task_q, pTH32x32_Para->TH32x32_ColorOutputFrame_addr);	// 送出 計算好的	通知	 SCALERUP Task
-			avi_encode_post_empty(TH32x32_SCALERUP_buf_q,ready_buf);						// 回收 給 TH32x32_start_timer_isr
-			if( pTH32x32_Para->TH32x32_readout_block_startON == 1 ) pTH32x32_Para->TH32x32_readout_block_startON = 0;
+			avi_encode_post_empty(MLX_TH32x24_SCALERUP_task_q, pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr);	// 送出 計算好的	通知	 SCALERUP Task
+			avi_encode_post_empty(MLX_TH32x24_SCALERUP_buf_q,ready_buf);						// 回收 給 MLX_TH32x24_start_timer_isr
+			if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 ) pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
 
 			TimeCnt2 = xTaskGetTickCount();
 
@@ -2072,7 +1842,7 @@ static void TH32x32_task_entry(void const *parm)
 
 
 			if (sampleCnt++ % 60 == 0)
-			DBG_PRINT("[ TH32x32_task_entry t2=%d ] tempSet=%d,TminTable=%d[%d-%d],TmaxTable=%d[%d-%d]\r\n",
+			DBG_PRINT("[ MLX_TH32x24_task_entry t2=%d ] tempSet=%d,TminTable=%d[%d-%d],TmaxTable=%d[%d-%d]\r\n",
 				TimeCnt2-TimeCnt1,(ReadTempValue+ SHOWTEMP_OFFSET-2730),
 				TminTable-2730,TminTable_number/32,TminTable_number%32,
 				TmaxTable-2730,TmaxTable_number/32,TmaxTable_number%32);
@@ -3293,7 +3063,7 @@ static void scaler_task_entry(void const *parm)
                 avi_ppu_draw_init(pAviEncVidPara->encode_width, pAviEncVidPara->encode_height);
             #endif
 
-			pTH32x32_Para->TH32x32_CMOS_OFF = 0;
+			pMLX_TH32x24_Para->MLX_TH32x24_CMOS_OFF = 0;
 
 			//PPU init start ***
 
@@ -3402,8 +3172,8 @@ static void scaler_task_entry(void const *parm)
 
 			// PPU setting End
 
-			//pTH32x32_Para->TH32x32_ScalerUp_status = 1;
-			gp_memcpy((INT8S *)(pTH32x32_Para->TH32x32_ColorOutputFrame_addr),
+			//pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 1;
+			gp_memcpy((INT8S *)(pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr),
 				(INT8S *)&(sensor32X32_RGB565),32*32*2);
 
 			//picCNT=0;
@@ -3548,14 +3318,14 @@ static void scaler_task_entry(void const *parm)
 				cpu_draw_time_osd(osd_time, display_frame, pAviEncVidPara->display_width);
 			#endif
 
-			#if TH32x32IMAGE
+			#if MLX_TH32x24IMAGE
 
 				if(videnc_display) { // davis run this //
 		    		videnc_display(pAviEncVidPara->display_buffer_width,
 		    					   pAviEncVidPara->display_buffer_height,
-		    					   pTH32x32_Para->TH32x32_display_frame);
-					if(pTH32x32_Para->TH32x32_ScalerUp_status == 1)
-						pTH32x32_Para->TH32x32_ScalerUp_status = 0;
+		    					   pMLX_TH32x24_Para->MLX_TH32x24_display_frame);
+					if(pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1)
+						pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 0;
 		    	}
 			#else
 		    	if(videnc_display) { // davis run this
@@ -3564,10 +3334,10 @@ static void scaler_task_entry(void const *parm)
 
 					// PPU 處理 
 
-					if(pTH32x32_Para->TH32x32_ScalerUp_status == 1){
+					if(pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1){
 						gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 320, 240,
-							(INT32U)pTH32x32_Para->TH32x32_display_frame); // from TH32x32 sensor
-						pTH32x32_Para->TH32x32_ScalerUp_status = 0;
+							(INT32U)pMLX_TH32x24_Para->MLX_TH32x24_display_frame); // from MLX_TH32x24 sensor
+						pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 0;
 						//DEBUG_MSG(" C \r\n");
 					}
 					//DEBUG_MSG("display_frame=0x%x \r\n",display_frame);
@@ -3720,15 +3490,15 @@ static void scaler_task_entry(void const *parm)
 		#if 0
 			// PPU 處理 ??
 
-			if(pTH32x32_Para->TH32x32_ScalerUp_status == 1){
-				//gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, PPU_TEXT_SIZE_HPIXEL, PPU_TEXT_SIZE_VPIXEL, (INT32U)pTH32x32_Para->TH32x32_display_frame); // from TH32x32 sensor
-				gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 640, 480, (INT32U)pTH32x32_Para->TH32x32_display_frame); // from TH32x32 sensor
+			if(pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1){
+				//gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, PPU_TEXT_SIZE_HPIXEL, PPU_TEXT_SIZE_VPIXEL, (INT32U)pMLX_TH32x24_Para->MLX_TH32x24_display_frame); // from MLX_TH32x24 sensor
+				gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 640, 480, (INT32U)pMLX_TH32x24_Para->MLX_TH32x24_display_frame); // from MLX_TH32x24 sensor
 				//osd_time.tm_sec= (INT32S) picCNT++;	// 計時用 
-				pTH32x32_Para->TH32x32_ScalerUp_status = 0;
+				pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 0;
 			}
 		#endif
 
-			//pTH32x32_Para->TH32x32_ScalerUp_status = 0; // 暫時 set 0 ?
+			//pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 0; // 暫時 set 0 ?
 			break;
 		}
 	}

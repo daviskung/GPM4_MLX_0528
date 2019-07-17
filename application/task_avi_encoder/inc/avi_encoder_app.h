@@ -240,80 +240,75 @@ typedef struct capture_s
 
 
 
-typedef struct TH32x32Para_s
+typedef struct MLX_TH32x24Para_s
 {
-	//sensor input 
-    INT32U  TH32x32_output_format;   // TH32x32 output format
-    INT16U  TH32x32_width;   // TH32x32 width
-    INT16U  TH32x32_height;  // TH32x32 height
-    
-    INT32U  TH32x32_ColorOutputFrame_addr;	// TH32x32 color table output buffer addr
-    INT32U  TH32x32_TmpOutput_format_addr[TH32x32_SCALERUP_BUFFER_NO];   // TH32x32 Temperature output 
-    INT8U   TH32x32_PPU_frame_ON; // 0: none , 1:keep sensor_frame ;
+	//sensor input
+    INT32U  MLX_TH32x24_output_format;   // MLX_TH32x24 output format
+    INT16U  MLX_TH32x24_width;   // MLX_TH32x24 width
+    INT16U  MLX_TH32x24_height;  // MLX_TH32x24 height
+
+    INT32U  MLX_TH32x24_ColorOutputFrame_addr;	// MLX_TH32x24 color table output buffer addr
+    INT32U  MLX_TH32x24_TmpOutput_format_addr[MLX_TH32x24_SCALERUP_BUFFER_NO];   // MLX_TH32x24 Temperature output
+    INT8U   MLX_TH32x24_PPU_frame_ON; // 0: none , 1:keep sensor_frame ;
 
 	// data read
-	INT16U  TH32x32_ReadDataBlkSize;   // TH32x32 block size 1282
-    INT16U  TH32x32_ElectOffDataSize;  // TH32x32 Elect offset size 1282
-    INT32U  TH32x32_ReadDataBlk_addr;
-	
-	INT32U  TH32x32_display_frame;
-	INT32U  TH32x32_ThGrad_buffer,TH32x32_ThOff_buffer;
-	INT32U	TH32x32_PixC_buffer;
-	INT32U	TH32x32_VddCompGrad_buffer,TH32x32_VddCompOff_buffer;
+	INT16U  MLX_TH32x24_ReadDataBlkSize;   // MLX_TH32x24 block size 1282
+    INT16U  MLX_TH32x24_ElectOffDataSize;  // MLX_TH32x24 Elect offset size 1282
+    INT32U  MLX_TH32x24_ReadDataBlk_addr;
 
-	INT32U  TH32x32_PPU_frame;
-	
-    INT32U  TH32x32_ScalerUp_status;      // 0: read E. offset  
+	INT32U  MLX_TH32x24_display_frame;
+	INT32U  MLX_TH32x24_ThGrad_buffer,MLX_TH32x24_ThOff_buffer;
+	INT32U	MLX_TH32x24_PixC_buffer;
+	INT32U	MLX_TH32x24_VddCompGrad_buffer,MLX_TH32x24_VddCompOff_buffer;
 
-	INT16U  TH32x32_sampleCnt;      // for TH32x32_start_timer_isr
+	INT32U  MLX_TH32x24_PPU_frame;
 
-	//INT16U  TH32x32_sampleHz;	//  5.7~ 732 Hz
-	INT16U  TH32x32_sampleHz;	//  5.7~ 732 Hz
+    INT32U  MLX_TH32x24_ScalerUp_status;      // 0: read E. offset
 
-	INT8U  TH32x32_ReadElecOffset_TA_startON;
-	INT8U  TH32x32_readout_block_startON;
+	INT16U  MLX_TH32x24_sampleCnt;      // for MLX_TH32x24_start_timer_isr
 
-	INT32U  TH32x32_BadPixAdr_buf;
-	INT32U  TH32x32_BadPixMask_buf;
+	//INT16U  MLX_TH32x24_sampleHz;	//  5.7~ 732 Hz
+	INT16U  MLX_TH32x24_sampleHz;	//  5.7~ 732 Hz
 
-	INT32U  TH32x32_readout_top_block_buf_addr[TH32x32_ReadoutBlockBuf_max][4];	// 
-	INT32U  TH32x32_readout_btm_block_buf_addr[TH32x32_ReadoutBlockBuf_max][4];	// 
+	INT8U  MLX_TH32x24_ReadElecOffset_TA_startON;
+	INT8U  MLX_TH32x24_readout_block_startON;
+
+	INT32U  MLX_TH32x24_BadPixAdr_buf;
+	INT32U  MLX_TH32x24_BadPixMask_buf;
+
+	INT32U  MLX_TH32x24_readout_top_block_buf_addr[MLX_TH32x24_ReadoutBlockBuf_max][4];	//
+	INT32U  MLX_TH32x24_readout_btm_block_buf_addr[MLX_TH32x24_ReadoutBlockBuf_max][4];	//
 
 
-	INT32U  TH32x32_readout_EOffTop_buf0_addr;
-	INT32U  TH32x32_readout_EOffBtm_buf0_addr;
-	/*
-	INT32U  TH32x32_readout_EOffTop_buf1_addr;
-	INT32U  TH32x32_readout_EOffBtm_buf1_addr;
-	INT32U  TH32x32_readout_EOffTop_buf2_addr;
-	INT32U  TH32x32_readout_EOffBtm_buf2_addr;
-	INT32U  TH32x32_readout_EOffTop_buf3_addr;
-	INT32U  TH32x32_readout_EOffBtm_buf3_addr;
-	*/
-	INT8U   TH32x32_move_dect;	// 0 - 2
-	//INT8U   TH32x32_MaxInd_fun;	// 高/低指示 
-	INT8U   TH32x32_OVR_RoomTemp;
-	INT8U   TH32x32_NOISE_CUTOFF_OVR_RTemp;
-	INT8U   TH32x32_CMOS_OFF;
-	INT8U   TH32x32_TABLE_SCALER_FACTOR;
-	
-	float  TH32x32_ta;	
-	INT16U  TH32x32_TA_AD7314;		
-	INT16U  TH32x32_TMAX;
-	INT16U  TH32x32_Tmin;
-	INT16U	TH32x32_TmaxAvgValue;
-	INT16U	TH32x32_TminAvgValue;
-	
+	INT32U  MLX_TH32x24_readout_EOffTop_buf0_addr;
+	INT32U  MLX_TH32x24_readout_EOffBtm_buf0_addr;
 
-	INT32U  TH32x32_avg_buf_addr[AVG_buf_len];	// TH32x32 temperature buffer addr
-	INT32U  TH32x32_display_background_frame;
+	INT8U   MLX_TH32x24_move_dect;	// 0 - 2
+	//INT8U   mlx_TH32x24_MaxInd_fun;	// 高/低指示 
+	INT8U   MLX_TH32x24_OVR_RoomTemp;
+	INT8U   MLX_TH32x24_NOISE_CUTOFF_OVR_RTemp;
+	INT8U   MLX_TH32x24_CMOS_OFF;
+	INT8U   MLX_TH32x24_TABLE_SCALER_FACTOR;
+
+	float  MLX_TH32x24_ta;
+	INT16U  MLX_TH32x24_TA_AD7314;
+	INT16U  MLX_TH32x24_TMAX;
+	INT16U  MLX_TH32x24_Tmin;
+	INT16U	MLX_TH32x24_TmaxAvgValue;
+	INT16U	MLX_TH32x24_TminAvgValue;
+
+
+	INT32U  MLX_TH32x24_avg_buf_addr[AVG_buf_len];	// MLX_TH32x24 temperature buffer addr
+	INT32U  MLX_TH32x24_display_background_frame;
 	INT32U  MLX32x24_EE_READ_8bitBUF;
 	INT32U  MLX32x24_EE_READ_16bitBUF;
 	//INT32U  MLX32x24_READ_frameData_BUF; -> 直接以 frameData[834]
 	INT16U	frameData[MLX90640_frameDataSize];
+
+	float  MLX_TH32x24_vdd;
 	
-	float  TH32x32_vdd;	
-} TH32x32Para_t;
+	float	result[MLX_Pixel];
+} MLX_TH32x24Para_t;
 
 
 
@@ -382,12 +377,12 @@ extern osMessageQId frame_ts_q;
 extern volatile INT32U vid_global_tick;
 #endif
 
-extern osMessageQId TH32x32_task_q;
-extern osMessageQId TH32x32_readout_task_q;
-extern osMessageQId TH32x32_readout_buf_q;
+extern osMessageQId MLX_TH32x24_task_q;
+extern osMessageQId MLX_TH32x24_readout_task_q;
+extern osMessageQId MLX_TH32x24_readout_buf_q;
 
-extern osMessageQId TH32x32_SCALERUP_task_q;
-extern osMessageQId TH32x32_SCALERUP_buf_q;
+extern osMessageQId MLX_TH32x24_SCALERUP_task_q;
+extern osMessageQId MLX_TH32x24_SCALERUP_buf_q;
 
 
 extern AviEncPara_t *pAviEncPara;
@@ -397,7 +392,7 @@ extern AviEncPacker_t *pAviEncPacker0, *pAviEncPacker1;
 extern catpure_t *pCap;
 extern volatile INT32S pscaler_exit_0, pscaler_exit_1;
 
-extern TH32x32Para_t *pTH32x32_Para;	//2019.03.28 davis
+extern MLX_TH32x24Para_t *pMLX_TH32x24_Para;	//2019.03.28 davis
 extern paramsMLX90640_t *pMLX32x24_Para;	//2019.05.28 davis
 
 
@@ -509,13 +504,13 @@ void cpu_draw_time_osd(TIME_T current_time, INT32U target_buffer, INT16U resolut
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-// TH32x32 I2C calc data task
+// MLX_TH32x24 I2C calc data task
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-extern INT32S TH32x32_task_create(INT8U pori);
-//extern INT32S TH32x32_task_del(void);
-extern INT32S TH32x32_task_start(void);
-extern INT32S TH32x32_task_stop(void);
+extern INT32S MLX_TH32x24_task_create(INT8U pori);
+//extern INT32S MLX_TH32x24_task_del(void);
+extern INT32S MLX_TH32x24_task_start(void);
+extern INT32S MLX_TH32x24_task_stop(void);
 extern void   TH80x64_start_timer_isr(void);
 
 

@@ -47,7 +47,6 @@
 #if VIDEO_ENCODE_MODE == C_VIDEO_ENCODE_FRAME_MODE
 	#define AVI_ENCODE_CSI_BUFFER_NO		3	//sensor use buffer number
 	#define AVI_ENCODE_SCALER_BUFFER_NO		6	//scaler use buffer number
-	//#define TH32x32_SCALERUP_BUFFER_NO 		1	//scaler use buffer number
 	
 	#define AVI_ENCODE_CSI_FIFO_NO			34	//sensor fifo mode use buffer number
 #elif VIDEO_ENCODE_MODE == C_VIDEO_ENCODE_FIFO_MODE
@@ -131,8 +130,8 @@
 #endif
 
 #define AVG_buf_len			4
-#define TH32x32_ReadoutBlockBuf_max	1
-#define TH32x32_SCALERUP_BUFFER_NO	1
+#define MLX_TH32x24_ReadoutBlockBuf_max	1
+#define MLX_TH32x24_SCALERUP_BUFFER_NO	1
 
 #define PRE_READ_DIS		0
 #define PRE_READ_ON			1
