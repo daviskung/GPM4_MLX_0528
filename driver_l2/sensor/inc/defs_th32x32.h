@@ -101,7 +101,7 @@ typedef struct {
 #define AdrDeadPixMask 	0xB0	//currently reserved space for 24 Pixel
 
 
-
+/*
 #define MLX90640_AdrDevID 		0x2407
 #define MLX90640_AdrStatus		0x8000
 #define MLX90640_AdrRegister1 	0x800D
@@ -113,7 +113,7 @@ typedef struct {
 #define MLX90640_EEAddrInternal_I2C		0x240F
 
 #define MLX90640_EEAddrstart 		0x2400
-
+*/
 
 #define AdrGlobalOffset 0x54
 #define AdrGlobalGain 0x55

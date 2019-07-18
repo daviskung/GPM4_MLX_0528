@@ -1166,7 +1166,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 	INT16U	read_EValue,offset_EValue,TmpValue;
 
-	INT16U	TimeCnt1,TimeCnt2,tmpSec;
+	INT16U	TimeCnt1,TimeCnt2,tmpSec,FrameData_TimeCnt1,FrameData_TimeCnt2;
 
 	INT8U	firstRun,SampleTempCnt;
 	//INT8U   data_buf[1];
@@ -1242,7 +1242,6 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			TimeCnt1=xTaskGetTickCount();
 			DBG_PRINT("StartTime = %d\r\n", xTaskGetTickCount());	// xTaskGetTickCount() timebase=1ms
 
-#if MLX32x24_FUN
 
 			pEEcopy16BIT = EEcopy16BIT;
 			pEEaddr = EEaddr;
@@ -1251,7 +1250,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 			MXL_handle.devNumber = I2C_1;
 		    MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
-		    MXL_handle.clkRate = 800;
+		    MXL_handle.clkRate = 1000;
 
 			//
 			//Wait 80ms + delay determined by the refresh rate
@@ -1280,13 +1279,8 @@ static void MLX_TH32x24_task_entry(void const *parm)
 				DBG_PRINT("EEPROM MLX90640_EEAddrRegister1 addr=0x%04X, data=0x%04X - 0x%04X - 0x%04X - 0x%04X \r\n",
 						MLX90640_EEAddrRegister1, *(pEEcopy16BIT) ,*(pEEcopy16BIT+1),*(pEEcopy16BIT+2),*(pEEcopy16BIT+3));
 
-			drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,pEEcopy16BIT);
-					DBG_PRINT("MLX90640_AdrRegister1 addr=0x%04X, data=0x%04X \r\n",MLX90640_AdrRegister1, *(pEEcopy16BIT));
-
-
-			drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,pEEcopy16BIT);
-					DBG_PRINT("MLX90640_AdrRegister1 addr=0x%04X, data=0x%04X \r\n",MLX90640_AdrRegister1, *(pEEcopy16BIT));
-
+			drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,pEEcopy16BIT);
+					DBG_PRINT("MLX90640_AdrRegister1 addr=0x%04X, data=0x%04X \r\n",MLX90640_AdrControlRegister1, *(pEEcopy16BIT));
 
 			EEaddress16 = MLX90640_EEAddrstart;
 			EEaddr[0]=(INT8U)(EEaddress16 >> 8);
@@ -1340,6 +1334,9 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 			gp_memset((INT8S *)pMLX_TH32x24_Para->frameData,0x00,MLX90640_frameDataSize*2);	// clear 值 
 			DBG_PRINT("clear frameData \r\n");
+			
+			gp_memset((INT8S *)pMLX_TH32x24_Para->result,0x00,MLX_Pixel*2);	// clear 值 
+						DBG_PRINT("clear result \r\n");
 
 			// 可以 與 pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF 共用 ??
 
@@ -1347,16 +1344,21 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			//MLX90640_GetFrameData(&MXL_handle); 暫不執行 
 
 			pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
+
+			FrameData_TimeCnt1=xTaskGetTickCount();
+			DBG_PRINT("GetFrameData[frame 0] ->StartTime = %d\r\n", xTaskGetTickCount());	// xTaskGetTickCount() timebase=1ms
+			
 		    dataReady = 0;
 			frameData_cnt=0;
 		    while(dataReady == 0)
 		    {
 				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
-				DBG_PRINT("read return  = %d \r\n",error);	// return data length , if error = -1
+				//DBG_PRINT("read return  = %d \r\n",error);	// return data length , if error = -1
 
 		        dataReady = statusRegister & 0x0008; // 1 : A new data is available in RAM ?
 
-				DBG_PRINT(" 1. dataReady = 0x%04x,frameData_cnt = %d \r\n",dataReady,frameData_cnt);
+				DBG_PRINT(" 1.statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d \r\n",
+					statusRegister,dataReady,frameData_cnt);
 		    }
 
 		    while(dataReady != 0 && frameData_cnt < 5)
@@ -1368,12 +1370,8 @@ static void MLX_TH32x24_task_entry(void const *parm)
         		//
 				error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
 
-				DBG_PRINT("write return = %d \r\n",error);	// return data length , if error = -1
-
-
-				// read from 0x0400 ~ 0x073F
-		        //error = MLX90640_I2CRead(slaveAddr, 0x0400, 832, frameData);
-
+			while(((statusRegister == 0x0008) || (statusRegister == 0x0009) ) && (frameData_cnt < 5) )
+		    {
 				EEaddress16 = MLX90640_RAMAddrstart;
 				EEaddr[0]=(INT8U)(EEaddress16 >> 8);
 				EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
@@ -1382,12 +1380,50 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 				DBG_PRINT("multi_read return = %d \r\n",error);// return data length , if error = -1
 
+				//error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
+				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
+			    //frameData[832] = controlRegister1;
+				pMLX_TH32x24_Para->frameData[832] = controlRegister1;
+		    	//frameData[833] = statusRegister & 0x0001;
+				pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
+				DBG_PRINT(" 2. [frame 0->subpage] pMLX_TH32x24_Para->frameData[833] = 0x%04x \r\n",
+					pMLX_TH32x24_Para->frameData[833]);
+
 				for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
 				{
 					i = cnt << 1;
 					*(pMLX32x32_frameData_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
 						+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
 				}
+				
+				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
+				//frameData[832] = controlRegister1;
+				pMLX_TH32x24_Para->frameData[832] = controlRegister1;
+				//frameData[833] = statusRegister & 0x0001;
+				pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
+
+				MLX90640_GetVdd();
+
+				DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd = 0x%04x (%f) \r\n"
+					,pMLX_TH32x24_Para->MLX_TH32x24_vdd,pMLX_TH32x24_Para->MLX_TH32x24_vdd);
+
+				MLX90640_GetTa();
+
+				DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
+					,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
+
+				tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
+
+				MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
+				DBG_PRINT(" frame %d MLX90640_CalculateTo-> End \r\n",pMLX_TH32x24_Para->frameData[833]);
+				
+				for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+				
+				if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+				DBG_PRINT("(%d)",(int)pMLX_TH32x24_Para->result[pixelNumber]);
+				
+				}
+				
 				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
 				DBG_PRINT("read return = %d \r\n",error);
 
@@ -1398,161 +1434,23 @@ static void MLX_TH32x24_task_entry(void const *parm)
 		        dataReady = statusRegister & 0x0008;
 		        frameData_cnt = frameData_cnt + 1;
 
-				DBG_PRINT(" 2. dataReady = 0x%04x,frameData_cnt = %d \r\n",dataReady,frameData_cnt);
-
+				DBG_PRINT(" 3. statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d [%d] \r\n",
+					statusRegister,dataReady,frameData_cnt,xTaskGetTickCount());
+					}
+			
+				osDelay(DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_64HZ]);
+				DBG_PRINT("delay  = %d ms \r\n",
+					DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_64HZ]);
 		    }
 			if(frameData_cnt > 4)
 		    {
         		//return -8;
-        		DBG_PRINT("GetFrameData => frameData_cnt > 4 error  \r\n");
+        		DBG_PRINT("GetFrameData => frameData_cnt > 4 ****  \r\n");
 		    }
 
-		    //error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
-			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,&controlRegister1);
-		    //frameData[832] = controlRegister1;
-			pMLX_TH32x24_Para->frameData[832] = controlRegister1;
-		    //frameData[833] = statusRegister & 0x0001;
-			pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
+		    
 
-			DBG_PRINT(" GetFrameData read return = %d \r\n",error);
-
-			DBG_PRINT(" 3. frameData[832] = 0x%04x,subpage -> frameData[833] = 0x%04x \r\n",
-				pMLX_TH32x24_Para->frameData[832],pMLX_TH32x24_Para->frameData[833]);
-
-
-
-			MLX90640_GetVdd();
-
-			DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd = 0x%04x (%f) \r\n"
-				,pMLX_TH32x24_Para->MLX_TH32x24_vdd,pMLX_TH32x24_Para->MLX_TH32x24_vdd);
-
-			MLX90640_GetTa();
-
-			DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
-				,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
-
-			tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
-
-			//MLX90640_GetImage();
-			//DBG_PRINT(" MLX90640_GetImage-> End \r\n");
-
-			MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
-			DBG_PRINT(" MLX90640_CalculateTo-> End \r\n");
-			for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
-				
-				if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
-				DBG_PRINT("(%d)",(int)pMLX_TH32x24_Para->result[pixelNumber]);
-				
-			}
-
-
-#if frame1_ON
-			DBG_PRINT("\r\n ************ GetFrameData frame 1 ************************************** \r\n");
-			//MLX90640_GetFrameData(&MXL_handle, pMLX32x32_frameData_INT16U_buf);
-
-
-
-			pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
-		    dataReady = 0;
-			frameData_cnt=0;
-		    while(dataReady == 0)
-		    {
-		        //error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
-				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
-				DBG_PRINT("read return = %d \r\n",error);
-
-		        dataReady = statusRegister & 0x0008; // 1 : A new data is available in RAM ?
-
-				DBG_PRINT("frame 1-> 1. dataReady = 0x%04x,frameData_cnt = %d \r\n",dataReady,frameData_cnt);
-		    }
-
-		    while(dataReady != 0 && frameData_cnt < 5)
-		    {
-        		//error = MLX90640_I2CWrite(slaveAddr, 0x8000, 0x0030);
-        		// 0x0030 :
-        		// 1 Data in RAM overwrite is enabled
-        		// 1 In step mode - start of measurement
-        		//		(set by the customer and cleared once the measurement is done)
-        		//
-				error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
-
-				DBG_PRINT("write return  = %d \r\n",error);
-
-
-				// read from 0x0400 ~ 0x073F
-		        //error = MLX90640_I2CRead(slaveAddr, 0x0400, 832, frameData);
-
-				EEaddress16 = MLX90640_RAMAddrstart;
-				EEaddr[0]=(INT8U)(EEaddress16 >> 8);
-				EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
-				error = drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pMLX32x32_READ_INT8U_buf
-					,MLX90640_RAM_AddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
-
-				DBG_PRINT("multi_read return = %d \r\n",error);
-
-				for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
-				{
-					i = cnt << 1;
-					*(pMLX32x32_frameData_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
-						+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
-				}
-				// error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
-				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
-				DBG_PRINT("read return = %d \r\n",error);
-
-		        dataReady = statusRegister & 0x0008;
-		        frameData_cnt = frameData_cnt + 1;
-
-				DBG_PRINT(" frame 1->2. dataReady = 0x%04x,frameData_cnt = %d \r\n",dataReady,frameData_cnt);
-
-		    }
-			if(frameData_cnt > 4)
-		    {
-        		//return -8;
-        		DBG_PRINT("GetFrameData => frameData_cnt > 4 error  \r\n");
-		    }
-
-		    //error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
-			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,&controlRegister1);
-		    //frameData[832] = controlRegister1;
-			pMLX_TH32x24_Para->frameData[832] = controlRegister1;
-		    //frameData[833] = statusRegister & 0x0001;
-			pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;
-
-			DBG_PRINT(" GetFrameData read return = %d \r\n",error);
-
-			DBG_PRINT(" frame 1->3. frameData[832] = 0x%04x,subpage ->frameData[833] = 0x%04x \r\n",
-				pMLX_TH32x24_Para->frameData[832],pMLX_TH32x24_Para->frameData[833]);
-
-			MLX90640_GetVdd();
-
-			DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd = 0x%04x (%f) \r\n"
-				,pMLX_TH32x24_Para->MLX_TH32x24_vdd,pMLX_TH32x24_Para->MLX_TH32x24_vdd);
-
-			MLX90640_GetTa();
-
-			DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
-				,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
-
-
-			//MLX90640_GetImage();
-			//DBG_PRINT(" frame 1-> MLX90640_GetImage-> End \r\n");
-
-			tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
-
-			MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
-			DBG_PRINT(" frame 1-> MLX90640_CalculateTo-> End \r\n");
 			
-			for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
-				
-				if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
-				DBG_PRINT("(%d)",(int)pMLX_TH32x24_Para->result[pixelNumber]);
-				
-			}
-			
-#endif
-
-#endif
 
 			TimeCnt2 = xTaskGetTickCount();
 			DBG_PRINT("\r\n EndTime = %d\r\n", xTaskGetTickCount());

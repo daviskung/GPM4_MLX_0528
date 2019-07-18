@@ -150,7 +150,7 @@ INT32S MLX90640_SetResolution(INT8U resolution)
 
 	value = (resolution & 0x03) << 10;
 
-	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,pEEcopy16BIT);
+	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,pEEcopy16BIT);
 
 	if(error > 0)
     {
@@ -160,7 +160,7 @@ INT32S MLX90640_SetResolution(INT8U resolution)
 		value = (EEcopy16BIT[0] & 0xF3FF ) | value;
 		//DBG_PRINT("value = 0x%04X \r\n",value);
 
-		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrRegister1,value);
+		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,value);
 	}
 
     return error;
@@ -179,7 +179,7 @@ INT32S MLX90640_SetRefreshRate(INT8U refreshRate)
 
 	value = (refreshRate & 0x07)<<7;
 
-	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,pEEcopy16BIT);
+	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,pEEcopy16BIT);
 
 	if(error > 0)
     {
@@ -189,7 +189,7 @@ INT32S MLX90640_SetRefreshRate(INT8U refreshRate)
 		value = (EEcopy16BIT[0] & 0xFC7F ) | value;
 		//DBG_PRINT("value = 0x%04X \r\n",value);
 
-		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrRegister1,value);
+		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,value);
 	}
 
     return error;
@@ -1010,7 +1010,7 @@ void MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t MXL_handle)
 	}
 
 	//error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
-	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrRegister1,&controlRegister1);
+	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
 	//frameData[832] = controlRegister1;
 	pMLX_TH32x24_Para->frameData[832] = controlRegister1;
 	//frameData[833] = statusRegister & 0x0001;

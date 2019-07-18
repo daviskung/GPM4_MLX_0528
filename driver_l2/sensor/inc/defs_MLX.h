@@ -36,10 +36,10 @@
 
 
 
-#define MLX90640_AdrDevID 		0x2407
-#define MLX90640_AdrStatus		0x8000
-#define MLX90640_AdrRegister1 	0x800D
-#define MLX90640_AdrConfig 		0x800F
+#define MLX90640_AdrDevID 				0x2407
+#define MLX90640_AdrStatus				0x8000
+#define MLX90640_AdrControlRegister1 	0x800D
+#define MLX90640_AdrConfig 				0x800F
 
 #define MLX90640_EEAddrRegister1 		0x240C
 #define MLX90640_EEAddrRegister2		0x240D
