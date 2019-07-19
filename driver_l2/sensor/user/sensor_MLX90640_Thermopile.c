@@ -927,6 +927,7 @@ void MLX90640_GetTa(void)
 }
 
 
+//------------------------------------------------------------------------------
 
 void MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t MXL_handle)
 {

@@ -33,6 +33,7 @@
 //#define ELAMOUNT 256
 //#define MAXNROFDEFECTS	5
 
+#define rowNumEnd_32 32
 
 
 
@@ -71,6 +72,13 @@
 #define MLX90640_REFRESH_RATE_16HZ	 	0x05
 #define MLX90640_REFRESH_RATE_32HZ	 	0x06
 #define MLX90640_REFRESH_RATE_64HZ	 	0x07
+
+#define MLX90640_StepModeSubpage0		0x09		// bit0=1 , bit3=1 , bit4 = 0 :subpage0 / 1 :subpage1
+#define MLX90640_StepModeSubpage1		0x19		// bit0=1 , bit3=1 , bit4 = 0 :subpage0 / 1 :subpage1
+
+
+#define MAXNROFDEFECTS	5
+
 
 
 #ifndef _MLX640_API_H_

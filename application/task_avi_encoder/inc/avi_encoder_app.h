@@ -252,19 +252,10 @@ typedef struct MLX_TH32x24Para_s
     INT8U   MLX_TH32x24_PPU_frame_ON; // 0: none , 1:keep sensor_frame ;
 
 	// data read
-	INT16U  MLX_TH32x24_ReadDataBlkSize;   // MLX_TH32x24 block size 1282
-    INT16U  MLX_TH32x24_ElectOffDataSize;  // MLX_TH32x24 Elect offset size 1282
-    INT32U  MLX_TH32x24_ReadDataBlk_addr;
 
 	INT32U  MLX_TH32x24_display_frame;
-	INT32U  MLX_TH32x24_ThGrad_buffer,MLX_TH32x24_ThOff_buffer;
-	INT32U	MLX_TH32x24_PixC_buffer;
-	INT32U	MLX_TH32x24_VddCompGrad_buffer,MLX_TH32x24_VddCompOff_buffer;
-
 	INT32U  MLX_TH32x24_PPU_frame;
-
     INT32U  MLX_TH32x24_ScalerUp_status;      // 0: read E. offset
-
 	INT16U  MLX_TH32x24_sampleCnt;      // for MLX_TH32x24_start_timer_isr
 
 	//INT16U  MLX_TH32x24_sampleHz;	//  5.7~ 732 Hz
@@ -275,13 +266,6 @@ typedef struct MLX_TH32x24Para_s
 
 	INT32U  MLX_TH32x24_BadPixAdr_buf;
 	INT32U  MLX_TH32x24_BadPixMask_buf;
-
-	INT32U  MLX_TH32x24_readout_top_block_buf_addr[MLX_TH32x24_ReadoutBlockBuf_max][4];	//
-	INT32U  MLX_TH32x24_readout_btm_block_buf_addr[MLX_TH32x24_ReadoutBlockBuf_max][4];	//
-
-
-	INT32U  MLX_TH32x24_readout_EOffTop_buf0_addr;
-	INT32U  MLX_TH32x24_readout_EOffBtm_buf0_addr;
 
 	INT8U   MLX_TH32x24_move_dect;	// 0 - 2
 	//INT8U   mlx_TH32x24_MaxInd_fun;	// 高/低指示 

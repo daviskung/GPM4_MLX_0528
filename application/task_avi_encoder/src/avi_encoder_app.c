@@ -16,7 +16,7 @@
 #include "gplib.h"
 #include "drv_l1_h264.h"
 #include "drv_l2_h264enc.h"
-#include "defs_th32x32.h"
+//#include "defs_th32x32.h"
 #include "defs_MLX.h"
 
 #if (defined APP_VIDEO_ENCODER_EN) && (APP_VIDEO_ENCODER_EN == 1)
@@ -515,10 +515,8 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 	INT32S buffer_size, nRet;
 	INT8U  tmpN1,tmpN2;
 
-	pMLX_TH32x24_Para->MLX_TH32x24_width = LINE;
-    pMLX_TH32x24_Para->MLX_TH32x24_height = COLUMN;
-	pMLX_TH32x24_Para->MLX_TH32x24_ReadDataBlkSize = (PixelEighth+1)*2; // (128+1)*2;
-	pMLX_TH32x24_Para->MLX_TH32x24_ElectOffDataSize = (PixelEighth+1)*2; //(128+1)*2;
+	pMLX_TH32x24_Para->MLX_TH32x24_width = MLX_LINE;
+    pMLX_TH32x24_Para->MLX_TH32x24_height = MLX_COLUMN;
 
 //	MLX32x24_EE_READ_8bitBUF
 	buffer_size = MLX90640_EEMemAddrRead * 2;
@@ -569,43 +567,6 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 		DBG_PRINT("davis --> MLX_TH32x24_avg_buf_addr[%d] addr = 0x%x\r\n",tmpN1, pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmpN1]);
 	}
 
-	buffer_size = pMLX_TH32x24_Para->MLX_TH32x24_ReadDataBlkSize;
-	for(tmpN1=0;tmpN1<MLX_TH32x24_ReadoutBlockBuf_max;tmpN1++){
-		for(tmpN2=0;tmpN2<4;tmpN2++){
-			buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-				if(buffer_addr == 0) RETURN(STATUS_FAIL);
-			pMLX_TH32x24_Para->MLX_TH32x24_readout_top_block_buf_addr[tmpN1][tmpN2] = buffer_addr;
-				DBG_PRINT("MLX_TH32x24_readout_top_block_buf_addr[%d][%d] addr = 0x%x\r\n",tmpN1,tmpN2,
-				pMLX_TH32x24_Para->MLX_TH32x24_readout_top_block_buf_addr[tmpN1][tmpN2]);
-		}
-	}
-
-	buffer_size = pMLX_TH32x24_Para->MLX_TH32x24_ReadDataBlkSize;
-	for(tmpN1=0;tmpN1<MLX_TH32x24_ReadoutBlockBuf_max;tmpN1++){
-		for(tmpN2=0;tmpN2<4;tmpN2++){
-			buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-					if(buffer_addr == 0) RETURN(STATUS_FAIL);
-			pMLX_TH32x24_Para->MLX_TH32x24_readout_btm_block_buf_addr[tmpN1][tmpN2] = buffer_addr;
-			DBG_PRINT("MLX_TH32x24_readout_btm_block_buf_addr[%d][%d] addr = 0x%x\r\n",tmpN1,tmpN2, pMLX_TH32x24_Para->MLX_TH32x24_readout_btm_block_buf_addr[tmpN1][tmpN2]);
-		}
-	}
-
-
-	buffer_size = pMLX_TH32x24_Para->MLX_TH32x24_ElectOffDataSize ;
-		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-		if(buffer_addr == 0) {
-			RETURN(STATUS_FAIL);	}
-		pMLX_TH32x24_Para->MLX_TH32x24_readout_EOffTop_buf0_addr = buffer_addr;
-		DBG_PRINT("davis --> MLX_TH32x24_readout_EOffTop_buf0_addr addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_readout_EOffTop_buf0_addr);
-
-	buffer_size = pMLX_TH32x24_Para->MLX_TH32x24_ElectOffDataSize ;
-		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-		if(buffer_addr == 0) {
-			RETURN(STATUS_FAIL);	}
-		pMLX_TH32x24_Para->MLX_TH32x24_readout_EOffBtm_buf0_addr = buffer_addr;
-		DBG_PRINT("davis --> MLX_TH32x24_readout_EOffBtm_buf0_addr addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_readout_EOffBtm_buf0_addr);
-
-
 	//buffer_size = pAviEncVidPara->sensor_capture_width * pAviEncVidPara->sensor_capture_height << 1;
 		buffer_size = pAviEncVidPara->display_width * pAviEncVidPara->display_height << 1;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
@@ -620,41 +581,6 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 			RETURN(STATUS_FAIL);	}
 		pMLX_TH32x24_Para->MLX_TH32x24_display_background_frame = buffer_addr;
 		DBG_PRINT("davis --> MLX_TH32x24_display_background_frame addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_display_background_frame);
-
-	buffer_size = sizeof(INT16S)*Pixel ;
-		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-		if(buffer_addr == 0) {
-			RETURN(STATUS_FAIL);	}
-		pMLX_TH32x24_Para->MLX_TH32x24_ThGrad_buffer = buffer_addr;
-		DBG_PRINT("davis --> diff with TH80x64 -> MLX_TH32x24_ThGrad_buffer(INT16S) addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_ThGrad_buffer);
-
-	buffer_size = sizeof(INT16S)*Pixel;
-		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-		if(buffer_addr == 0) {
-			RETURN(STATUS_FAIL);	}
-		pMLX_TH32x24_Para->MLX_TH32x24_ThOff_buffer = buffer_addr;
-		DBG_PRINT("davis --> MLX_TH32x24_ThOff_buffer(INT16S) addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_ThOff_buffer);
-
-	buffer_size = sizeof(unsigned long)*Pixel ;
-		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-		if(buffer_addr == 0) {
-			RETURN(STATUS_FAIL);	}
-		pMLX_TH32x24_Para->MLX_TH32x24_PixC_buffer = buffer_addr;
-		DBG_PRINT("davis --> MLX_TH32x24_PixC_buffer(unsigned long) addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_PixC_buffer);
-
-	buffer_size = sizeof(INT16U)*ELAMOUNT ;
-		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-		if(buffer_addr == 0) {
-			RETURN(STATUS_FAIL);	}
-		pMLX_TH32x24_Para->MLX_TH32x24_VddCompGrad_buffer = buffer_addr;
-		DBG_PRINT("davis --> MLX_TH32x24_VddCompGrad_buffer(INT16S) addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_VddCompGrad_buffer);
-
-	buffer_size = sizeof(INT16U)*ELAMOUNT ;
-		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
-		if(buffer_addr == 0) {
-			RETURN(STATUS_FAIL);	}
-		pMLX_TH32x24_Para->MLX_TH32x24_VddCompOff_buffer = buffer_addr;
-		DBG_PRINT("davis --> MLX_TH32x24_VddCompOff_buffer(INT16S) addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_VddCompOff_buffer);
 
 	buffer_size = sizeof(INT16U)*MAXNROFDEFECTS ;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
