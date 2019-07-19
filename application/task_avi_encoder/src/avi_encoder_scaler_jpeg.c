@@ -1001,7 +1001,7 @@ void MLX90640_CalculateTo(float emissivity, float tr)
 
             To = sqrt(sqrt(irData / (alphaCompensated * alphaCorrR[range] * (1 + pMLX32x24_Para->ksTo[range] * (To - pMLX32x24_Para->ct[range]))) + taTr)) - 273.15;
 
-            pMLX_TH32x24_Para->result[pixelNumber] = To;
+            pMLX_TH32x24_Para->result[pixelNumber] =(INT16S)(To*10);
         }
     }
 }
@@ -1356,7 +1356,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					statusRegister,dataReady,frameData_cnt);
 		    }
 
-		    while(dataReady != 0 && frameData_cnt < 5)
+		    while(dataReady != 0 && frameData_cnt < 7)
 		    {
 		    	
 				// 0x0030 :
@@ -1366,7 +1366,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 				//
 				error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
         		
-			while(((statusRegister == 0x0008) || (statusRegister == 0x0009) ) && (frameData_cnt < 5) )
+			while(((statusRegister == 0x0008) || (statusRegister == 0x0009) ) && (frameData_cnt < 7) )
 		    {
 				EEaddress16 = MLX90640_RAMAddrstart;
 				EEaddr[0]=(INT8U)(EEaddress16 >> 8);
@@ -1375,13 +1375,11 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					,MLX90640_RAM_AddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
 
 				DBG_PRINT("multi_read return = %d \r\n",error);// return data length , if error = -1
-
-				/* 只需 一次 
+ 
 				//error = MLX90640_I2CRead(slaveAddr, 0x800D, 1, &controlRegister1);
 				error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
 			    //frameData[832] = controlRegister1;
 				pMLX_TH32x24_Para->frameData[832] = controlRegister1;
-				*/
 				
 		    	//frameData[833] = statusRegister & 0x0001;
 				pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
@@ -1399,6 +1397,23 @@ static void MLX_TH32x24_task_entry(void const *parm)
 				pMLX_TH32x24_Para->frameData[832] = controlRegister1;
 				//frameData[833] = statusRegister & 0x0001;
 				pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
+
+
+				if(pMLX_TH32x24_Para->frameData[833] == 0x0001)
+					// set step mode(subpage0) !!
+					controlRegister1 = controlRegister1 & MLX90640_StepModeSubpage0 ;
+				else 
+					// set step mode(subpage1) !!
+					controlRegister1 = controlRegister1 | MLX90640_StepModeSubpage1 ;
+				drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,controlRegister1);
+				DBG_PRINT("write controlRegister1 = 0x%04x \r\n",controlRegister1);
+				// 0x0030 :
+				// 1 Data in RAM overwrite is enabled
+				// 1 In step mode - start of measurement
+				//		(set by the customer and cleared once the measurement is done)
+				//
+				error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
+        	
 				
 				MLX90640_GetVdd();
 
@@ -1418,7 +1433,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 				for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
 				
 				if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
-				DBG_PRINT("(%d)",(int)pMLX_TH32x24_Para->result[pixelNumber]);
+				DBG_PRINT("(%d)",pMLX_TH32x24_Para->result[pixelNumber]);
 				
 				}
 				

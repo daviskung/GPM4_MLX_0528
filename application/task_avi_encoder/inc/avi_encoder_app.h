@@ -291,7 +291,7 @@ typedef struct MLX_TH32x24Para_s
 
 	float  MLX_TH32x24_vdd;
 	
-	float	result[MLX_Pixel];
+	INT16S	result[MLX_Pixel];
 } MLX_TH32x24Para_t;
 
 
