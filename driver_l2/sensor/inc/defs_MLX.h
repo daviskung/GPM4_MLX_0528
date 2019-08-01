@@ -8,6 +8,10 @@
 
 #define	WRITE_CMD				0x00
 #define	READ_CMD				0x00
+#define	DEBUG_TMP_READ_OUT		0
+
+#define	READ_STATUS_DELAY_TIME		5
+
 
 
 
@@ -73,6 +77,7 @@
 #define MLX90640_REFRESH_RATE_32HZ	 	0x06
 #define MLX90640_REFRESH_RATE_64HZ	 	0x07
 
+#define MLX90640_SetStepMode			0x0009		// bit0=1 , bit3=1 
 #define MLX90640_StepModeSubpage0		0xFFEF		// bit0=1 , bit3=1 , bit4 = 0 :subpage0 / 1 :subpage1
 #define MLX90640_StepModeSubpage1		0x0010		// bit0=1 , bit3=1 , bit4 = 0 :subpage0 / 1 :subpage1
 
