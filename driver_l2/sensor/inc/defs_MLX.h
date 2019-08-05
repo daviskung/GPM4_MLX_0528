@@ -9,6 +9,9 @@
 #define	WRITE_CMD				0x00
 #define	READ_CMD				0x00
 #define	DEBUG_TMP_READ_OUT		0
+#define	DEBUG_TMP_READ_OUT2		0
+#define	DEBUG_MLX_MSG_OUT		0
+
 
 #define	READ_STATUS_DELAY_TIME		5
 

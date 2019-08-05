@@ -928,7 +928,7 @@ void MLX90640_GetTa(void)
 
 
 //------------------------------------------------------------------------------
-
+#if 0
 void MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t MXL_handle)
 {
     uint16_t dataReady = 1;
@@ -1025,7 +1025,7 @@ void MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t MXL_handle)
     return;
 }
 
-
+#endif
 
 
 #endif //(defined _SENSOR_MXL90640_THERMOPILE) && (_SENSOR_MXL90640_THERMOPILE == 1)
