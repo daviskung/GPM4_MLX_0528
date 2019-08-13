@@ -1388,6 +1388,9 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			gp_memset((INT8S *)pMLX_TH32x24_Para->result,0x00,MLX_Pixel*2);	// clear 值 
 						DBG_PRINT("clear result \r\n");
 
+			
+			DBG_PRINT("CalculateTo(emissivity_byUser->%f,tr_byUser = ta - TA_SHIFT->%d ) \r\n",
+				emissivity_byUser,TA_SHIFT);
 
 			pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
 
