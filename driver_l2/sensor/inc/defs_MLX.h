@@ -12,6 +12,10 @@
 #define	DEBUG_TMP_READ_OUT2		0
 #define	DEBUG_MLX_MSG_OUT		0
 
+#define	TWO_FRAME_OUT			1
+#define	TMP_AVGBUF_ON			1
+
+
 
 #define	READ_STATUS_DELAY_TIME		5
 
@@ -80,9 +84,15 @@
 #define MLX90640_REFRESH_RATE_32HZ	 	0x06
 #define MLX90640_REFRESH_RATE_64HZ	 	0x07
 
+#define MLX90640_SetModeClear			0xFFE6		// bit0=0 , bit3=0 , bit4 = 0
+#define MLX90640_SetStepModeSubpageRep	0x0001		// bit0=1 , bit3=0
+
 #define MLX90640_SetStepMode			0x0009		// bit0=1 , bit3=1 
 #define MLX90640_StepModeSubpage0		0xFFEF		// bit0=1 , bit3=1 , bit4 = 0 :subpage0 / 1 :subpage1
-#define MLX90640_StepModeSubpage1		0x0010		// bit0=1 , bit3=1 , bit4 = 0 :subpage0 / 1 :subpage1
+#define MLX90640_StepModeSubpage1		0x0010		// bit0=1 , bit3=1 , bit4 = 1 :subpage0 / 1 :subpage1
+
+#define MLX90640_StepMode32HzSubpage0	0x1B0F
+#define MLX90640_StepMode32HzSubpage1	0x1B1F
 
 
 #define MAXNROFDEFECTS	5
