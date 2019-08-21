@@ -130,6 +130,8 @@
 #endif
 
 #define AVG_buf_len			4
+#define IMG_AVG_buf_len		4
+
 #define MLX_TH32x24_ReadoutBlockBuf_max	1
 #define MLX_TH32x24_SCALERUP_BUFFER_NO	1
 

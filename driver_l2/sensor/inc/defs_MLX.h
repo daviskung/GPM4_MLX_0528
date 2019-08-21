@@ -9,11 +9,15 @@
 #define	WRITE_CMD				0x00
 #define	READ_CMD				0x00
 #define	DEBUG_TMP_READ_OUT		0
+#define	DEBUG_image_READ_OUT	0
+#define	DEBUG_image_READ_OUT2	0
+
 #define	DEBUG_TMP_READ_OUT2		0
 #define	DEBUG_MLX_MSG_OUT		0
 
 #define	TWO_FRAME_OUT			1
-#define	TMP_AVGBUF_ON			1
+#define	TMP_AVGBUF_ON			0
+#define	IMG_AVGBUF_ON			1
 
 
 
@@ -23,6 +27,7 @@
 
 
 #define CONVERT_WAIT_TIME		15
+#define IMAGE_DATA_INT32S_SIZE		4
 
 //mode[in]:i2c restart without stop or not:
 // 1:I2C_RESTART_WITHOUT_STOP 0:I2C_RESTART_WITH_STOP
@@ -45,6 +50,9 @@
 //#define MAXNROFDEFECTS	5
 
 #define rowNumEnd_32 32
+#define colNumEnd_24 24
+#define ScaleUp_10	 10
+#define ScaleUp_3	 3
 
 
 
