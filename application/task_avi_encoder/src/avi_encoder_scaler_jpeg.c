@@ -89,7 +89,6 @@
 const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 
 #define TRANSPARENT_COLOR 	0x00	// 無色 
-#define TRANSPARENT_COLOR2 	0x001f	// 無色 
 #define COLOR_FRAME_OUT		1
 #define DBG_COLOR_TABLE		0
 
@@ -108,6 +107,8 @@ const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 #define CORE_AREA_limit		4
 #define SENSOR_AREA_WIDTH	32
 #define SENSOR_AREA_HIGH	24
+#define TmaxAt_COREarea     1
+
 
 #define COLD_DISP_OFF		1
 
@@ -136,6 +137,46 @@ const INT16U ColorTable_HOT[10]={
 0xfa08,	//淡 紅 
 0xf8e3,// 淺紅 
 };
+
+
+const INT16U ColorTable_HOT32[22]={
+	/*
+	0x0000,
+	0x0800,
+	0x1000,
+	0x1800,
+	0x2000,
+	0x2800,
+	0x3000,
+	0x3800,
+	0x4000,
+	0x4800,
+	*/
+	0x5000,
+	0x5800,
+	0x6000,
+	0x6800,
+	0x7000,
+	0x7800,
+	0x8000,
+	0x8800,
+	0x9000,
+	0x9800,
+	0xa000,
+	0xa800,
+	0xb000,
+	0xb800,
+	0xc000,
+	0xc800,
+	0xd000,
+	0xd800,
+	0xe000,
+	0xe800,
+	0xf000,
+	0xf800
+
+};
+
 
 /*
 const INT16U ColorTable_HOT[10]={
@@ -168,7 +209,7 @@ const INT16U ColorTable_COLD[10]={
 0xc61f,0xb5bf,0xad7f,0xa53f,0x8c7f,	// 淡藍 
 0xb59f,
 0x421f,
-//0x295f,	
+//0x295f,
 //0x10bf,
 //0x001f};		// 深藍色 //30-39
 0x00,
@@ -178,16 +219,21 @@ const INT16U ColorTable_COLD[10]={
 
 
 const INT16U ColorTable_COLD[10]={
-//0x001f,0x10bf,0x295f,0x295f,	// 深藍色
-0xffe0,0xffea,0xffec,0xffee,//0xfff0,   //黃 
+//0x001f,0x10bf,0x295f,0x295f,	// 深藍色 
 //0xeaff,0xecff,0xeeff,0xf0ff,   //粉紅 
-0x8c7f,	 
-0xb59f,
-0x421f,
+//0x5000,	0x5800,	0x6000,	0x6800,	// 淺紅 
+0xffe0,0xffe2,0xffe5,0xffe6,//   //黃 
+//0xffe8,0xffea,0xffec,0xffef,	//淺黃 
+
+//0x10bf,0x295f,0x295f,0x001f,
+0x457f,0x539f,0x531f,	// 淺藍 
+
+//0x001f,0x001f};// 深藍色 
+
 //0x295f,
 //0x10bf,
 //0x001f};		//30-39
-0x00,0x00,0x00};	// 無色
+0x00,0x00,0x00};	// 無色 
 
 
 
@@ -741,7 +787,7 @@ static void MLX_TH32x24_SCALERUP_task_entry(void const *parm)
 		#else
 			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
 		#endif
-		
+
 			scale.input_u_addr = 0;
 			scale.input_v_addr = 0;
 			#if 1
@@ -1189,7 +1235,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 	INT8U  	*pMLX_TH32x24_BadPixMaskAdr_buf;
 	unsigned long	PixC;		// INT32U
 	INT16U  *pMLX_TH32x24_frame_INT16U_buf0;
-	
+
 	INT16U  *pMLX_TH32x24_ScaleUpframe_INT16U_buf0;
 
 	INT8U  *pMLX_TH32x24_Grayframe_INT8U_buf0,*pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0;
@@ -1222,7 +1268,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 	INT16U	 ReadTempValue;
 	signed int	TobjectRange;	// INT32S
 	float	Tmax,Tmin,TminTable,TmaxTable;
-	
+
 	float	TmaxOverZero,TminOverZero,TmaxUnderZero,TminUnderZero;
 	float	TmaxOverZeroTable,TminOverZeroTable,TmaxUnderZeroTable,TminUnderZeroTable;
 	INT8U   MLX_TH32x24_BlockNum , Blk_startIdex;
@@ -1478,15 +1524,15 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			retValue = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
 			DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d \r\n",retValue) ;
 
-			pMLX_TH32x24_frame_INT16U_buf0 = 
+			pMLX_TH32x24_frame_INT16U_buf0 =
 				(INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr;
-			
+
 			pMLX_TH32x24_Grayframe_INT8U_buf0 =
 				(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr;
-			
+
 			pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 =
 				(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr;
-			
+
 			pMLX_TH32x24_ScaleUpframe_INT16U_buf0 =
 				(INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_ScaleUpFrame_addr;
 
@@ -1947,6 +1993,8 @@ static void MLX_TH32x24_task_entry(void const *parm)
 		for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
 			//Tobject = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + cellNum);
 			ImgObject = *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum);
+
+		#if TmaxAt_COREarea
 		//
 		// find Tmax Tmin at CORE area
 		//
@@ -1963,7 +2011,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					TmaxUnderZero = -388888888;
 					TminUnderZero = 0;
 					}
-					
+
 				}
 			if(((cellNum/32) >CORE_AREA_limit)&&((cellNum/32)<(SENSOR_AREA_HIGH -CORE_AREA_limit))
 					&&((cellNum%32)>CORE_AREA_limit)&&((cellNum%32)<(SENSOR_AREA_WIDTH -CORE_AREA_limit))){
@@ -1972,38 +2020,68 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					if(TminOverZero > ImgObject){ TminOverZero = ImgObject;Tmin_number=cellNum;}
 					if(TmaxOverZero < ImgObject){ TmaxOverZero = ImgObject;Tmax_number=cellNum;}
 					}
-			
+
 				else{
 					if(TminUnderZero > ImgObject){ TminUnderZero = ImgObject;Tmin_number=cellNum;}
 					if(TmaxUnderZero < ImgObject){ TmaxUnderZero = ImgObject;Tmax_number=cellNum;}
 					}
 			}
 
+		#else
+
+			if(cellNum == 0){
+				if(ImgObject < 0 ){
+					TmaxOverZero = 0;
+					TminOverZero = 388888888;
+					TmaxUnderZero = ImgObject;
+					TminUnderZero = ImgObject;
+					}
+				else{
+					TmaxOverZero = ImgObject;
+					TminOverZero = ImgObject;
+					TmaxUnderZero = -388888888;
+					TminUnderZero = 0;
+					}
+				}
+			if ((ImgObject >= 0) && (cellNum != 0))
+					{
+					if(TminOverZero > ImgObject){ TminOverZero = ImgObject;Tmin_number=cellNum;}
+					if(TmaxOverZero < ImgObject){ TmaxOverZero = ImgObject;Tmax_number=cellNum;}
+					}
+
+				else{
+					if(TminUnderZero > ImgObject){ TminUnderZero = ImgObject;Tmin_number=cellNum;}
+					if(TmaxUnderZero < ImgObject){ TmaxUnderZero = ImgObject;Tmax_number=cellNum;}
+					}
+
+		#endif
+
 		#if COLOR_FRAME_OUT
 				TmpValue = TRANSPARENT_COLOR;
 				if((TminTable==250) && (TmaxTable==250)){		// initial setting
 					if(ImgObject > 0)
 						TmpValue =0xf8e3;
-					else 
+					else
 						TmpValue = TRANSPARENT_COLOR;
 				}
-				
+
 				else{
-					if(ImgObject >= 0) 
+					if(ImgObject >= 0)
 					{
-						if (ImgObject >= TmaxOverZeroTable) TmpValue =0xf8e3;
+						if (ImgObject >= TmaxOverZeroTable) TmpValue =ColorTable_HOT32[21];
 						else {
 						// auto Autoscale
-						TmpTbInd = ((ImgObject - TminOverZeroTable)*10)/(TmaxOverZeroTable - TminOverZeroTable) ;
-						if(TmpTbInd>9)	TmpTbInd=9;
-							TmpValue = ColorTable_HOT[TmpTbInd];
+						TmpTbInd = (INT8U) (((ImgObject - TminOverZeroTable)*22)/(TmaxOverZeroTable - TminOverZeroTable)) ;
+						if(TmpTbInd>21)	TmpTbInd=21;
+							//TmpValue = ColorTable_HOT[TmpTbInd];
+							TmpValue = ColorTable_HOT32[TmpTbInd];
 							}
 					}
 					else{
-						if (ImgObject <= TminUnderZeroTable) TmpValue =ColorTable_COLD[0];
+						if (ImgObject <= TminUnderZeroTable) TmpValue =ColorTable_COLD[9];
 						else {
 						// auto Autoscale
-						TmpTbInd =10 - ((ImgObject - TminUnderZeroTable)*10)/(TmaxUnderZeroTable - TminUnderZeroTable) ;
+						TmpTbInd =10 - (INT8U)(((ImgObject - TminUnderZeroTable)*10)/(TmaxUnderZeroTable - TminUnderZeroTable)) ;
 						if(TmpTbInd>9)	TmpTbInd=9;
 						TmpValue = ColorTable_COLD[TmpTbInd];
 						//TmpValue = TRANSPARENT_COLOR;
@@ -2016,17 +2094,17 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			if((TminTable==250) && (TmaxTable==250)){		// initial setting
 				if(ImgObject > 0)
 					GrayTmpValue =0x1f;
-					else 
+					else
 						GrayTmpValue = 0x00;	// TRANSPARENT_COLOR;
 				}
-				
+
 			else{
-				if(ImgObject >= 0) 
+				if(ImgObject >= 0)
 				{
 					if (ImgObject >= TmaxOverZeroTable) GrayTmpValue =0xff;
 					else {
 					// auto Autoscale
-					TmpTbInd = ((ImgObject - TminOverZeroTable)*127)/(TmaxOverZeroTable - TminOverZeroTable) ;
+					TmpTbInd = (INT8U)(((ImgObject - TminOverZeroTable)*127)/(TmaxOverZeroTable - TminOverZeroTable)) ;
 					if(TmpTbInd>127)	TmpTbInd=127;
 						GrayTmpValue = TmpTbInd + 127;
 						}
@@ -2035,7 +2113,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 						if (ImgObject <= TminUnderZeroTable) GrayTmpValue =0x00;
 						else {
 						// auto Autoscale
-						TmpTbInd =((ImgObject - TminUnderZeroTable)*127)/(TmaxUnderZeroTable - TminUnderZeroTable) ;
+						TmpTbInd =(INT8U)(((ImgObject - TminUnderZeroTable)*127)/(TmaxUnderZeroTable - TminUnderZeroTable)) ;
 						if(TmpTbInd>127)	TmpTbInd=127;
 							GrayTmpValue = TmpTbInd ;
 							}
@@ -2071,7 +2149,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 		//
 		// set Tmax/Tmin for next frame, NOT this frame
-		// 
+		//
 		//	float	TmaxOverZeroTable,TminOverZeroTable,TmaxUnderZeroTable,TminUnderZeroTable;
 			TminOverZeroTable=TminOverZero; TminTable_number=Tmin_number;
 			TmaxOverZeroTable=TmaxOverZero; TmaxTable_number=Tmax_number;
@@ -2094,7 +2172,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					tmp_start = tmp_i;
 					//DBG_PRINT("tmp_start = %d,tmp_i2 = %d , cellNum = %d  \r\n",tmp_start,tmp_i2,cellNum);
 				}
-				
+
 			for (tmp_i = tmp_start + tmp_i2 *ScaleUp_3 ; tmp_i < tmp_start + (tmp_i2 *ScaleUp_3)+ ScaleUp_3; ++tmp_i)
 				{
 				*(pMLX_TH32x24_ScaleUpframe_INT16U_buf0 + tmp_i )
@@ -2112,7 +2190,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 				*(pMLX_TH32x24_ScaleUpframe_INT16U_buf0 + tmp_i )
 						=TmpValue;
 				}
-			
+
 		}
 		#else
 
@@ -2130,7 +2208,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					tmp_start = tmp_i;
 					//DBG_PRINT("tmp_start = %d,tmp_i2 = %d , cellNum = %d  \r\n",tmp_start,tmp_i2,cellNum);
 				}
-				
+
 			for (tmp_i = tmp_start + tmp_i2 *ScaleUp_3 ; tmp_i < tmp_start + (tmp_i2 *ScaleUp_3)+ ScaleUp_3; ++tmp_i)
 				{
 				*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
@@ -2148,12 +2226,12 @@ static void MLX_TH32x24_task_entry(void const *parm)
 				*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
 						=TmpValue;
 				}
-			
+
 		}
-		
+
 		#endif
-		
-	
+
+
 END_TEST:
 
 			//DBG_PRINT("2.ready_buf = 0x%04x \r\n",ready_buf);
@@ -2182,6 +2260,9 @@ END_TEST:
 				TmaxOverZeroTable,TmaxTable_number/32,TmaxTable_number%32);
 			DBG_PRINT("TminUnderZeroTable=%f,TmaxUnderZeroTable=%f\r\n",
 				TminUnderZeroTable,TmaxUnderZeroTable);
+			DBG_PRINT("OverZeroDiff=[%f] , UnderZeroDiff=[%f] \r\n",
+				//(TmaxOverZeroTable-TminOverZeroTable)/1048575,(TmaxUnderZeroTable-TminUnderZeroTable)/1048575); // 會有 error
+				(TmaxOverZeroTable-TminOverZeroTable),(TmaxUnderZeroTable-TminUnderZeroTable));
 				}
 			//DBG_PRINT("[TA=%dC, MAX =%d[%d],min =%d[%d],t2=%d ] \r\n",TA-2730,Tmax_number,Tmax,Tmin_number,Tmin,TimeCnt2-TimeCnt1);
 			//if (sampleCnt++ % 20 == 0) DBG_PRINT("TH32x32_READ = %d \r\n", sampleCnt);

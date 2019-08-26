@@ -36,7 +36,7 @@
 #define AVI_ENCODE_FAST_SWITCH_EN		0		//0: disable, 1:enable; video encode fast stop and start
 #define AVI_ENCODE_VIDEO_TIMER			TIMER_C //timer, A,B,C
 #define AVI_ENCODE_TIME_BASE			50		//timer frequency must >= frame rate
-#define AVI_ENCODE_SHOW_TIME			0		//0: disable, 1:enable
+#define AVI_ENCODE_SHOW_TIME			0		//0: disable, 1:enable // TIME_T 未定義??
 
 #define VIDEO_PACKER_NONE               0
 #define VIDEO_PACKER_MOV                1

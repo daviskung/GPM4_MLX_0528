@@ -490,7 +490,7 @@ extern void avi_adc_hw_stop(void);
 
 #if	AVI_ENCODE_SHOW_TIME == 1
 void cpu_draw_osd(const INT8U *source_addr, INT32U target_addr, INT16U offset, INT16U res);
-void cpu_draw_time_osd(TIME_T current_time, INT32U target_buffer, INT16U resolution);
+//void cpu_draw_time_osd(TIME_T current_time, INT32U target_buffer, INT16U resolution);
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
