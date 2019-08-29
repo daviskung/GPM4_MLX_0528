@@ -7,6 +7,20 @@
 #define SENSOR_FEA_VIDEO_ENCODE			0
 #define SENSOR_FEA_OID					1
 
+#if 0
+//Time and data reminder
+typedef struct
+{
+    INT32S tm_sec;  /* 0-59 */
+    INT32S tm_min;  /* 0-59 */
+    INT32S tm_hour; /* 0-23 */
+    INT32S tm_mday; /* 1-31 */
+    INT32S tm_mon;  /* 1-12 */
+    INT32S tm_year;
+    INT32S tm_wday; /* 0-6 Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday */
+}TIME_T;
+#endif
+
 /* MP3 */
 /////////////////////////////////////////////////////////////////////////////
 //		Constant Definition

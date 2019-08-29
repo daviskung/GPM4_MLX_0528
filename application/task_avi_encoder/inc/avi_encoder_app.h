@@ -290,10 +290,10 @@ typedef struct MLX_TH32x24Para_s
 	INT16U	frameData[MLX90640_frameDataSize];
 
 	float  MLX_TH32x24_vdd;
-	
+
 	INT16S	result[MLX_Pixel];
 	float	result_image[MLX_Pixel];
-	
+
 	INT32U  MLX_TH32x24_ImgAvg_buf_addr[IMG_AVG_buf_len];	// MLX_TH32x24 image buffer addr
 	INT32U  MLX_TH32x24_GrayOutputFrame_addr;
 	INT32U 	MLX_TH32x24_GrayScaleUpFrame_addr;
@@ -488,9 +488,26 @@ extern INT32U avi_audio_get_next_buffer(void);
 extern void avi_adc_hw_start(INT32U sample_rate);
 extern void avi_adc_hw_stop(void);
 
+
 #if	AVI_ENCODE_SHOW_TIME == 1
 void cpu_draw_osd(const INT8U *source_addr, INT32U target_addr, INT16U offset, INT16U res);
+void cpu_draw_advalue_osd(INT32S value, INT32U target_buffer, INT16U resolution,INT8U st_val, INT8U shift_val, INT8U spec_val);
+
 //void cpu_draw_time_osd(TIME_T current_time, INT32U target_buffer, INT16U resolution);
+
+//Time and data reminder
+typedef struct
+{
+    INT32S tm_sec;  /* 0-59 */
+    INT32S tm_min;  /* 0-59 */
+    INT32S tm_hour; /* 0-23 */
+    INT32S tm_mday; /* 1-31 */
+    INT32S tm_mon;  /* 1-12 */
+    INT32S tm_year;
+    INT32S tm_wday; /* 0-6 Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday */
+}TIME_T;
+
+
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////

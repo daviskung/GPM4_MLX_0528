@@ -104,7 +104,7 @@ const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 #define	TA_SHIFT			8
 
 
-#define CORE_AREA_limit		4
+#define CORE_AREA_limit		1
 #define SENSOR_AREA_WIDTH	32
 #define SENSOR_AREA_HIGH	24
 #define TmaxAt_COREarea     1
@@ -249,6 +249,8 @@ typedef struct
 extern objRecongResult obj_recong_draw;
 
 INT32U obj_id,pos_x,pos_y;
+INT32S UnderZeroDiff_value,OverZeroDiff_value;
+
 
 /**************************************************************************
  *                          D A T A    T Y P E S                          *
@@ -1206,6 +1208,8 @@ static void MLX_TH32x24_task_entry(void const *parm)
 	osThreadId id;
 	INT16U   i;
 
+	//INT16U ad_18_value;
+
 	drv_l1_i2c_bus_handle_t th32x32_handle;
 	drv_l1_i2c_bus_handle_t MXL_handle;
 
@@ -1264,7 +1268,9 @@ static void MLX_TH32x24_task_entry(void const *parm)
 	float  *pMLX_TH32x24_ImgOutput_INT32S_buf0;
 
 	INT8U	sampleCnt;
-	INT16U	 Tmin_number,Tmax_number,TminTable_number,TmaxTable_number;
+	INT16U	 OverZ_Tmin_number,OverZ_Tmax_number,OverZ_TminTable_number,OverZ_TmaxTable_number;
+	INT16U	 UnderZ_Tmin_number,UnderZ_Tmax_number,UnderZ_TminTable_number,UnderZ_TmaxTable_number;
+	
 	INT16U	 ReadTempValue;
 	signed int	TobjectRange;	// INT32S
 	float	Tmax,Tmin,TminTable,TmaxTable;
@@ -2017,13 +2023,13 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					&&((cellNum%32)>CORE_AREA_limit)&&((cellNum%32)<(SENSOR_AREA_WIDTH -CORE_AREA_limit))){
 				if (ImgObject >= 0)
 					{
-					if(TminOverZero > ImgObject){ TminOverZero = ImgObject;Tmin_number=cellNum;}
-					if(TmaxOverZero < ImgObject){ TmaxOverZero = ImgObject;Tmax_number=cellNum;}
+					if(TminOverZero > ImgObject){ TminOverZero = ImgObject;OverZ_Tmin_number=cellNum;}
+					if(TmaxOverZero < ImgObject){ TmaxOverZero = ImgObject;OverZ_Tmax_number=cellNum;}
 					}
 
 				else{
-					if(TminUnderZero > ImgObject){ TminUnderZero = ImgObject;Tmin_number=cellNum;}
-					if(TmaxUnderZero < ImgObject){ TmaxUnderZero = ImgObject;Tmax_number=cellNum;}
+					if(TminUnderZero > ImgObject){ TminUnderZero = ImgObject;UnderZ_Tmin_number=cellNum;}
+					if(TmaxUnderZero < ImgObject){ TmaxUnderZero = ImgObject;UnderZ_Tmax_number=cellNum;}
 					}
 			}
 
@@ -2043,17 +2049,18 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					TminUnderZero = 0;
 					}
 				}
-			if ((ImgObject >= 0) && (cellNum != 0))
+			else{
+				if(ImgObject > 0)
 					{
-					if(TminOverZero > ImgObject){ TminOverZero = ImgObject;Tmin_number=cellNum;}
-					if(TmaxOverZero < ImgObject){ TmaxOverZero = ImgObject;Tmax_number=cellNum;}
+					if(TminOverZero > ImgObject){ TminOverZero = ImgObject;OverZ_Tmin_number=cellNum;}
+					if(TmaxOverZero < ImgObject){ TmaxOverZero = ImgObject;OverZ_Tmax_number=cellNum;}
 					}
 
 				else{
-					if(TminUnderZero > ImgObject){ TminUnderZero = ImgObject;Tmin_number=cellNum;}
-					if(TmaxUnderZero < ImgObject){ TmaxUnderZero = ImgObject;Tmax_number=cellNum;}
+					if(TminUnderZero > ImgObject){ TminUnderZero = ImgObject;UnderZ_Tmin_number=cellNum;}
+					if(TmaxUnderZero < ImgObject){ TmaxUnderZero = ImgObject;UnderZ_Tmax_number=cellNum;}
 					}
-
+				}
 		#endif
 
 		#if COLOR_FRAME_OUT
@@ -2151,10 +2158,10 @@ static void MLX_TH32x24_task_entry(void const *parm)
 		// set Tmax/Tmin for next frame, NOT this frame
 		//
 		//	float	TmaxOverZeroTable,TminOverZeroTable,TmaxUnderZeroTable,TminUnderZeroTable;
-			TminOverZeroTable=TminOverZero; TminTable_number=Tmin_number;
-			TmaxOverZeroTable=TmaxOverZero; TmaxTable_number=Tmax_number;
-			TminUnderZeroTable = TminUnderZero;
-			TmaxUnderZeroTable = TmaxUnderZero;
+			TminOverZeroTable=TminOverZero; OverZ_TminTable_number=OverZ_Tmin_number;
+			TmaxOverZeroTable=TmaxOverZero; OverZ_TmaxTable_number=OverZ_Tmax_number;
+			TminUnderZeroTable = TminUnderZero; UnderZ_TminTable_number=UnderZ_Tmin_number;
+			TmaxUnderZeroTable = TmaxUnderZero; UnderZ_TmaxTable_number=UnderZ_Tmax_number;
 			TminTable = 260; // disable default value
 			TmaxTable = 260;
 	#if COLOR_FRAME_OUT
@@ -2253,18 +2260,28 @@ END_TEST:
 
 			//DBG_PRINT(" ImageOut[t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
 
-			if (sampleCnt++ % 60 == 0){
-			DBG_PRINT("[ MLX_TH32x24_task_entry t2=%d ] tempSet=%d,TminOverZeroTable=%f[%d-%d],TmaxOverZeroTable=%f[%d-%d]\r\n",
-				TimeCnt2-TimeCnt1,ReadTempValue,
-				TminOverZeroTable,TminTable_number/32,TminTable_number%32,
-				TmaxOverZeroTable,TmaxTable_number/32,TmaxTable_number%32);
-			DBG_PRINT("TminUnderZeroTable=%f,TmaxUnderZeroTable=%f\r\n",
-				TminUnderZeroTable,TmaxUnderZeroTable);
-			DBG_PRINT("OverZeroDiff=[%f] , UnderZeroDiff=[%f] \r\n",
+			if (sampleCnt++ % 30 == 0){
+
+			DBG_PRINT("[ MLX_TH32x24_task_entry t2=%d ] \r\n TminOverZeroTable=%f[%d-%d],TmaxOverZeroTable=%f[%d-%d]\r\n",
+				TimeCnt2-TimeCnt1,
+				TminOverZeroTable,OverZ_TminTable_number/32,OverZ_TminTable_number%32,
+				TmaxOverZeroTable,OverZ_TmaxTable_number/32,OverZ_TmaxTable_number%32);
+			DBG_PRINT("TminUnderZeroTable=%f[%d-%d],TmaxUnderZeroTable=%f[%d-%d]\r\n",
+				TminUnderZeroTable,UnderZ_TminTable_number/32,UnderZ_TminTable_number%32,
+				TmaxUnderZeroTable,UnderZ_TmaxTable_number/32,UnderZ_TmaxTable_number%32);
+			
+				UnderZeroDiff_value = (INT32S)((TmaxUnderZeroTable-TminUnderZeroTable)/1000000);
+				if( UnderZeroDiff_value < 0 ) UnderZeroDiff_value = 0; // too small & too large ?
+				
+				OverZeroDiff_value = (INT32S)((TmaxOverZeroTable-TminOverZeroTable)/1000000);
+				if( OverZeroDiff_value < 0 ) OverZeroDiff_value = 0;
+				
+				DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 \r\n",
 				//(TmaxOverZeroTable-TminOverZeroTable)/1048575,(TmaxUnderZeroTable-TminUnderZeroTable)/1048575); // 會有 error
-				(TmaxOverZeroTable-TminOverZeroTable),(TmaxUnderZeroTable-TminUnderZeroTable));
+				(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
+				(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
 				}
-			//DBG_PRINT("[TA=%dC, MAX =%d[%d],min =%d[%d],t2=%d ] \r\n",TA-2730,Tmax_number,Tmax,Tmin_number,Tmin,TimeCnt2-TimeCnt1);
+			//DBG_PRINT("[TA=%dC, MAX =%d[%d],min =%d[%d],t2=%d ] \r\n",TA-2730,OverZ_Tmax_number,Tmax,OverZ_Tmin_number,Tmin,TimeCnt2-TimeCnt1);
 			//if (sampleCnt++ % 20 == 0) DBG_PRINT("TH32x32_READ = %d \r\n", sampleCnt);
 
 ERROR_QUIT:
@@ -3732,18 +3749,23 @@ static void scaler_task_entry(void const *parm)
 			if (disp_bit) {
 				display_frame = scaler_frame;
 			#if	AVI_ENCODE_SHOW_TIME == 1
-				cal_time_get(&osd_time);
-				cpu_draw_time_osd(osd_time, display_frame, pAviEncVidPara->display_width);
+				//cal_time_get(&osd_time);
+				//cpu_draw_time_osd(osd_time, display_frame, pAviEncVidPara->display_width);
 			#endif
 
 			#if MLX_TH32x24IMAGE_ONLY
 
-				if(videnc_display) { // davis run this //
+
+				if((videnc_display)&&(pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1)) { // davis run this //
+					cpu_draw_advalue_osd(UnderZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
+						320,16,0,7);
+					cpu_draw_advalue_osd(OverZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
+						320,100,0,6);
 		    		videnc_display(pAviEncVidPara->display_buffer_width,
 		    					   pAviEncVidPara->display_buffer_height,
 		    					   pMLX_TH32x24_Para->MLX_TH32x24_display_frame);
-					//if(pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1)
-					//	pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 0;
+
+					pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 0;
 		    	}
 			#else
 		    	if(videnc_display) { // davis run this
@@ -3753,12 +3775,17 @@ static void scaler_task_entry(void const *parm)
 					// PPU 處理 
 
 					if(pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1){
+						cpu_draw_advalue_osd(UnderZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
+						320,16,0,7);
+						cpu_draw_advalue_osd(OverZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
+						320,100,0,6);
 						gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 320, 240,
 							(INT32U)pMLX_TH32x24_Para->MLX_TH32x24_display_frame); // from MLX_TH32x24 sensor
 						pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 0;
 						//DEBUG_MSG(" C \r\n");
 					}
 					//DEBUG_MSG("display_frame=0x%x \r\n",display_frame);
+
 					gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, 320, 240,
 							(INT32U)display_frame);	 // from CMOS sensor
 					//DEBUG_MSG("PPU-s\r\n");
@@ -4108,7 +4135,7 @@ static void video_encode_task_entry(void const *parm)
 	ScalerPara_t para;
 #endif
 #if	AVI_ENCODE_SHOW_TIME == 1
-	TIME_T osd_time;
+	//TIME_T osd_time;
 #endif
     INT32S FrmCnt, FirstFrm, NullFrm = 0;
     INT64S dwtemp;
@@ -4275,8 +4302,8 @@ static void video_encode_task_entry(void const *parm)
 			//if(pAviEncVidPara->video_format == C_MJPG_FORMAT) {
 			#if	AVI_ENCODE_SHOW_TIME == 1
 				if(pAviEncVidPara->dispaly_scaler_flag == 1) {
-					cal_time_get(&osd_time);
-					cpu_draw_time_osd(osd_time, scaler_frame, pAviEncVidPara->encode_width);
+					//cal_time_get(&osd_time);
+					//cpu_draw_time_osd(osd_time, scaler_frame, pAviEncVidPara->encode_width);
 				}
 			#endif
 

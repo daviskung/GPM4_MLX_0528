@@ -1784,6 +1784,7 @@ void avi_adc_hw_stop(void)
 }
 
 #if	AVI_ENCODE_SHOW_TIME == 1
+
 const INT8U *number[] = {
 	acFontHZArial01700030,
 	acFontHZArial01700031,
@@ -1796,6 +1797,20 @@ const INT8U *number[] = {
 	acFontHZArial01700038,
 	acFontHZArial01700039
 };
+
+
+const INT8U *specMark[] = {
+	acFontHZArial017Slash,
+	acFontHZArial017Dot,
+	acFontHZArial017Comma,
+	acFontHZArialSlash,
+	acFontHZArialDot,
+	acFontHZArialCommon,
+	acFontHZArial017_H,
+	acFontHZArial017_L,
+	acFontHZArial017_M
+};
+
 
 //  Draw OSD function
 void cpu_draw_osd(const INT8U *source_addr, INT32U target_addr, INT16U offset, INT16U res)
@@ -1821,7 +1836,8 @@ void cpu_draw_osd(const INT8U *source_addr, INT32U target_addr, INT16U offset, I
  		ptr += (res-8)*2;
  	}
 }
-/*
+
+#if 0
 void cpu_draw_time_osd(TIME_T current_time, INT32U target_buffer, INT16U resolution)
 {
 	INT8U  data;
@@ -1898,22 +1914,21 @@ void cpu_draw_time_osd(TIME_T current_time, INT32U target_buffer, INT16U resolut
 		cache_drain_range((target_buffer + (resolution*220*2)), resolution*(240-220)*2);
 	}
 }
-*/
-#if 0
-extern INT16U ad_value;
-extern INT16U ad_18_value;
-void cpu_draw_advalue_osd(INT16U value, INT32U target_buffer, INT16U resolution, INT16U aa)
+#endif
+
+#if 1
+
+void cpu_draw_advalue_osd(INT32S value, INT32U target_buffer, 
+		INT16U resolution,INT8U st_val, INT8U shift_val , INT8U spec_val )
 {
 	INT8U  data;
 	INT16U offset, space, wtemp;
 	INT32U line;
 	if(resolution == 320){
 		line = target_buffer + 220*resolution*2;//QVGA
-		offset = 250*2;
-	} else {
-		line = target_buffer + aa*resolution*2;//VGA
-		offset = 480*2;
-	}
+		offset = st_val*2 + shift_val;
+	} 
+	
 	space = 16;
 	//Arial 17
 	//year
@@ -1932,6 +1947,9 @@ void cpu_draw_advalue_osd(INT16U value, INT32U target_buffer, INT16U resolution,
 	cpu_draw_osd(number[data],line,offset+space*3,resolution);
 	data = wtemp;
 	cpu_draw_osd(number[data],line,offset+space*4,resolution);
+	if(spec_val < 9)
+	// slash dot comma *17 , slash dot comma *14 , H L M
+	cpu_draw_osd(specMark[spec_val],line,offset-space*2,resolution); 
 }
 #endif
 #endif
