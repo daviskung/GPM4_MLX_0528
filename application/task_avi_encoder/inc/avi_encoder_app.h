@@ -275,13 +275,10 @@ typedef struct MLX_TH32x24Para_s
 	INT8U   MLX_TH32x24_TABLE_SCALER_FACTOR;
 
 	float  MLX_TH32x24_ta;
-	INT16U  MLX_TH32x24_TA_AD7314;
-	INT16U  MLX_TH32x24_TMAX;
+	INT16U  MLX_TH32x24_ImgValAry[IMG_VAL_buf_len]; // over zero max/min , under zero max/min
+	INT16S  MLX_TH32x24_ImgTempAry[IMG_VAL_buf_len]; // over zero max/min , under zero max/min
 	INT16U  MLX_TH32x24_Tmin;
-	INT16U	MLX_TH32x24_TmaxAvgValue;
-	INT16U	MLX_TH32x24_TminAvgValue;
-
-
+	
 	INT32U  MLX_TH32x24_avg_buf_addr[AVG_buf_len];	// MLX_TH32x24 temperature buffer addr
 	INT32U  MLX_TH32x24_display_background_frame;
 	INT32U  MLX32x24_EE_READ_8bitBUF;

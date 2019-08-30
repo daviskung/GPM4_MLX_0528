@@ -943,6 +943,152 @@ Return:
 }
 */
 
+
+//------------------------------------------------------------------------------
+// example1:
+// Calculate  the  object  temperatures  for  all  the  pixels  in  a  frame,
+// object  emissivity  is  0.95  and  the reflected temperature is 23.15°C (measured by the user):
+// example2:
+// Calculate  the  object  temperatures  for  all  the  pixels  in  a  frame,
+// object  emissivity  is  0.95  and  the reflected temperature is the sensor ambient temperature:
+
+void MLX90640_PixelNumber_CalculateTo(float emissivity, float tr)
+{
+    float vdd;
+    float ta;
+    float ta4;
+    float tr4;
+    float taTr;
+    float gain;
+    float irDataCP[2];
+    float irData;
+    float alphaCompensated;
+    uint8_t mode;
+    int8_t ilPattern;
+    int8_t chessPattern;
+    int8_t pattern;
+    int8_t conversionPattern;
+    float Sx;
+    float To;
+    float alphaCorrR[4];
+    int8_t range;
+    uint16_t subPage;
+    int i,pixelNumber;
+
+
+	subPage = pMLX_TH32x24_Para->frameData[833];
+    vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
+    ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
+
+    ta4 = pow((ta + 273.15), (double)4);
+    tr4 = pow((tr + 273.15), (double)4);
+    taTr = tr4 - (tr4-ta4)/emissivity;
+
+    alphaCorrR[0] = 1 / (1 + pMLX32x24_Para->ksTo[0] * 40);
+    alphaCorrR[1] = 1 ;
+    alphaCorrR[2] = (1 + pMLX32x24_Para->ksTo[2] * pMLX32x24_Para->ct[2]);
+    alphaCorrR[3] = alphaCorrR[2] * (1 + pMLX32x24_Para->ksTo[3] * (pMLX32x24_Para->ct[3] - pMLX32x24_Para->ct[2]));
+
+//------------------------- Gain calculation -----------------------------------
+    gain = pMLX_TH32x24_Para->frameData[778];
+    if(gain > 32767)
+    {
+        gain = gain - 65536;
+    }
+
+    gain = pMLX32x24_Para->gainEE / gain;
+
+//------------------------- To calculation -------------------------------------
+    mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
+
+    irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
+    irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
+    for( i = 0; i < 2; i++)
+    {
+        if(irDataCP[i] > 32767)
+        {
+            irDataCP[i] = irDataCP[i] - 65536;
+        }
+        irDataCP[i] = irDataCP[i] * gain;
+    }
+    irDataCP[0] = irDataCP[0] - pMLX32x24_Para->cpOffset[0] * (1 + pMLX32x24_Para->cpKta * (ta - 25)) * (1 + pMLX32x24_Para->cpKv * (vdd - 3.3));
+    if( mode ==  pMLX32x24_Para->calibrationModeEE)
+    {
+        irDataCP[1] = irDataCP[1] - pMLX32x24_Para->cpOffset[1] * (1 + pMLX32x24_Para->cpKta * (ta - 25)) * (1 + pMLX32x24_Para->cpKv * (vdd - 3.3));
+    }
+    else
+    {
+      irDataCP[1] = irDataCP[1] - (pMLX32x24_Para->cpOffset[1] + pMLX32x24_Para->ilChessC[0]) * (1 + pMLX32x24_Para->cpKta * (ta - 25)) * (1 + pMLX32x24_Para->cpKv * (vdd - 3.3));
+    }
+
+    for( i = 0; i < IMG_VAL_buf_len; i++)
+    {
+    	pixelNumber = pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[i];
+        ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
+        chessPattern = ilPattern ^ (pixelNumber - (pixelNumber/2)*2);
+        conversionPattern = ((pixelNumber + 2) / 4 - (pixelNumber + 3) / 4 + (pixelNumber + 1) / 4 - pixelNumber / 4) * (1 - 2 * ilPattern);
+
+        if(mode == 0)
+        {
+          pattern = ilPattern;
+        }
+        else
+        {
+          pattern = chessPattern;
+        }
+
+        if(pattern == pMLX_TH32x24_Para->frameData[833])
+        {
+            irData = pMLX_TH32x24_Para->frameData[pixelNumber];
+            if(irData > 32767)
+            {
+                irData = irData - 65536;
+            }
+            irData = irData * gain;
+
+            irData = irData - pMLX32x24_Para->offset[pixelNumber]*(1 + pMLX32x24_Para->kta[pixelNumber]*(ta - 25))*(1 + pMLX32x24_Para->kv[pixelNumber]*(vdd - 3.3));
+            if(mode !=  pMLX32x24_Para->calibrationModeEE)
+            {
+              irData = irData + pMLX32x24_Para->ilChessC[2] * (2 * ilPattern - 1) - pMLX32x24_Para->ilChessC[1] * conversionPattern;
+            }
+
+            irData = irData / emissivity;
+
+            irData = irData - pMLX32x24_Para->tgc * irDataCP[subPage];
+
+            alphaCompensated = (pMLX32x24_Para->alpha[pixelNumber] - pMLX32x24_Para->tgc * pMLX32x24_Para->cpAlpha[subPage])*(1 + pMLX32x24_Para->KsTa * (ta - 25));
+
+            Sx = pow((double)alphaCompensated, (double)3) * (irData + alphaCompensated * taTr);
+            Sx = sqrt(sqrt(Sx)) * pMLX32x24_Para->ksTo[1];
+
+            To = sqrt(sqrt(irData/(alphaCompensated * (1 - pMLX32x24_Para->ksTo[1] * 273.15) + Sx) + taTr)) - 273.15;
+
+            if(To < pMLX32x24_Para->ct[1])
+            {
+                range = 0;
+            }
+            else if(To < pMLX32x24_Para->ct[2])
+            {
+                range = 1;
+            }
+            else if(To < pMLX32x24_Para->ct[3])
+            {
+                range = 2;
+            }
+            else
+            {
+                range = 3;
+            }
+
+            To = sqrt(sqrt(irData / (alphaCompensated * alphaCorrR[range] * (1 + pMLX32x24_Para->ksTo[range] * (To - pMLX32x24_Para->ct[range]))) + taTr)) - 273.15;
+           // pMLX_TH32x24_Para->result[pixelNumber] =(INT16S)(To*10);
+			pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[i] =(INT16S)(To*10);
+        }
+    }
+}
+
+
+
 //------------------------------------------------------------------------------
 // example1:
 // Calculate  the  object  temperatures  for  all  the  pixels  in  a  frame,
@@ -1270,10 +1416,11 @@ static void MLX_TH32x24_task_entry(void const *parm)
 	INT8U	sampleCnt;
 	INT16U	 OverZ_Tmin_number,OverZ_Tmax_number,OverZ_TminTable_number,OverZ_TmaxTable_number;
 	INT16U	 UnderZ_Tmin_number,UnderZ_Tmax_number,UnderZ_TminTable_number,UnderZ_TmaxTable_number;
-	
+
 	INT16U	 ReadTempValue;
 	signed int	TobjectRange;	// INT32S
-	float	Tmax,Tmin,TminTable,TmaxTable;
+	INT16U	TminTable,TmaxTable;
+	//INT16S	TempTable_max,TempTable_min;
 
 	float	TmaxOverZero,TminOverZero,TmaxUnderZero,TminUnderZero;
 	float	TmaxOverZeroTable,TminOverZeroTable,TmaxUnderZeroTable,TminUnderZeroTable;
@@ -1786,6 +1933,13 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			//DBG_PRINT(" frame %d MLX90640_GetImage->2 End[t=%d] \r\n",
 			//	pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
 
+			if((TminTable != 250) && (TmaxTable != 250)){		// initial setting
+
+				tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
+				MLX90640_PixelNumber_CalculateTo(emissivity_byUser,tr_byUser);
+
+			}
+
 			#if DEBUG_TMP_READ_OUT
 				for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
 
@@ -1857,10 +2011,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			// 每5秒 一次 AD7314_readTempature(暫不執行) 
 			//
 			ReadTempValue =(INT16S) pMLX_TH32x24_Para->MLX_TH32x24_ta;; // 先設定 TA 為標準溫度 
-			pMLX_TH32x24_Para->MLX_TH32x24_TA_AD7314 = ReadTempValue;
-			pMLX_TH32x24_Para->MLX_TH32x24_TMAX = Tmax;	// Tmax Tmin initial value 250 25C
-			pMLX_TH32x24_Para->MLX_TH32x24_Tmin = Tmin;
-			//pMLX_TH32x24_Para->MLX_TH32x24_TA = TA-2730;
+
 
 			//
 			// 每5秒 一次 產生 	  ReadElecOffset & TA
@@ -2065,6 +2216,8 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 		#if COLOR_FRAME_OUT
 				TmpValue = TRANSPARENT_COLOR;
+
+
 				if((TminTable==250) && (TmaxTable==250)){		// initial setting
 					if(ImgObject > 0)
 						TmpValue =0xf8e3;
@@ -2073,6 +2226,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 				}
 
 				else{
+
 					if(ImgObject >= 0)
 					{
 						if (ImgObject >= TmaxOverZeroTable) TmpValue =ColorTable_HOT32[21];
@@ -2093,8 +2247,14 @@ static void MLX_TH32x24_task_entry(void const *parm)
 						TmpValue = ColorTable_COLD[TmpTbInd];
 						//TmpValue = TRANSPARENT_COLOR;
 						}
+
+
 						}
+
 				}
+
+NO_VAL:
+
 
 	#else
 			//GrayTmpValue = 0x00; // 0x00 ~ 0x7F low temp ,0x80 ~ 0xff high temp
@@ -2162,6 +2322,22 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			TmaxOverZeroTable=TmaxOverZero; OverZ_TmaxTable_number=OverZ_Tmax_number;
 			TminUnderZeroTable = TminUnderZero; UnderZ_TminTable_number=UnderZ_Tmin_number;
 			TmaxUnderZeroTable = TmaxUnderZero; UnderZ_TmaxTable_number=UnderZ_Tmax_number;
+
+			#if 0	// clear screen
+			if ((UnderZeroDiff_value - 500) < 0)
+			{
+
+				gp_memset((INT8S *)pMLX_TH32x24_frame_INT16U_buf0,TRANSPARENT_COLOR,MLX_Pixel*2);	// clear 值 
+
+			}
+
+			#endif
+
+			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[0] = UnderZ_TminTable_number;
+			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[1] = UnderZ_TmaxTable_number;
+			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[2] = OverZ_TminTable_number;
+			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[3] = OverZ_TmaxTable_number;
+
 			TminTable = 260; // disable default value
 			TmaxTable = 260;
 	#if COLOR_FRAME_OUT
@@ -2260,7 +2436,7 @@ END_TEST:
 
 			//DBG_PRINT(" ImageOut[t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
 
-			if (sampleCnt++ % 30 == 0){
+			if (sampleCnt++ % 20 == 0){
 
 			DBG_PRINT("[ MLX_TH32x24_task_entry t2=%d ] \r\n TminOverZeroTable=%f[%d-%d],TmaxOverZeroTable=%f[%d-%d]\r\n",
 				TimeCnt2-TimeCnt1,
@@ -2270,19 +2446,26 @@ END_TEST:
 				TminUnderZeroTable,UnderZ_TminTable_number/32,UnderZ_TminTable_number%32,
 				TmaxUnderZeroTable,UnderZ_TmaxTable_number/32,UnderZ_TmaxTable_number%32);
 			
+				
 				UnderZeroDiff_value = (INT32S)((TmaxUnderZeroTable-TminUnderZeroTable)/1000000);
 				if( UnderZeroDiff_value < 0 ) UnderZeroDiff_value = 0; // too small & too large ?
-				
+
 				OverZeroDiff_value = (INT32S)((TmaxOverZeroTable-TminOverZeroTable)/1000000);
 				if( OverZeroDiff_value < 0 ) OverZeroDiff_value = 0;
+				
 				
 				DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 \r\n",
 				//(TmaxOverZeroTable-TminOverZeroTable)/1048575,(TmaxUnderZeroTable-TminUnderZeroTable)/1048575); // 會有 error
 				(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
 				(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
+
+				DBG_PRINT("\r\n U min (%d)-> %d / U max (%d)-> %d  O min (%d)-> %d / O max (%d)-> %d \r\n",
+					pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[0],pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[0],
+					pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[1],pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[1],
+					pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[2],pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[2],
+					pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[3],pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[3]);
+
 				}
-			//DBG_PRINT("[TA=%dC, MAX =%d[%d],min =%d[%d],t2=%d ] \r\n",TA-2730,OverZ_Tmax_number,Tmax,OverZ_Tmin_number,Tmin,TimeCnt2-TimeCnt1);
-			//if (sampleCnt++ % 20 == 0) DBG_PRINT("TH32x32_READ = %d \r\n", sampleCnt);
 
 ERROR_QUIT:
 			check_MAX_pos=1;
