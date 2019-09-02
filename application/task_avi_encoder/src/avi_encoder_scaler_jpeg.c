@@ -138,20 +138,26 @@ const INT16U ColorTable_HOT[10]={
 0xf8e3,// 淺紅 
 };
 
-
 const INT16U ColorTable_HOT32[22]={
-	/*
-	0x0000,
-	0x0800,
-	0x1000,
-	0x1800,
-	0x2000,
-	0x2800,
-	0x3000,
-	0x3800,
-	0x4000,
-	0x4800,
-	*/
+	0x0700,0x0700,	// 鮮綠 
+	0x0700,0x0700,	// 鮮綠 
+	0x0700,0x0700,	// 鮮綠 
+	0x0700,0x0700,	// 鮮綠 
+	0x0700,0x0700,	// 鮮綠 
+	0x0700,0x0700,	// 鮮綠 
+0x07e0,0x07e0, // 綠 
+0x07e0,0x07e0, // 綠 
+0x07e0,0x07e0, // 綠 
+	0x07e0,0x07e0, // 綠 
+	0x07e0,0x07e0 // 綠 
+};
+
+/*
+const INT16U ColorTable_HOT32[22]={
+
+	//0x0000,	0x0800,	0x1000,	0x1800,	0x2000,
+	//0x2800,	0x3000,	0x3800,	0x4000,	0x4800,
+
 	0x5000,
 	0x5800,
 	0x6000,
@@ -177,6 +183,7 @@ const INT16U ColorTable_HOT32[22]={
 
 };
 
+*/
 
 /*
 const INT16U ColorTable_HOT[10]={
@@ -2346,10 +2353,10 @@ NO_VAL:
 			*(pMLX_TH32x24_frame_INT16U_buf0 + OverZ_TmaxTable_number - 32) = 0xf800;
 			*(pMLX_TH32x24_frame_INT16U_buf0 + OverZ_TmaxTable_number + 32) = 0xf800;
 
-			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number-1) = 0xf800;
-			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number+1) = 0xf800;
-			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number - 32) = 0xf800;
-			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number + 32) = 0xf800;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number-1) = 0x6000;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number+1) = 0x6000;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number - 32) = 0x6000;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number + 32) = 0x6000;
 
 			TminTable = 260; // disable default value
 			TmaxTable = 260;
@@ -2458,15 +2465,15 @@ END_TEST:
 			DBG_PRINT("TminUnderZeroTable=%f[%d-%d],TmaxUnderZeroTable=%f[%d-%d]\r\n",
 				TminUnderZeroTable,UnderZ_TminTable_number/32,UnderZ_TminTable_number%32,
 				TmaxUnderZeroTable,UnderZ_TmaxTable_number/32,UnderZ_TmaxTable_number%32);
-			
-				
+
+
 				UnderZeroDiff_value = (INT32S)((TmaxUnderZeroTable-TminUnderZeroTable)/1000000);
 				if( UnderZeroDiff_value < 0 ) UnderZeroDiff_value = 0; // too small & too large ?
 
 				OverZeroDiff_value = (INT32S)((TmaxOverZeroTable-TminOverZeroTable)/1000000);
 				if( OverZeroDiff_value < 0 ) OverZeroDiff_value = 0;
-				
-				
+
+
 				DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 \r\n",
 				//(TmaxOverZeroTable-TminOverZeroTable)/1048575,(TmaxUnderZeroTable-TminUnderZeroTable)/1048575); // 會有 error
 				(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
