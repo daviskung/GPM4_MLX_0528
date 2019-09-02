@@ -2338,6 +2338,19 @@ NO_VAL:
 			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[2] = OverZ_TminTable_number;
 			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[3] = OverZ_TmaxTable_number;
 
+
+			// set Tmax/Tmin marker
+
+			*(pMLX_TH32x24_frame_INT16U_buf0 + OverZ_TmaxTable_number-1) = 0xf800;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + OverZ_TmaxTable_number+1) = 0xf800;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + OverZ_TmaxTable_number - 32) = 0xf800;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + OverZ_TmaxTable_number + 32) = 0xf800;
+
+			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number-1) = 0xf800;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number+1) = 0xf800;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number - 32) = 0xf800;
+			*(pMLX_TH32x24_frame_INT16U_buf0 + UnderZ_TmaxTable_number + 32) = 0xf800;
+
 			TminTable = 260; // disable default value
 			TmaxTable = 260;
 	#if COLOR_FRAME_OUT
