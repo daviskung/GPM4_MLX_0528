@@ -2181,13 +2181,30 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					&&((cellNum%32)>CORE_AREA_limit)&&((cellNum%32)<(SENSOR_AREA_WIDTH -CORE_AREA_limit))){
 				if (ImgObject >= 0)
 					{
-					if(TminOverZero > ImgObject){ TminOverZero = ImgObject;OverZ_Tmin_number=cellNum;}
-					if(TmaxOverZero < ImgObject){ TmaxOverZero = ImgObject;OverZ_Tmax_number=cellNum;}
+					if(TminOverZero > ImgObject){ 
+						TminOverZero = ImgObject;
+						tmp_i = cellNum/rowNumEnd_32;
+						tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
+						OverZ_Tmin_number=tmp_i2;}
+					
+					if(TmaxOverZero < ImgObject){ 
+						TmaxOverZero = ImgObject;
+						tmp_i = cellNum/rowNumEnd_32;
+						tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
+						OverZ_Tmax_number=tmp_i2;}
 					}
 
 				else{
-					if(TminUnderZero > ImgObject){ TminUnderZero = ImgObject;UnderZ_Tmin_number=cellNum;}
-					if(TmaxUnderZero < ImgObject){ TmaxUnderZero = ImgObject;UnderZ_Tmax_number=cellNum;}
+					if(TminUnderZero > ImgObject){ 
+						TminUnderZero = ImgObject;
+						tmp_i = cellNum/rowNumEnd_32;
+						tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
+						UnderZ_Tmin_number=tmp_i2;}
+					if(TmaxUnderZero < ImgObject){ 
+						TmaxUnderZero = ImgObject;
+						tmp_i = cellNum/rowNumEnd_32;
+						tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
+						UnderZ_Tmax_number=tmp_i2;}
 					}
 			}
 
