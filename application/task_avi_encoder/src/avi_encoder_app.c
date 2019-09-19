@@ -1798,18 +1798,23 @@ const INT8U *number[] = {
 	acFontHZArial01700039
 };
 
-
 const INT8U *specMark[] = {
-	acFontHZArial017Slash,
+	acFontHZArial017Slash,	// 0
 	acFontHZArial017Dot,
 	acFontHZArial017Comma,
-	acFontHZArialSlash,
+	acFontHZArialSlash,		// 3
 	acFontHZArialDot,
 	acFontHZArialCommon,
-	acFontHZArial017_H,
+	acFontHZArial017_H,		// 6
 	acFontHZArial017_L,
-	acFontHZArial017_M
+	acFontHZArial017_M,
+	acFontHZArial017_E,
+	acFontHZArial_d	,	// 10
+	acFontHZArial017_G,
+	acFontHZArial017_B,
+	acFontHZArial017_Y
 };
+
 
 
 //  Draw OSD function
@@ -1949,7 +1954,7 @@ void cpu_draw_advalue_osd(INT32S value, INT32U target_buffer,
 	cpu_draw_osd(number[data],line,offset+space*4,resolution);
 	if(spec_val < 9)
 	// slash dot comma *17 , slash dot comma *14 , H L M
-	cpu_draw_osd(specMark[spec_val],line,offset-space*2,resolution); 
+	cpu_draw_osd(specMark[spec_val],line,offset-space,resolution); 
 }
 #endif
 #endif
