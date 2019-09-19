@@ -1812,7 +1812,11 @@ const INT8U *specMark[] = {
 	acFontHZArial_d	,	// 10
 	acFontHZArial017_G,
 	acFontHZArial017_B,
-	acFontHZArial017_Y
+	acFontHZArial017_Y,
+	acFontHZArial017_U, // 14
+	acFontHZArial017_O,
+	acFontHZArial_u,
+	acFontHZArial_o		// 17
 };
 
 
@@ -1938,21 +1942,20 @@ void cpu_draw_advalue_osd(INT32S value, INT32U target_buffer,
 	//Arial 17
 	//year
 	wtemp = value;
-	data = wtemp/10000;
-	wtemp -= data*10000;
-	cpu_draw_osd(number[data], line, offset, resolution);
+	//data = wtemp/10000;	// 減少 至 4位輸出 
+	//wtemp -= data*10000;
+	//cpu_draw_osd(number[data], line, offset, resolution);
 	data = wtemp/1000;
 	wtemp -= data*1000;
-	cpu_draw_osd(number[data],line,offset+space*1,resolution);
+	cpu_draw_osd(number[data],line,offset,resolution);
 	data = wtemp/100;
 	wtemp -= data*100;
-	cpu_draw_osd(number[data],line,offset+space*2,resolution);
+	cpu_draw_osd(number[data],line,offset+space*1,resolution);
 	data = wtemp/10;
 	wtemp -= data*10;
-	cpu_draw_osd(number[data],line,offset+space*3,resolution);
+	cpu_draw_osd(number[data],line,offset+space*2,resolution);
 	data = wtemp;
-	cpu_draw_osd(number[data],line,offset+space*4,resolution);
-	if(spec_val < 9)
+	cpu_draw_osd(number[data],line,offset+space*3,resolution);
 	// slash dot comma *17 , slash dot comma *14 , H L M
 	cpu_draw_osd(specMark[spec_val],line,offset-space,resolution); 
 }

@@ -17,7 +17,7 @@
 
 #define	TWO_FRAME_OUT			1
 #define	TMP_AVGBUF_ON			0
-#define	IMG_AVGBUF_ON			1
+#define	IMG_AVGBUF_ON			1	// avg ON is good
 
 
 

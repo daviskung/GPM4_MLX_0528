@@ -257,6 +257,7 @@ extern objRecongResult obj_recong_draw;
 
 INT32U obj_id,pos_x,pos_y;
 INT32S UnderZeroDiff_value,OverZeroDiff_value;
+INT16U OverZ_TmaxTable_number,UnderZ_TmaxTable_number;
 
 
 /**************************************************************************
@@ -1421,8 +1422,8 @@ static void MLX_TH32x24_task_entry(void const *parm)
 	float  *pMLX_TH32x24_ImgOutput_INT32S_buf0;
 
 	INT8U	sampleCnt;
-	INT16U	 OverZ_Tmin_number,OverZ_Tmax_number,OverZ_TminTable_number,OverZ_TmaxTable_number;
-	INT16U	 UnderZ_Tmin_number,UnderZ_Tmax_number,UnderZ_TminTable_number,UnderZ_TmaxTable_number;
+	INT16U	 OverZ_Tmin_number,OverZ_Tmax_number,OverZ_TminTable_number; //,OverZ_TmaxTable_number;
+	INT16U	 UnderZ_Tmin_number,UnderZ_Tmax_number,UnderZ_TminTable_number; //,UnderZ_TmaxTable_number;
 
 	INT16U	 ReadTempValue;
 	signed int	TobjectRange;	// INT32S
@@ -2473,17 +2474,15 @@ END_TEST:
 
 			//DBG_PRINT(" ImageOut[t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
 
-			if (sampleCnt++ % 20 == 0){
+			if (sampleCnt++ % 30 == 0){
 			
-			DBG_PRINT(" ImageOut[t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
-
-			DBG_PRINT("[ MLX_TH32x24_task_entry t2=%d ] \r\n TminOverZeroTable=%f[%d-%d],TmaxOverZeroTable=%f[%d-%d]\r\n",
+			DBG_PRINT("[ MLX_TH32x24_task_entry t2=%d ms ] \r\n TminOverZeroTable= %f[%d-%d] %d c,TmaxOverZeroTable= %f[%d-%d] %d c\r\n",
 				TimeCnt2-TimeCnt1,
-				TminOverZeroTable,OverZ_TminTable_number/32,OverZ_TminTable_number%32,
-				TmaxOverZeroTable,OverZ_TmaxTable_number/32,OverZ_TmaxTable_number%32);
-			DBG_PRINT("TminUnderZeroTable=%f[%d-%d],TmaxUnderZeroTable=%f[%d-%d]\r\n",
-				TminUnderZeroTable,UnderZ_TminTable_number/32,UnderZ_TminTable_number%32,
-				TmaxUnderZeroTable,UnderZ_TmaxTable_number/32,UnderZ_TmaxTable_number%32);
+				TminOverZeroTable,OverZ_TminTable_number/32,OverZ_TminTable_number%32,pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[2],
+				TmaxOverZeroTable,OverZ_TmaxTable_number/32,OverZ_TmaxTable_number%32,pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[3]);
+			DBG_PRINT(" TminUnderZeroTable=%f[%d-%d] %d c,TmaxUnderZeroTable=%f[%d-%d] %d c\r\n",
+				TminUnderZeroTable,UnderZ_TminTable_number/32,UnderZ_TminTable_number%32,pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[0],
+				TmaxUnderZeroTable,UnderZ_TmaxTable_number/32,UnderZ_TmaxTable_number%32,pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[1]);
 
 
 				UnderZeroDiff_value = (INT32S)((TmaxUnderZeroTable-TminUnderZeroTable)/1000000);
@@ -2498,12 +2497,7 @@ END_TEST:
 				(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
 				(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
 
-				DBG_PRINT("\r\n U min (%d)-> %d / U max (%d)-> %d  O min (%d)-> %d / O max (%d)-> %d \r\n",
-					pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[0],pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[0],
-					pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[1],pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[1],
-					pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[2],pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[2],
-					pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[3],pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[3]);
-
+				
 				}
 
 ERROR_QUIT:
@@ -3979,10 +3973,12 @@ static void scaler_task_entry(void const *parm)
 
 
 				if((videnc_display)&&(pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1)) { // davis run this //
+
 					cpu_draw_advalue_osd(UnderZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
-						320,16,0,7);
+						320,16,0,16);
 					cpu_draw_advalue_osd(OverZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
-						320,100,0,6);
+						320,60,0,17);
+				
 		    		videnc_display(pAviEncVidPara->display_buffer_width,
 		    					   pAviEncVidPara->display_buffer_height,
 		    					   pMLX_TH32x24_Para->MLX_TH32x24_display_frame);
@@ -3998,9 +3994,18 @@ static void scaler_task_entry(void const *parm)
 
 					if(pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1){
 						cpu_draw_advalue_osd(UnderZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
-						320,16,0,7);
+						320,16,0,16);
 						cpu_draw_advalue_osd(OverZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
-						320,100,0,6);
+						320,60,0,17);
+						
+						/*
+						cpu_draw_advalue_osd(OverZ_TmaxTable_number/32,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
+						320,110,0,9);
+						
+						cpu_draw_advalue_osd(OverZ_TmaxTable_number%32,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
+						320,160,0,9);
+						*/
+						
 						gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 320, 240,
 							(INT32U)pMLX_TH32x24_Para->MLX_TH32x24_display_frame); // from MLX_TH32x24 sensor
 						pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 0;
