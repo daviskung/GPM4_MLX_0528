@@ -96,7 +96,7 @@ const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 #define MLX_TH32x24_ReadStatus_WaitTime	2
 #define CHECK_ReadStatus_WAITTIME	0
 #define SHOWTEMP_OFFSET				0
-#define MLX_TH32x24IMAGE_ONLY		1
+#define MLX_TH32x24IMAGE_ONLY		0
 #define MLX_TH32x24_FUN				0
 #define	frame1_ON					1
 
@@ -2474,6 +2474,8 @@ END_TEST:
 			//DBG_PRINT(" ImageOut[t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
 
 			if (sampleCnt++ % 20 == 0){
+			
+			DBG_PRINT(" ImageOut[t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
 
 			DBG_PRINT("[ MLX_TH32x24_task_entry t2=%d ] \r\n TminOverZeroTable=%f[%d-%d],TmaxOverZeroTable=%f[%d-%d]\r\n",
 				TimeCnt2-TimeCnt1,
