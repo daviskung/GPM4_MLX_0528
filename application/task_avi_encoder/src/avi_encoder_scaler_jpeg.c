@@ -2297,9 +2297,9 @@ NO_VAL:
 					if (ImgObject <= Tpoint3) GrayTmpValue =0x00;
 					else {
 					// auto Autoscale
-					TmpTbInd =(INT8U)(((ImgObject - TminUnderZeroTable)*127)/(TmaxUnderZeroTable - TminUnderZeroTable)) ;
+					TmpTbInd =(INT8U)(((ImgObject - TminUnderZeroTable)*255)/(TmaxUnderZeroTable - TminUnderZeroTable)) ;
 					
-					if(TmpTbInd>127)	TmpTbInd=127;
+					if(TmpTbInd> 250 )	TmpTbInd=255;
 					else
 						GrayTmpValue = TmpTbInd ;
 					}
