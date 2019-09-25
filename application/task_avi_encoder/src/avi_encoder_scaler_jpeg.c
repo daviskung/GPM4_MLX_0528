@@ -89,14 +89,14 @@
 const INT16U Blk_start_ary[4]={992,960,928,896}; // 改成 TH32X32
 
 #define TRANSPARENT_COLOR 	0x00	// 無色 
-#define COLOR_FRAME_OUT		1
+#define COLOR_FRAME_OUT		0
 #define DBG_COLOR_TABLE		0
 
 
 #define MLX_TH32x24_ReadStatus_WaitTime	2
 #define CHECK_ReadStatus_WAITTIME	0
 #define SHOWTEMP_OFFSET				0
-#define MLX_TH32x24IMAGE_ONLY		0
+#define MLX_TH32x24IMAGE_ONLY		1
 #define MLX_TH32x24_FUN				0
 #define	frame1_ON					1
 
@@ -1432,6 +1432,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 	float	TmaxOverZero,TminOverZero,TmaxUnderZero,TminUnderZero;
 	float	TmaxOverZeroTable,TminOverZeroTable,TmaxUnderZeroTable,TminUnderZeroTable;
+	float	Tpoint3;
 	INT8U   MLX_TH32x24_BlockNum , Blk_startIdex;
 	signed long VDD_MEAS_sum,VDD_MEAS_TOP,VDD_MEAS_BTM;
 	unsigned long Vddlong;	// signed long	Vddlong;
@@ -2291,25 +2292,18 @@ NO_VAL:
 				}
 
 			else{
-				if(ImgObject >= 0)
-				{
-					if (ImgObject >= TmaxOverZeroTable) GrayTmpValue =0xff;
+				if(ImgObject >= 0)	GrayTmpValue =0xff;
+				else{
+					if (ImgObject <= Tpoint3) GrayTmpValue =0x00;
 					else {
 					// auto Autoscale
-					TmpTbInd = (INT8U)(((ImgObject - TminOverZeroTable)*127)/(TmaxOverZeroTable - TminOverZeroTable)) ;
+					TmpTbInd =(INT8U)(((ImgObject - TminUnderZeroTable)*127)/(TmaxUnderZeroTable - TminUnderZeroTable)) ;
+					
 					if(TmpTbInd>127)	TmpTbInd=127;
-						GrayTmpValue = TmpTbInd + 127;
-						}
-				}
-					else{
-						if (ImgObject <= TminUnderZeroTable) GrayTmpValue =0x00;
-						else {
-						// auto Autoscale
-						TmpTbInd =(INT8U)(((ImgObject - TminUnderZeroTable)*127)/(TmaxUnderZeroTable - TminUnderZeroTable)) ;
-						if(TmpTbInd>127)	TmpTbInd=127;
-							GrayTmpValue = TmpTbInd ;
-							}
-						}
+					else
+						GrayTmpValue = TmpTbInd ;
+					}
+					}
 				}
 	#endif
 			//*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + cellNum)
@@ -2347,6 +2341,7 @@ NO_VAL:
 			TmaxOverZeroTable=TmaxOverZero; OverZ_TmaxTable_number=OverZ_Tmax_number;
 			TminUnderZeroTable = TminUnderZero; UnderZ_TminTable_number=UnderZ_Tmin_number;
 			TmaxUnderZeroTable = TmaxUnderZero; UnderZ_TmaxTable_number=UnderZ_Tmax_number;
+			Tpoint3 = (0.3*TmaxUnderZeroTable + 0.7*TminUnderZeroTable); // 30% 以下 0值
 
 			#if 0	// clear screen
 			if ((UnderZeroDiff_value - 500) < 0)
