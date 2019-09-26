@@ -295,6 +295,8 @@ typedef struct MLX_TH32x24Para_s
 	INT32U  MLX_TH32x24_GrayOutputFrame_addr;
 	INT32U 	MLX_TH32x24_GrayScaleUpFrame_addr;
 	INT32U  MLX_TH32x24_ScaleUpFrame_addr;
+	
+	INT8U  MLX_TH32x24_GrayOutputFactor;
 } MLX_TH32x24Para_t;
 
 

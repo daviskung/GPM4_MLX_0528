@@ -24,6 +24,9 @@
 #define ENCODE_MJPEG_X1_5      0
 #define VGA_sensor      1
 
+#define IO8_FUN_OFF		1	// use this IO8 as emissivity val
+
+
 #if ENCODE_MJPEG_X1_5 == 1
 #define TAR_WIDTH		1280
 #define TAR_HEIGHT		720
@@ -280,6 +283,10 @@ void Digital_Video_Demo(void)
 		adc_key_scan();
 		if(ADKEY_IO1)
 		{
+		
+	#if IO8_FUN_OFF
+			MLX_TH32x24_DEC_GRAY_FACTOR();
+	#else
 			switch(OperationMode)
 			{//exit the old mode
 			case DV_PLAY:
@@ -334,9 +341,15 @@ void Digital_Video_Demo(void)
 				drv_l2_display_start(DISDEV_TFT, DISP_FMT_YUYV);
 				break;
 			}
+		#endif
 		}
 		else if(ADKEY_IO2)
 		{//start play
+
+		
+	#if IO8_FUN_OFF
+			MLX_TH32x24_INC_GRAY_FACTOR();
+	#else
 			switch(OperationMode)
 			{
 			case DV_PLAY:
@@ -416,6 +429,7 @@ void Digital_Video_Demo(void)
 				}
 				break;
 			}
+		#endif
 		}
 		else if(ADKEY_IO3)
 		{//stop

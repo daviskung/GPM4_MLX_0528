@@ -934,6 +934,45 @@ INT32S MLX_TH32x24_task_stop(void)
 Return:
 	return nRet;
 }
+
+
+INT32S MLX_TH32x24_DEC_GRAY_FACTOR(void)
+{
+	INT32S nRet = STATUS_OK;
+
+	
+	if (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor == 1)
+		{
+		pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = 10;
+		}
+	else
+		pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor =
+		pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor - 1;
+
+	DBG_PRINT("\r\n  MLX_TH32x24_GrayOutputFactor value = (%d) \r\n",pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor);
+
+Return:
+	return nRet;
+}
+
+INT32S MLX_TH32x24_INC_GRAY_FACTOR(void)
+{
+	INT32S nRet = STATUS_OK;
+
+	if (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor == 10)
+		{
+		pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = 1;
+		}
+	else
+	pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor =
+		pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor + 1;
+
+	DBG_PRINT("\r\n  MLX_TH32x24_GrayOutputFactor value = (%d) \r\n",pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor);
+
+Return:
+	return nRet;
+}
+
 //
 // 不使用此code
 //	以 TH32x32_SCALERUP_task_entry(void const *parm) 執行完成 
@@ -1664,7 +1703,8 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			pMLX_TH32x24_Para->MLX_TH32x24_NOISE_CUTOFF_OVR_RTemp = NOISE_OVR_RoomTemp;
 			DBG_PRINT("Noise filter =%d \r\n",pMLX_TH32x24_Para->MLX_TH32x24_NOISE_CUTOFF_OVR_RTemp);
 
-
+			pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = 3;
+				DBG_PRINT("MLX_TH32x24_GrayOutputFactor =%d \r\n",pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor);
 
 			for(tmp_i=0;tmp_i<IMG_AVG_buf_len;tmp_i++){
 				pMLX_TH32x24_INT16U_avg_buf[tmp_i]= (INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmp_i];
@@ -2183,13 +2223,13 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					&&((cellNum%32)>CORE_AREA_limit)&&((cellNum%32)<(SENSOR_AREA_WIDTH -CORE_AREA_limit))){
 				if (ImgObject >= 0)
 					{
-					if(TminOverZero > ImgObject){ 
+					if(TminOverZero > ImgObject){
 						TminOverZero = ImgObject;
 						tmp_i = cellNum/rowNumEnd_32;
 						tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 						OverZ_Tmin_number=tmp_i2;}
-					
-					if(TmaxOverZero < ImgObject){ 
+
+					if(TmaxOverZero < ImgObject){
 						TmaxOverZero = ImgObject;
 						tmp_i = cellNum/rowNumEnd_32;
 						tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
@@ -2197,12 +2237,12 @@ static void MLX_TH32x24_task_entry(void const *parm)
 					}
 
 				else{
-					if(TminUnderZero > ImgObject){ 
+					if(TminUnderZero > ImgObject){
 						TminUnderZero = ImgObject;
 						tmp_i = cellNum/rowNumEnd_32;
 						tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 						UnderZ_Tmin_number=tmp_i2;}
-					if(TmaxUnderZero < ImgObject){ 
+					if(TmaxUnderZero < ImgObject){
 						TmaxUnderZero = ImgObject;
 						tmp_i = cellNum/rowNumEnd_32;
 						tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
@@ -2298,7 +2338,7 @@ NO_VAL:
 					else {
 					// auto Autoscale
 					TmpTbInd =(INT8U)(((ImgObject - TminUnderZeroTable)*255)/(TmaxUnderZeroTable - TminUnderZeroTable)) ;
-					
+
 					if(TmpTbInd> 250 )	TmpTbInd=255;
 					else
 						GrayTmpValue = TmpTbInd ;
@@ -2341,7 +2381,8 @@ NO_VAL:
 			TmaxOverZeroTable=TmaxOverZero; OverZ_TmaxTable_number=OverZ_Tmax_number;
 			TminUnderZeroTable = TminUnderZero; UnderZ_TminTable_number=UnderZ_Tmin_number;
 			TmaxUnderZeroTable = TmaxUnderZero; UnderZ_TmaxTable_number=UnderZ_Tmax_number;
-			Tpoint3 = (0.3*TmaxUnderZeroTable + 0.7*TminUnderZeroTable); // 30% 以下 0值
+			Tpoint3 = ((pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor * TmaxUnderZeroTable )
+				+ (10-pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor) * TminUnderZeroTable)/10; // 30% 以下 0值 
 
 			#if 0	// clear screen
 			if ((UnderZeroDiff_value - 500) < 0)
@@ -2470,7 +2511,7 @@ END_TEST:
 			//DBG_PRINT(" ImageOut[t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
 
 			if (sampleCnt++ % 30 == 0){
-			
+
 			DBG_PRINT("[ MLX_TH32x24_task_entry t2=%d ms ] \r\n TminOverZeroTable= %f[%d-%d] %d c,TmaxOverZeroTable= %f[%d-%d] %d c\r\n",
 				TimeCnt2-TimeCnt1,
 				TminOverZeroTable,OverZ_TminTable_number/32,OverZ_TminTable_number%32,pMLX_TH32x24_Para->MLX_TH32x24_ImgTempAry[2],
@@ -2492,7 +2533,7 @@ END_TEST:
 				(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
 				(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
 
-				
+
 				}
 
 ERROR_QUIT:
@@ -3973,7 +4014,10 @@ static void scaler_task_entry(void const *parm)
 						320,16,0,16);
 					cpu_draw_advalue_osd(OverZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
 						320,60,0,17);
-				
+
+					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
+						320,100,0,10);
+						
 		    		videnc_display(pAviEncVidPara->display_buffer_width,
 		    					   pAviEncVidPara->display_buffer_height,
 		    					   pMLX_TH32x24_Para->MLX_TH32x24_display_frame);
@@ -3992,15 +4036,15 @@ static void scaler_task_entry(void const *parm)
 						320,16,0,16);
 						cpu_draw_advalue_osd(OverZeroDiff_value,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
 						320,60,0,17);
-						
+
 						/*
 						cpu_draw_advalue_osd(OverZ_TmaxTable_number/32,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
 						320,110,0,9);
-						
+
 						cpu_draw_advalue_osd(OverZ_TmaxTable_number%32,pMLX_TH32x24_Para->MLX_TH32x24_display_frame,
 						320,160,0,9);
 						*/
-						
+
 						gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, 320, 240,
 							(INT32U)pMLX_TH32x24_Para->MLX_TH32x24_display_frame); // from MLX_TH32x24 sensor
 						pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 0;
