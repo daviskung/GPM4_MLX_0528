@@ -258,7 +258,6 @@ typedef struct MLX_TH32x24Para_s
     INT32U  MLX_TH32x24_ScalerUp_status;      // 0: read E. offset
 	INT16U  MLX_TH32x24_sampleCnt;      // for MLX_TH32x24_start_timer_isr
 
-	//INT16U  MLX_TH32x24_sampleHz;	//  5.7~ 732 Hz
 	INT16U  MLX_TH32x24_sampleHz;	//  5.7~ 732 Hz
 
 	INT8U  MLX_TH32x24_ReadElecOffset_TA_startON;
@@ -268,11 +267,7 @@ typedef struct MLX_TH32x24Para_s
 	INT32U  MLX_TH32x24_BadPixMask_buf;
 
 	INT8U   MLX_TH32x24_move_dect;	// 0 - 2
-	//INT8U   mlx_TH32x24_MaxInd_fun;	// 高/低指示 
-	INT8U   MLX_TH32x24_OVR_RoomTemp;
-	INT8U   MLX_TH32x24_NOISE_CUTOFF_OVR_RTemp;
 	INT8U   MLX_TH32x24_CMOS_OFF;
-	INT8U   MLX_TH32x24_TABLE_SCALER_FACTOR;
 
 	float  MLX_TH32x24_ta;
 	INT16U  MLX_TH32x24_ImgValAry[IMG_VAL_buf_len]; // over zero max/min , under zero max/min
@@ -297,6 +292,9 @@ typedef struct MLX_TH32x24Para_s
 	INT32U  MLX_TH32x24_ScaleUpFrame_addr;
 	
 	INT8U  MLX_TH32x24_GrayOutputFactor;
+	INT8U  MLX_TH32x24_GRAY_MAX_VAL;
+	INT8U  MLX_TH32x24_GRAY_START_VAL;
+	
 } MLX_TH32x24Para_t;
 
 

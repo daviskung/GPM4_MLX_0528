@@ -36,10 +36,8 @@
 #define ReadBlock0				0x09
 #define Read_VDD_MEAS_Block0	0x0D
 
-#define COLOR_TABLE_OVR_RoomTemp 		20 // 大於 室溫 3 度 
-#define COLOR_TABLE_UNDER_RoomTemp 		60 // 低於 室溫 6 度 
-#define NOISE_OVR_RoomTemp 				20 // 大於 室溫 3 度 
-
+#define FOV_BAA_110			0
+#define FOV_BAB_55			1
 
 #define MLX_LINE 32
 //#define MLX_rowNumEnd_32 32

@@ -132,6 +132,8 @@
 #define AVG_buf_len			4
 #define IMG_AVG_buf_len		4
 #define IMG_VAL_buf_len		4
+#define IMG_GRAY_IND_buf_len		10
+
 
 
 #define MLX_TH32x24_ReadoutBlockBuf_max	1

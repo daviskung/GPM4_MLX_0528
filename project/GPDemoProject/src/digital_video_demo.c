@@ -433,6 +433,9 @@ void Digital_Video_Demo(void)
 		}
 		else if(ADKEY_IO3)
 		{//stop
+		#if IO8_FUN_OFF
+			MLX_TH32x24_INC_GRAY_MAX();
+		#else
 			switch(OperationMode)
 			{
 			case DV_PLAY:
@@ -458,9 +461,13 @@ void Digital_Video_Demo(void)
 				}
 				break;
 			}
+		#endif
 		}
 		else if(ADKEY_IO4)
 		{	//pause, resume
+		#if IO8_FUN_OFF
+			MLX_TH32x24_DEC_GRAY_MAX();
+		#else
 			switch(OperationMode)
 			{
 			case DV_PLAY:
@@ -503,9 +510,13 @@ void Digital_Video_Demo(void)
                 }
 				break;
 			}
+		#endif
 		}
 		else if(ADKEY_IO5)
 		{//volume up / zoom in
+		#if IO8_FUN_OFF
+			MLX_TH32x24_INC_GRAY_START_VAL();
+		#else
 			switch(OperationMode)
 			{
 			case DV_PLAY:
@@ -530,9 +541,13 @@ void Digital_Video_Demo(void)
         		video_encode_set_zoom_scaler(zoom_ratio);
 				break;
 			}
+		#endif
 		}
 		else if(ADKEY_IO6)
 		{// volume down / zoom out
+		#if IO8_FUN_OFF
+			MLX_TH32x24_DEC_GRAY_START_VAL();
+		#else
 			switch(OperationMode)
 			{
 			case DV_PLAY:
@@ -557,6 +572,7 @@ void Digital_Video_Demo(void)
             	video_encode_set_zoom_scaler(zoom_ratio);
             	break;
 			}
+		#endif
 		}
 		else if(ADKEY_IO7)
 		{
