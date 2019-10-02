@@ -24,7 +24,7 @@
 #define ENCODE_MJPEG_X1_5      0
 #define VGA_sensor      1
 
-#define IO8_FUN_OFF		1	// use this IO8 as emissivity val
+#define IO8_FUN_OFF		0	// use this IO8 as emissivity val
 
 
 #if ENCODE_MJPEG_X1_5 == 1
@@ -195,6 +195,7 @@ void Digital_Video_Demo(void)
 	// Initialize display device
     drv_l2_display_init();
     drv_l2_display_start(DISDEV_TFT, DISP_FMT_YUYV);
+    //drv_l2_display_start(DISDEV_HDMI_720P, DISP_FMT_VYUV);
     video_encode_register_display_callback(Display_Callback);
     video_decode_register_display_callback(Display_Callback);
 
