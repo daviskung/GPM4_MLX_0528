@@ -590,7 +590,7 @@ INT32S vid_enc_preview_start(void)
 	if((avi_encode_get_status()&C_AVI_ENCODE_SENSOR) == 0) {
 		POST_MESSAGE(AVIEncodeApQ, MSG_AVI_START_SENSOR, avi_encode_ack_m, 5000);
 		avi_encode_set_status(C_AVI_ENCODE_SENSOR);
-		DEBUG_MSG("c.sensor start\r\n");
+		DEBUG_MSG("c.sensor start\r\n"); // MLX sensor start ?
 	}
 
 	
