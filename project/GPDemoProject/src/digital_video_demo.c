@@ -195,7 +195,7 @@ void Digital_Video_Demo(void)
 	// Initialize display device
     drv_l2_display_init();
     drv_l2_display_start(DISDEV_TFT, DISP_FMT_YUYV);
-    //drv_l2_display_start(DISDEV_HDMI_720P, DISP_FMT_VYUV);
+    //drv_l2_display_start(DISDEV_HDMI_480P, DISP_FMT_VYUV);
     video_encode_register_display_callback(Display_Callback);
     video_decode_register_display_callback(Display_Callback);
 

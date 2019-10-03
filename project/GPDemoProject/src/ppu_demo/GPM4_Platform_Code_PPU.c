@@ -60,9 +60,9 @@ void GPM4_PPU_Demo(void)
         drv_l2_display_get_size(DISPLAY_DEVICE,(INT16U *)&h_size,(INT16U *)&v_size);
 
     Scale_Factor[0] = 0.5;
-	for (i=1;i<240;i++) {
-		Scale_Factor[i] = Scale_Factor[i-1] + 0.01;
-	}
+	//for (i=1;i<240;i++) {
+	//	Scale_Factor[i] = Scale_Factor[i-1] + 0.01;
+	//}
 
     /* initial ppu register parameter set structure */
     ppu_register_set = (PPU_REGISTER_SETS *) &ppu_register_structure;
@@ -407,21 +407,7 @@ void GPM4_PPU_Demo(void)
 
 	while(1)
 	{
-        if(flag==0){
-	       if(++blend_level > 63){
-	            blend_level=63;
-	            flag=1;
-	       }
-	     }else{
-	       if(--blend_level < 0){
-	            blend_level=0;
-	            flag=0;
-	       }
-	     }
-
-	     if (++Angle > 359) {
-	         Angle = 0;
-	     }
+        
 
         //text 4
         gplib_ppu_text_blend_set(ppu_register_set, C_PPU_TEXT4, 1, 1,blend_level);
@@ -430,120 +416,9 @@ void GPM4_PPU_Demo(void)
 	     //text 3
 	     gplib_ppu_text3_25d_set(ppu_register_set, Angle, Scale_Factor);
 
-	     if(flag1==0){
-	       if(++sp_zoom > 63){
-	            sp_zoom=63;
-	            flag1=1;
-	       }
-	     }else{
-	       if(--sp_zoom < 16){
-	            sp_zoom=16;
-	            flag1=0;
-	       }
-	     }
+	    
 
-	     if(flag2==0){
-	       if(++sp_blend_level > 16){
-	            sp_blend_level=16;
-	            flag2=1;
-	       }
-	     }else{
-	       if(--sp_blend_level < 0){
-	            sp_blend_level=0;
-	            flag2=0;
-	       }
-	     }
-
-	     if (++sp_rotate > 63) {
-	         sp_rotate = 0;
-	     }
-
-	     if(frame_count % 5 == 0){
-	       if (++sp_mosaic > 3)
-	           sp_mosaic = 0;
-	     }
-
-	     if(sp_num++ > 3)
-	        sp_num=0;
-
-         switch(sp_num){
-           case 0:
-         	  set_sprite_image_number(2,(INT32U)_a1_CellIdx);
-         	  set_exsprite_image_number(0,(INT32U)_a1_CellIdx);
-         	  set_sprite_image_number(3,(INT32U)_aa01_CellIdx);
-              set_sprite_image_number(4,(INT32U)_cc01_CellIdx);
-              set_sprite_image_number(5,(INT32U)_cc01_CellIdx);
-         	  set_sprite_image_number(6,(INT32U)_a1_CellIdx);
-         	  set_sprite_image_number(7,(INT32U)_aa01_CellIdx);
-         	  set_sprite_image_number(8,(INT32U)_bb01_CellIdx);
-         	  set_sprite_image_number(9,(INT32U)_bb01_CellIdx);
-         	  set_sprite_image_number(13,(INT32U)_aa01_CellIdx);
-           break;
-           case 1:
-         	  set_sprite_image_number(2,(INT32U)_a2_CellIdx);
-         	  set_exsprite_image_number(0,(INT32U)_a2_CellIdx);
-         	  set_sprite_image_number(3,(INT32U)_aa02_CellIdx);
-              set_sprite_image_number(4,(INT32U)_cc02_CellIdx);
-              set_sprite_image_number(5,(INT32U)_cc02_CellIdx);
-         	  set_sprite_image_number(6,(INT32U)_a2_CellIdx);
-         	  set_sprite_image_number(7,(INT32U)_aa02_CellIdx);
-         	  set_sprite_image_number(8,(INT32U)_bb02_CellIdx);
-         	  set_sprite_image_number(9,(INT32U)_bb02_CellIdx);
-         	  set_sprite_image_number(13,(INT32U)_aa02_CellIdx);
-           break;
-           case 2:
-         	  set_sprite_image_number(2,(INT32U)_a3_CellIdx);
-         	  set_exsprite_image_number(0,(INT32U)_a3_CellIdx);
-         	  set_sprite_image_number(3,(INT32U)_aa03_CellIdx);
-              set_sprite_image_number(4,(INT32U)_cc03_CellIdx);
-              set_sprite_image_number(5,(INT32U)_cc03_CellIdx);
-         	  set_sprite_image_number(6,(INT32U)_a3_CellIdx);
-         	  set_sprite_image_number(7,(INT32U)_aa03_CellIdx);
-         	  set_sprite_image_number(8,(INT32U)_bb03_CellIdx);
-         	  set_sprite_image_number(9,(INT32U)_bb03_CellIdx);
-         	  set_sprite_image_number(13,(INT32U)_aa03_CellIdx);
-           break;
-           case 3:
-         	  set_sprite_image_number(2,(INT32U)_a4_CellIdx);
-         	  set_exsprite_image_number(0,(INT32U)_a4_CellIdx);
-         	  set_sprite_image_number(3,(INT32U)_aa04_CellIdx);
-              set_sprite_image_number(4,(INT32U)_cc04_CellIdx);
-              set_sprite_image_number(5,(INT32U)_cc04_CellIdx);
-         	  set_sprite_image_number(6,(INT32U)_a4_CellIdx);
-         	  set_sprite_image_number(7,(INT32U)_aa04_CellIdx);
-         	  set_sprite_image_number(8,(INT32U)_bb04_CellIdx);
-         	  set_sprite_image_number(9,(INT32U)_bb04_CellIdx);
-         	  set_sprite_image_number(13,(INT32U)_aa04_CellIdx);
-           break;
-           case 4:
-         	  set_sprite_image_number(2,(INT32U)_a5_CellIdx);
-         	  set_exsprite_image_number(0,(INT32U)_a5_CellIdx);
-         	  set_sprite_image_number(3,(INT32U)_aa05_CellIdx);
-              set_sprite_image_number(4,(INT32U)_cc05_CellIdx);
-              set_sprite_image_number(5,(INT32U)_cc05_CellIdx);
-         	  set_sprite_image_number(6,(INT32U)_a5_CellIdx);
-         	  set_sprite_image_number(7,(INT32U)_aa05_CellIdx);
-         	  set_sprite_image_number(8,(INT32U)_bb05_CellIdx);
-         	  set_sprite_image_number(9,(INT32U)_bb05_CellIdx);
-         	  set_sprite_image_number(13,(INT32U)_aa05_CellIdx);
-           break;
-         }
-
-         SetSpritePosition(0,Sprite_Coordinate_640X480,-4,-2,1);
-	     SetSpritePosition(1,Sprite_Coordinate_640X480,3,2,1);
-	     SetSpritePosition(2,Sprite_Coordinate_640X480,4,0,1);
-	     SetSpritePosition(3,Sprite_Coordinate_640X480,-2,0,1);
-	     SetSpritePosition(4,Sprite_Coordinate_640X480,3,0,1);
-	     SetSpritePosition(5,Sprite_Coordinate_640X480,6,0,1);
-	     SetSpritePosition(6,Sprite_Coordinate_640X480,-2,0,1);
-	     SetSpritePosition(7,Sprite_Coordinate_640X480,3,0,1);
-	     SetSpritePosition(8,Sprite_Coordinate_640X480,3,0,1);
-	     SetSpritePosition(9,Sprite_Coordinate_640X480,-5,0,1);
-	     SetSpritePosition(10,Sprite_Coordinate_640X480,2,0,1);
-	     SetSpritePosition(11,Sprite_Coordinate_640X480,4,0,1);
-	     paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,20);
-	     paint_ppu_exspriteram(Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,2);
-
+        
          //get exsprite character number of image and sprite start ptr of sprite ram
          Get_exsprite_image_info(0,(SpN_ptr *)&sp_ptr);
          sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -1037,7 +912,7 @@ void GPM4_PPU_Demo(void)
 	     if(display_buf > 0)
             drv_l2_display_update(DISPLAY_DEVICE,display_buf);
 		 
-		 DBG_PRINT("display_buf = 0x%x\r\n",display_buf);	 //davisppu-1
+		 //DBG_PRINT("display_buf = 0x%x\r\n",display_buf);	 //davisppu-1
 	     frame_count++;
 	}
 #endif
