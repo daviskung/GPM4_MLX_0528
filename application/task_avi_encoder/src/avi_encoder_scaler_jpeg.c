@@ -90,13 +90,13 @@
 
 //const INT8U MLX_Gray_MAX_val_Ary[10]  = {140,140,140,140,140,140,140,176,176,176}; 
 //const INT8U MLX_Gray_START_val_Ary[10]= {130,130,100,70 ,60 ,60 ,40 ,25  ,5  ,5}; 
-#if FOV_BAB_55 
+#if  (FOV_BAB_55 == 1) && (FOV_BAA_110 == 0)
 const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3}; 
 //const INT8U MLX_Gray_MAX_val_Ary[20]   = {40,40,40,50, 60, 60, 70, 80,100,110,135,170,195,210,210,210,210,210,220,220}; 
 //const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
   const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,255,255}; 
   const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
-#else if FOV_BAA_110
+#else  // if FOV_BAA_110
 const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3}; 
   const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,240,240,255,255}; 
   const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
@@ -1783,9 +1783,10 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 
 			// *************************
-			#if FOV_BAA_110
+			#if (FOV_BAB_55 == 0) && (FOV_BAA_110 == 1)
+			
 				DBG_PRINT("for [FOV_BAA_110] \r\n");
-			#else if FOV_BAB_55
+			#else 	//if FOV_BAB_55
 				DBG_PRINT("for [FOV_BAB_55 ] \r\n");
 			#endif
 
@@ -4007,19 +4008,6 @@ static void scaler_task_entry(void const *parm)
 			id = osThreadGetId();
     		osThreadTerminate(id);
 			break;
-
-			/*
-		case MSG_SCALER_TASK_TH32x32Ready:
-			//TH32x32_TEST_HIGH();
-			pTH32x32_Para->TH32x32_ScalerUp_status = 1;
-			ack_msg = ACK_OK;
-			osMessagePut(scaler_task_ack_m, (INT32U)&ack_msg, osWaitForever);
-			//OSMboxPost(scaler_task_ack_m, (void*)C_ACK_SUCCESS);
-			//DBG_PRINT("[ MSG_SCALER_TASK_TH32x32Ready] ");
-			//osd_time.tm_sec= (INT32S) picCNT++;	// 計時用 
-			//TH32x32_TEST_LOW();
-			break;
-			*/
 
 		default:
             disp_bit = msg_id & 0x80000000;

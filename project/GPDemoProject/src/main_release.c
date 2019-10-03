@@ -14,8 +14,8 @@
 #define AUDIO_DECODE_OGGMIX     0
 #define AUDIO_I2S_DECODE        0
 #define AUDIO_ENCODE            0
-#define DIGITAL_VIDEO_DEMO      1
-#define GPM4_PPU_DEMO           0
+#define DIGITAL_VIDEO_DEMO      0
+#define GPM4_PPU_DEMO           1
 #define FACE_DETECTION_DEMO     0
 #define USBD_UAC_DEMO           0
 #define USBD_UVC_DEMO           0	//if #define UVC_H264  1 @ usbd_uvc_dec.c, please #define AVI_AUDIO_ENCODE_EN   0 @ avi_encoder_scaler_jpeg.h

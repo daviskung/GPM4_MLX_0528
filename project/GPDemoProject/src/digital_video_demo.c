@@ -286,7 +286,8 @@ void Digital_Video_Demo(void)
 		{
 		
 	#if IO8_FUN_OFF
-			MLX_TH32x24_DEC_GRAY_FACTOR();
+			//MLX_TH32x24_DEC_GRAY_FACTOR();
+			
 	#else
 			switch(OperationMode)
 			{//exit the old mode

@@ -100,7 +100,6 @@
     #define _SENSOR_H62_CDSP_MIPI			0
 
 	
-	#define _SENSOR_TH32x32_THERMOPILE		1
 	#define _SENSOR_MXL90640_THERMOPILE		1
 	
 #endif
