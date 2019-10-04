@@ -90,13 +90,13 @@
 
 //const INT8U MLX_Gray_MAX_val_Ary[10]  = {140,140,140,140,140,140,140,176,176,176}; 
 //const INT8U MLX_Gray_START_val_Ary[10]= {130,130,100,70 ,60 ,60 ,40 ,25  ,5  ,5}; 
-#if FOV_BAB_55 
+#if (FOV_BAB_55 == 1) && (FOV_BAA_110 == 0) 
 const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3}; 
 //const INT8U MLX_Gray_MAX_val_Ary[20]   = {40,40,40,50, 60, 60, 70, 80,100,110,135,170,195,210,210,210,210,210,220,220}; 
 //const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
   const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,255,255}; 
   const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
-#else if FOV_BAA_110
+#else 
 const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3}; 
   const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,240,240,255,255}; 
   const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
@@ -796,7 +796,7 @@ static void MLX_TH32x24_SCALERUP_task_entry(void const *parm)
 
 		#if 1
 		//
-		// MLX_TH32x24 sensor scaler -[ first time]
+		// MLX_TH32x24 sensor scaler TO VGA -[ first time]
 		//
 
 			gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
@@ -832,14 +832,14 @@ static void MLX_TH32x24_SCALERUP_task_entry(void const *parm)
 			#endif
 
 			scale.output_format = C_SCALER_CTRL_OUT_YUYV;
-			scale.output_width = pAviEncVidPara->display_width;
-			scale.output_height = pAviEncVidPara->display_height;
-			scale.output_buf_width = pAviEncVidPara->display_width;
-			scale.output_buf_height = pAviEncVidPara->display_height;
+			scale.output_width = pAviEncVidPara->display_width * 2;
+			scale.output_height = pAviEncVidPara->display_height * 2;
+			scale.output_buf_width = pAviEncVidPara->display_width * 2;
+			scale.output_buf_height = pAviEncVidPara->display_height * 2;
 			scale.output_x_offset = 0;
 
 			//scale.output_y_addr = scaler_frame;
-			scale.output_y_addr = pMLX_TH32x24_Para->MLX_TH32x24_display_frame;
+			scale.output_y_addr = pMLX_TH32x24_Para->MLX_TH32x24_VGAdisplay_frame;
 			scale.output_u_addr = 0;
 			scale.output_v_addr = 0;
 
@@ -853,7 +853,7 @@ static void MLX_TH32x24_SCALERUP_task_entry(void const *parm)
 			memset((void *)&para, 0x00, sizeof(para));
 
 			//para.gamma_en = 1;
-			//para.color_matrix_en = 1;
+			para.scaler_intmode = 1;
 			para.boundary_color = 0x008080;
 			//para.yuv_type = C_SCALER_CTRL_TYPE_YUV;
 
@@ -862,9 +862,67 @@ static void MLX_TH32x24_SCALERUP_task_entry(void const *parm)
 				drv_l2_scaler_stop(SCALER_0);
 			}
 			else {
-				DBG_PRINT("Scale1 Fail\r\n");
+				DBG_PRINT("Scale1-first Fail\r\n");
 			while(1);
 			}
+		#endif
+
+		#if 1
+
+		//
+		// MLX_TH32x24 sensor scaler  VGA TO QVGA -[ 2nd time]
+		//
+
+		gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
+			
+		scale.input_format = C_SCALER_CTRL_IN_YUYV;
+		
+		scale.input_width = pAviEncVidPara->display_width * 2;;
+		scale.input_height = pAviEncVidPara->display_height * 2;
+		scale.input_visible_width = pAviEncVidPara->display_width * 2;;
+		scale.input_visible_height = pAviEncVidPara->display_height * 2;
+		scale.input_x_offset = 0;
+		scale.input_y_offset = 0;
+		
+		scale.input_y_addr = pMLX_TH32x24_Para->MLX_TH32x24_VGAdisplay_frame;
+		
+		
+		
+		scale.output_format = C_SCALER_CTRL_OUT_YUYV;
+		scale.output_width = pAviEncVidPara->display_width;
+		scale.output_height = pAviEncVidPara->display_height;
+		scale.output_buf_width = pAviEncVidPara->display_width;
+		scale.output_buf_height = pAviEncVidPara->display_height;
+		scale.output_x_offset = 0;
+		
+		//scale.output_y_addr = scaler_frame;
+		scale.output_y_addr = pMLX_TH32x24_Para->MLX_TH32x24_display_frame;
+		scale.output_u_addr = 0;
+		scale.output_v_addr = 0;
+		
+		
+		scale.fifo_mode = C_SCALER_CTRL_FIFO_DISABLE;
+		//scale.scale_mode = C_SCALER_FULL_SCREEN;
+		scale.scale_mode = C_SCALER_BY_RATIO;
+		scale.digizoom_m = 10;
+		scale.digizoom_n = 10;
+		//#endif
+		memset((void *)&para, 0x00, sizeof(para));
+		
+		//para.gamma_en = 1;
+		para.scaler_intmode = 0;
+		para.boundary_color = 0x008080;
+		//para.yuv_type = C_SCALER_CTRL_TYPE_YUV;
+		
+    	nRet = drv_l2_scaler_trigger(SCALER_0, 1, &scale, &para);
+		if(nRet == C_SCALER_STATUS_DONE || nRet == C_SCALER_STATUS_STOP) {
+			drv_l2_scaler_stop(SCALER_0);
+		}
+		else {
+			DBG_PRINT("Scale1-2nd Fail\r\n");
+		while(1);
+		}
+		
 		#endif
 
 			pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 1;
@@ -1783,10 +1841,10 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 
 			// *************************
-			#if FOV_BAA_110
-				DBG_PRINT("for [FOV_BAA_110] \r\n");
-			#else if FOV_BAB_55
-				DBG_PRINT("for [FOV_BAB_55 ] \r\n");
+			#if (FOV_BAB_55 == 1) && (FOV_BAA_110 == 0) 
+				DBG_PRINT("for [FOV_BAB_55] \r\n");
+			#else 
+				DBG_PRINT("for [FOV_BAA_110 ] \r\n");
 			#endif
 
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = GRAY_GRAYMAX_COLOR;

@@ -295,6 +295,7 @@ typedef struct MLX_TH32x24Para_s
 	INT8U  MLX_TH32x24_GRAY_MAX_VAL;
 	INT8U  MLX_TH32x24_GRAY_START_VAL;
 	
+	INT32U  MLX_TH32x24_VGAdisplay_frame;
 } MLX_TH32x24Para_t;
 
 

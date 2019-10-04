@@ -641,6 +641,20 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 		pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr = buffer_addr;
 		DBG_PRINT("davis --> MLX_TH32x24_GrayOutputFrame_addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr);
 
+
+		//buffer_size = pAviEncVidPara->sensor_capture_width * pAviEncVidPara->sensor_capture_height << 1;
+		//buffer_size = pAviEncVidPara->display_width * pAviEncVidPara->display_height << 1; // QVGA 320*240
+		buffer_size = (pAviEncVidPara->display_width * 2 * pAviEncVidPara->display_height * 2 )<< 1; // VGA 640*480
+		
+			buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+			//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
+			if(buffer_addr == 0) {
+				RETURN(STATUS_FAIL);
+			}
+			pMLX_TH32x24_Para->MLX_TH32x24_VGAdisplay_frame = buffer_addr;
+			DBG_PRINT("davis --> MLX_TH32x24_VGAdisplay_frame = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_VGAdisplay_frame);
+		
+
 	nRet = STATUS_OK;
 Return:
 	return nRet;
