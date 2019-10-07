@@ -1165,6 +1165,7 @@
 		<Unit filename="src/ppu_demo/GPM4_Platform_Code_PPU.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/ppu_demo/resource/inc/32X32RGB565NEW.h" />
 		<Unit filename="src/ppu_demo/resource/inc/TEXT_Platform_verification_1_HDR.h" />
 		<Unit filename="src/ppu_demo/resource/inc/TEXT_Platform_verification_2_HDR.h" />
 		<Unit filename="src/ppu_demo/resource/inc/TEXT_Platform_verification_3_HDR.h" />

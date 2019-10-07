@@ -45,7 +45,7 @@
 
 
 
-#include "32X32RGB565NEW.h" 	//  davis 2019.04.23
+//#include "32X32RGB565NEW.h" 	//  davis 2019.04.23
 
 
 
@@ -88,20 +88,20 @@
 
 
 
-//const INT8U MLX_Gray_MAX_val_Ary[10]  = {140,140,140,140,140,140,140,176,176,176}; 
-//const INT8U MLX_Gray_START_val_Ary[10]= {130,130,100,70 ,60 ,60 ,40 ,25  ,5  ,5}; 
+//const INT8U MLX_Gray_MAX_val_Ary[10]  = {140,140,140,140,140,140,140,176,176,176};
+//const INT8U MLX_Gray_START_val_Ary[10]= {130,130,100,70 ,60 ,60 ,40 ,25  ,5  ,5};
 #if  (FOV_BAB_55 == 1) && (FOV_BAA_110 == 0)
-const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3}; 
-//const INT8U MLX_Gray_MAX_val_Ary[20]   = {40,40,40,50, 60, 60, 70, 80,100,110,135,170,195,210,210,210,210,210,220,220}; 
-//const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
-  const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,255,255}; 
-  const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
+const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
+//const INT8U MLX_Gray_MAX_val_Ary[20]   = {40,40,40,50, 60, 60, 70, 80,100,110,135,170,195,210,210,210,210,210,220,220};
+//const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5};
+  const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,255,255};
+  const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5};
 #else  // if FOV_BAA_110
-const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3}; 
-  const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,240,240,255,255}; 
-  const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
-//const INT8U MLX_Gray_MAX_val_Ary[20]   = {40,40,40,50, 60, 60, 70, 80,100,110,135,170,195,210,210,210,210,210,220,220}; 
-//const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5}; 
+const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
+  const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,240,240,255,255};
+  const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5};
+//const INT8U MLX_Gray_MAX_val_Ary[20]   = {40,40,40,50, 60, 60, 70, 80,100,110,135,170,195,210,210,210,210,210,220,220};
+//const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5};
 
 #endif
 
@@ -1559,7 +1559,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 	float	TmaxOverZero,TminOverZero,TmaxUnderZero,TminUnderZero;
 	float	TmaxOverZeroTable,TminOverZeroTable,TmaxUnderZeroTable,TminUnderZeroTable;
 	float	Tpoint3;
-	
+
 	INT8U   MLX_TH32x24_BlockNum , Blk_startIdex;
 	signed long VDD_MEAS_sum,VDD_MEAS_TOP,VDD_MEAS_BTM;
 	unsigned long Vddlong;	// signed long	Vddlong;
@@ -1784,7 +1784,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 			// *************************
 			#if (FOV_BAB_55 == 0) && (FOV_BAA_110 == 1)
-			
+
 				DBG_PRINT("for [FOV_BAA_110] \r\n");
 			#else 	//if FOV_BAB_55
 				DBG_PRINT("for [FOV_BAB_55 ] \r\n");
@@ -2473,7 +2473,7 @@ NO_VAL:
 			TmaxOverZeroTable=TmaxOverZero; OverZ_TmaxTable_number=OverZ_Tmax_number;
 			TminUnderZeroTable = TminUnderZero; UnderZ_TminTable_number=UnderZ_Tmin_number;
 			TmaxUnderZeroTable = TmaxUnderZero; UnderZ_TmaxTable_number=UnderZ_Tmax_number;
-			
+
 
 			UnderZeroDiff_value = (INT32U)((TmaxUnderZeroTable-TminUnderZeroTable)/1000000);
 			if( UnderZeroDiff_value < 0 ) UnderZeroDiff_value = 0; // too small & too large ?
@@ -2482,7 +2482,7 @@ NO_VAL:
 			if( OverZeroDiff_value < 0 ) OverZeroDiff_value = 0;
 
 
-			#if 1 // MLX_GrayOutputFactor_Ary[10]={8,8,7,7,6,5,4,3,3,3,3}; 
+			#if 1 // MLX_GrayOutputFactor_Ary[10]={8,8,7,7,6,5,4,3,3,3,3};
 
 			if (OverZeroDiff_value > 0)
 			{
@@ -2516,19 +2516,19 @@ NO_VAL:
 					}
 					TmpTbInd = TmpTbInd / IMG_GRAY_IND_buf_len;
 				}
-				
+
 				if (TmpTbInd > 19) TmpTbInd = 19;
 				pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[TmpTbInd];
 				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
 				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
-				
+
 			}
-			
-			
+
+
 
 			#endif
 
-			
+
 			Tpoint3 = ((pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor * TmaxUnderZeroTable )
 							+ (10-pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor) * TminUnderZeroTable)/10; // 30% 以下 0值 
 
@@ -3982,8 +3982,8 @@ static void scaler_task_entry(void const *parm)
 			// PPU setting End
 
 			//pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status = 1;
-			gp_memcpy((INT8S *)(pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr),
-				(INT8S *)&(sensor32X32_RGB565),32*24*2);
+			//gp_memcpy((INT8S *)(pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr),
+			//	(INT8S *)&(sensor32X32_RGB565),32*24*2);
 
 			//picCNT=0;
 
@@ -4148,7 +4148,7 @@ static void scaler_task_entry(void const *parm)
 					 videnc_display(pAviEncVidPara->display_buffer_width,
 		    				   pAviEncVidPara->display_buffer_height,
 		    				   display_frame);
-				#else 
+				#else
 					// PPU 處理 
 
 					if(pMLX_TH32x24_Para->MLX_TH32x24_ScalerUp_status == 1){
