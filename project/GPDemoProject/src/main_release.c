@@ -167,7 +167,8 @@ void InitTask(void const *param)
 #endif
 
 #if (GPM4_PPU_DEMO == 1)
-    GPM4_PPU_Demo();
+    //GPM4_PPU_Demo();
+    GPM4_PPU_THERMAL_IMG();
 #endif
 
 #if (FACE_DETECTION_DEMO == 1)
