@@ -518,6 +518,7 @@ extern INT32S MLX_TH32x24_task_stop(void);
 extern void   TH80x64_start_timer_isr(void);
 
 
+
 INT32S h264_encode_start(INT32S width, INT32S height);
 INT32S h264_encode_stop(void);
 INT32S h264_encode_frame(INT32U frameAddr, INT32U outAddr, INT32U PictureType, INT32S insertHdr, INT32U NullFrame);

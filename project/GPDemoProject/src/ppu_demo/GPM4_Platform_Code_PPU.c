@@ -14,6 +14,14 @@
 #include "drv_l1_scaler.h"
 #include "drv_l2_scaler.h"
 #include "32X32RGB565NEW.h" 	//  davis 2019.04.23
+#include "avi_encoder_app.h"
+
+#include "defs_MLX.h"
+#include "avi_encoder_state.h"
+
+
+//AVI_ENCODER_APP_H
+
 
 
 #define FRAME_BUF_ALIGN64                   0x3F
@@ -34,6 +42,148 @@ static INT16U h_size,v_size;
 #define Photo_Disable                       1
 #endif
 
+
+#if 1
+INT32S MLX_TH32x24_forPPU_mem_alloc(void)	//davis
+{
+	INT32U buffer_addr;
+	INT32S buffer_size, nRet;
+	INT8U  tmpN1,tmpN2;
+
+	pMLX_TH32x24_Para->MLX_TH32x24_width = MLX_LINE;
+    pMLX_TH32x24_Para->MLX_TH32x24_height = MLX_COLUMN;
+
+//	MLX32x24_EE_READ_8bitBUF
+	buffer_size = MLX90640_EEMemAddrRead * 2;
+
+	buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);
+		}
+		pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF = buffer_addr;
+		DBG_PRINT("davis --> MLX32x24_EE_READ_8bitBUF = 0x%x\r\n", pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF);
+
+//	MLX32x24_EE_READ_16bitBUF
+		buffer_size = MLX90640_EEMemAddrRead*2;
+
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+			if(buffer_addr == 0) {
+				RETURN(STATUS_FAIL);
+			}
+			pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF = buffer_addr;
+			DBG_PRINT("davis --> MLX32x24_EE_READ_16bitBUF = 0x%x\r\n", pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF);
+
+
+	// 	1 pixel takes 2 bytes => 32*24 pixel requires 32*24*2
+	buffer_size = pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height << 1;
+
+	buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+	//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
+	if(buffer_addr == 0) {
+		RETURN(STATUS_FAIL);
+	}
+	pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr = buffer_addr;
+	DBG_PRINT("davis --> MLX_TH32x24_ColorOutputFrame_addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr);
+
+	for(tmpN1=0; tmpN1<MLX_TH32x24_SCALERUP_BUFFER_NO; tmpN1++) {
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pMLX_TH32x24_Para->MLX_TH32x24_TmpOutput_format_addr[tmpN1] = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_TmpOutput_format_addr[%d] = 0x%x\r\n",tmpN1, pMLX_TH32x24_Para->MLX_TH32x24_TmpOutput_format_addr[tmpN1]);
+	}
+
+
+	for(tmpN1=0;tmpN1<AVG_buf_len;tmpN1++){
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmpN1] = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_avg_buf_addr[%d] addr = 0x%x\r\n",tmpN1, pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmpN1]);
+	}
+
+	//buffer_size = pAviEncVidPara->sensor_capture_width * pAviEncVidPara->sensor_capture_height << 1;
+		buffer_size = pAviEncVidPara->display_width * pAviEncVidPara->display_height << 1;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pMLX_TH32x24_Para->MLX_TH32x24_display_frame = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_display_frame addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_display_frame);
+
+
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pMLX_TH32x24_Para->MLX_TH32x24_display_background_frame = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_display_background_frame addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_display_background_frame);
+
+	buffer_size = sizeof(INT16U)*MAXNROFDEFECTS ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pMLX_TH32x24_Para->MLX_TH32x24_BadPixAdr_buf = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_BadPixAdr_buf(INT16U) addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_BadPixAdr_buf);
+
+	buffer_size = sizeof(INT8U)*MAXNROFDEFECTS ;
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pMLX_TH32x24_Para->MLX_TH32x24_BadPixMask_buf = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_BadPixMask_buf(INT8U) addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_BadPixMask_buf);
+
+
+	buffer_size = IMAGE_DATA_INT32S_SIZE * MLX_Pixel ; // float/INT32S = 4 byte
+	for(tmpN1 = 0 ; tmpN1 < IMG_AVG_buf_len ; tmpN1++){
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);	}
+		pMLX_TH32x24_Para->MLX_TH32x24_ImgAvg_buf_addr[tmpN1] = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_ImgAvg_buf_addr[%d] addr = 0x%x\r\n",tmpN1, pMLX_TH32x24_Para->MLX_TH32x24_ImgAvg_buf_addr[tmpN1]);
+	}
+
+		//	1 pixel takes 2 bytes => 32*24 pixel requires 32*24*3*3 放大3倍 
+		buffer_size = (pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height << 1)*ScaleUp_3*ScaleUp_3;
+
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);
+		}
+		pMLX_TH32x24_Para->MLX_TH32x24_ScaleUpFrame_addr = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_ScaleUpFrame_addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_ScaleUpFrame_addr);
+
+		//	1 pixel takes 1 bytes (Gray out) => 32*24 pixel requires 32*24*3*3 放大3倍 
+		buffer_size = (pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height )*ScaleUp_3*ScaleUp_3;
+
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);
+		}
+		pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_GrayScaleUpFrame_addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr);
+
+
+
+		//	1 pixel takes 1 bytes (Gray out) => 32*24 pixel requires 32*24
+		buffer_size = (pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height );
+
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);
+		}
+		pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_GrayOutputFrame_addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr);
+
+	nRet = STATUS_OK;
+Return:
+	return nRet;
+}
+
+#endif
+
+
 void GPM4_PPU_Demo(void)
 {
 #if  GPLIB_PPU_EN
@@ -49,6 +199,8 @@ void GPM4_PPU_Demo(void)
     nTX_image_info image_info;
 	ScalerFormat_t scale;
 	ScalerPara_t para;
+	
+	MLX_TH32x24Para_t MLX_TH32x24_Para, *pMLX_TH32x24_Para; // 2019.03.28 davis
 
 	INT32S  nRet;
 
@@ -66,7 +218,10 @@ void GPM4_PPU_Demo(void)
         v_size = 480;
     }
 
-    drv_l2_display_start(DISPLAY_DEVICE,DISP_FMT_YUYV);
+    //drv_l2_display_start(DISPLAY_DEVICE,DISP_FMT_YUYV);
+	
+    drv_l2_display_start(DISPLAY_DEVICE,DISP_FMT_VYUV);
+	
 
     if(DISPLAY_DEVICE == DISDEV_TFT)
         drv_l2_display_get_size(DISPLAY_DEVICE,(INT16U *)&h_size,(INT16U *)&v_size);
@@ -134,8 +289,37 @@ void GPM4_PPU_Demo(void)
 
 	frame_count=0;
 
-
+	//alloc memory
 	
+	pMLX_TH32x24_Para = &MLX_TH32x24_Para;	// 2019.03.28 davis
+    gp_memset((INT8S *)pMLX_TH32x24_Para, 0, sizeof(MLX_TH32x24Para_t));
+
+#if 1
+	if(MLX_TH32x24_forPPU_mem_alloc() < 0) {	// RAM 正常 
+		avi_encode_memory_free();
+		DEBUG_MSG("MLX_TH32x24 memory alloc fail!!!\r\n");
+		//RETURN(STATUS_FAIL);
+	}
+	
+#endif
+
+//MLX_TH32x24_TEST_LOW();
+
+	 osDelay(50);
+	MXL90640_thermopile_init();
+
+
+	nRet = MLX_TH32x24_task_create(MLX32x24_TASK_PRIORITY);
+	if(nRet < 0)	DEBUG_MSG("MLX_TH32x24_task_create fail !!!");
+		 else  DBG_PRINT("MLX_TH32x24_task_create success !!! \r\n");
+
+    osDelay(100);
+
+	nRet = MLX_TH32x24_SCALERUP_Task_create(MLX32x24_SCALERUP_PRIORITY);
+	if(nRet < 0) DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create fail !!!");
+		else  DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create success !!! \r\n");	
+
+
 
 	while(1)
 	{
@@ -147,14 +331,14 @@ void GPM4_PPU_Demo(void)
 	     display_buf = ppu_frame_buffer_display_get();
 	     if(display_buf > 0){
             drv_l2_display_update(DISPLAY_DEVICE,display_buf);
-			DBG_PRINT("frame_count = 0x%x\r\n",frame_count);  //davisppu-1
-			DBG_PRINT("display_buf = 0x%x\r\n",display_buf);	 //davisppu-1
+			//DBG_PRINT("frame_count = 0x%x\r\n",frame_count);  //davisppu-1
+			//DBG_PRINT("display_buf = 0x%x\r\n",display_buf);	 //davisppu-1
 	     	}
 
 		// DBG_PRINT("display_buf = 0x%x\r\n",display_buf);	 //davisppu-1
 
 
-		//
+	//
 	// MLX_TH32x24 sensor scaler -[ first time]
 	//
 
@@ -189,7 +373,7 @@ void GPM4_PPU_Demo(void)
 		scale.input_v_addr = 0;
 		
 
-		scale.output_format = C_SCALER_CTRL_OUT_VYUY;
+		scale.output_format = C_SCALER_CTRL_OUT_VYUY;  //C_SCALER_CTRL_OUT_YUYV;	//C_SCALER_CTRL_OUT_VYUY; 
 		scale.output_width = h_size;
 		scale.output_height = v_size;
 		scale.output_buf_width = h_size;
