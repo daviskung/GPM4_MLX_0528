@@ -681,6 +681,9 @@
 		</Unit>
 		<Unit filename="../../driver_l2/scaler/inc/define.h" />
 		<Unit filename="../../driver_l2/scaler/inc/drv_l2_scaler.h" />
+		<Unit filename="../../driver_l2/scaler/src/drv_l2_scaler.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../driver_l2/sccb/inc/drv_l2_sccb.h" />
 		<Unit filename="../../driver_l2/sccb/src/drv_l2_sccb.c">
 			<Option compilerVar="CC" />

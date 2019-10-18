@@ -853,7 +853,7 @@ static void MLX_TH32x24_SCALERUP_task_entry(void const *parm)
 			memset((void *)&para, 0x00, sizeof(para));
 
 			//para.gamma_en = 1;
-			para.scaler_intmode = 1;
+			para.scaler_intmode = 0;
 			para.boundary_color = 0x008080;
 			//para.yuv_type = C_SCALER_CTRL_TYPE_YUV;
 
