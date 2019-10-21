@@ -108,7 +108,7 @@ INT32S MLX_TH32x24_forPPU_mem_alloc(void)	//davis
 		if(buffer_addr == 0) {
 			RETURN(STATUS_FAIL);	}
 		pMLX_TH32x24_Para->MLX_TH32x24_display_frame = buffer_addr;
-		
+
 		DBG_PRINT("davis --> v_size = %d h_size = %d \r\n", v_size,h_size);
 		DBG_PRINT("davis --> MLX_TH32x24_display_frame addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_display_frame);
 
@@ -1317,6 +1317,9 @@ void GPM4_PPU_THERMAL_IMG(void)
 	pMLX_TH32x24_Para = &MLX_TH32x24_Para;	// 2019.03.28 davis
     gp_memset((INT8S *)pMLX_TH32x24_Para, 0, sizeof(MLX_TH32x24Para_t));
 
+	//pMLX32x24_Para = &MLX32x24_Para ;	// 2019.05.28 davis
+    //gp_memset((INT8S *)pMLX32x24_Para, 0, sizeof(paramsMLX90640_t));
+
 #if 1
 	if(MLX_TH32x24_forPPU_mem_alloc() < 0) {	// RAM 正常 
 		avi_encode_memory_free();
@@ -1341,6 +1344,20 @@ void GPM4_PPU_THERMAL_IMG(void)
 	nRet = MLX_TH32x24_SCALERUP_Task_create(MLX32x24_SCALERUP_PRIORITY);
 	if(nRet < 0) DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create fail !!!");
 		else  DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create success !!! \r\n");
+
+
+
+	// start MLX_TH32x24
+
+	//if(MLX_TH32x24_SCALERUP_task_start() < 0) DBG_PRINT("MLX_TH32x24_SCALERUP_task_start  fail \r\n");
+	//		else	DBG_PRINT("MLX_TH32x24_SCALERUP_task_start OK \r\n");
+
+	//osDelay(100);
+
+	if(MLX_TH32x24_task_start() < 0) DEBUG_MSG("d.MLX_TH32x24_task start fail !!\r\n");
+			else	DBG_PRINT("d.MLX_TH32x24_task start\r\n");
+
+	osDelay(100);
 
 
 

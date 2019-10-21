@@ -1592,6 +1592,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
     float ptatArt;
 	INT16U pixelNumber;
 
+	INT32S retVal=0;
 
     DEBUG_MSG("<<%s>>\r\n", __func__);
 
@@ -1726,10 +1727,11 @@ static void MLX_TH32x24_task_entry(void const *parm)
 				//
 			error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
 
+			DBG_PRINT("set MLX_TH32x24 start of measurement \r\n");
 
-
-			gp_memset((INT8S *)pMLX32x24_Para,0x00,sizeof(paramsMLX90640_t));	// clear 值 
-			DBG_PRINT("clear pMLX32x24_Para \r\n");
+			//DBG_PRINT("clear pMLX32x24_Para - 1 \r\n");
+			retVal = gp_memset((INT8S *)pMLX32x24_Para,0,sizeof(paramsMLX90640_t));	// clear 值 
+			//DBG_PRINT("clear pMLX32x24_Para -2\r\n");
 
 			error = CheckEEPROMValid(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF);
 
