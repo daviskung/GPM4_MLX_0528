@@ -1611,9 +1611,9 @@ static void MLX_TH32x24_task_entry(void const *parm)
 
 			OSQFlush(MLX_TH32x24_task_q);
 
-			for(i=0; i<MLX_TH32x24_SCALERUP_BUFFER_NO; i++) {
-		        avi_encode_post_empty(MLX_TH32x24_SCALERUP_buf_q, pMLX_TH32x24_Para->MLX_TH32x24_TmpOutput_format_addr[i]);
-		    }
+			//for(i=0; i<MLX_TH32x24_SCALERUP_BUFFER_NO; i++) {
+		   //     avi_encode_post_empty(MLX_TH32x24_SCALERUP_buf_q, pMLX_TH32x24_Para->MLX_TH32x24_TmpOutput_format_addr[i]);
+		    //}
 
 
 
@@ -1730,7 +1730,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			DBG_PRINT("set MLX_TH32x24 start of measurement \r\n");
 
 			//DBG_PRINT("clear pMLX32x24_Para - 1 \r\n");
-			retVal = gp_memset((INT8S *)pMLX32x24_Para,0,sizeof(paramsMLX90640_t));	// clear 值 
+			//retVal = gp_memset((INT8S *)pMLX32x24_Para,0,sizeof(paramsMLX90640_t));	// clear 值 
 			//DBG_PRINT("clear pMLX32x24_Para -2\r\n");
 
 			error = CheckEEPROMValid(pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF);

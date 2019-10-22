@@ -1341,9 +1341,9 @@ void GPM4_PPU_THERMAL_IMG(void)
 
     osDelay(100);
 
-	nRet = MLX_TH32x24_SCALERUP_Task_create(MLX32x24_SCALERUP_PRIORITY);
-	if(nRet < 0) DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create fail !!!");
-		else  DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create success !!! \r\n");
+	//nRet = MLX_TH32x24_SCALERUP_Task_create(MLX32x24_SCALERUP_PRIORITY);
+	//if(nRet < 0) DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create fail !!!");
+	//	else  DBG_PRINT("MLX_TH32x24_SCALERUP_Task_create success !!! \r\n");
 
 
 
