@@ -641,6 +641,180 @@ static void mazeTest_Preview_PScaler(void)
 	mazePscalerSet(&PScalerParam);
 }
 
+static void thermal_task_entry(void const *parm)
+{
+    INT32U csi_buf,PscalerBuffer,PscalerBufferSize;
+    INT32U i,event;
+    osEvent result;
+
+    DBG_PRINT("thermal_task_entry start \r\n");
+    // thermal init
+    ThermalTest_Preview_PScaler();
+
+    // disp size
+    drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
+	PscalerBufferSize = (device_h_size * device_v_size * 2);
+	PscalerBuffer = (INT32U) gp_malloc_align(((PscalerBufferSize*C_DEVICE_FRAME_NUM)+64), 32);
+    if(PscalerBuffer == 0)
+    {
+        DBG_PRINT("PscalerBuffer fail\r\n");
+        while(1);
+    }
+	PscalerBuffer = (INT32U)((PscalerBuffer + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
+	for(i=0; i<C_DEVICE_FRAME_NUM; i++)
+	{
+		csi_buf = (PscalerBuffer+i*PscalerBufferSize);
+		pscaler_frame_buffer_add((INT32U *)csi_buf,1);
+		DBG_PRINT("PscalerBuffer:0x%X \r\n",csi_buf);
+	}
+    prcess_state_post(PRCESS_STATE_OK);
+
+    while(1)
+    {
+        result = osMessageGet(csi_frame_buffer_queue, osWaitForever);
+        csi_buf = result.value.v;
+        if((result.status != osEventMessage) || !csi_buf) {
+            continue;
+        }
+        //DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
+        //DBG_PRINT(".");
+
+        PscalerBuffer = pscaler_frame_buffer_get(1);
+        if(PscalerBuffer)
+            fd_display_set_frame(csi_buf, PscalerBuffer, PRCESS_SRC_WIDTH, PRCESS_SRC_HEIGHT, device_h_size, device_v_size);
+
+        event = prcess_state_get();
+        if(event == PRCESS_STATE_OK)
+        {
+            //**************************************//
+                //DBG_PRINT("user result get \r\n");
+
+            //**************************************//
+            prcess_frame_buffer_add((INT32U *)csi_buf, 1);
+        }
+
+        if(PscalerBuffer)
+        {
+            if(event == PRCESS_STATE_OK)
+            {
+                //**************************************//
+                //DBG_PRINT("user draw image \r\n");
+
+                //**************************************//
+            }
+            disp_frame_buffer_add((INT32U *)PscalerBuffer, 1);
+        }
+        //else
+            //DBG_PRINT("@");
+        if(event != PRCESS_STATE_OK)
+            free_frame_buffer_add((INT32U *)csi_buf, 1);
+    }
+}
+
+
+
+static void ThermalTest_Preview_PScaler(void)
+{
+    CHAR *p;
+	INT32U i,PrcessBuffer,csi_mode,temp;
+	INT32U csiBufferSize,csiBuffer;
+	drv_l2_sensor_ops_t *pSencor;
+	drv_l2_sensor_info_t *pInfo;
+
+	csiBufferSize = PRCESS_SRC_WIDTH*PRCESS_SRC_HEIGHT*2;
+    csiBuffer = DUMMY_BUFFER_ADDRESS;
+
+	PrcessBuffer = (INT32U) gp_malloc_align(((csiBufferSize*DISP_QUEUE_MAX)+64), 32);
+    if(PrcessBuffer == 0)
+    {
+        DBG_PRINT("PrcessBuffer fail\r\n");
+        while(1);
+    }
+	PrcessBuffer = (INT32U)((PrcessBuffer + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
+	for(i=0; i<DISP_QUEUE_MAX; i++)
+	{
+		temp = (PrcessBuffer+i*csiBufferSize);
+		free_frame_buffer_add((INT32U *)temp,1);
+		DBG_PRINT("CSIBuffer:0x%X \r\n",temp);
+	}
+
+    // sensor init
+	drv_l2_sensor_init();
+    pSencor = drv_l2_sensor_get_ops(0);
+    DBG_PRINT("SensorName = %s\r\n", pSencor->name);
+
+ 	// get csi or cdsp
+	p = (CHAR *)strrchr((CHAR *)pSencor->name, 'c');
+	if(p == 0) {
+        DBG_PRINT("get csi or cdsp fail\r\n");
+        while(1);
+	}
+
+	if(strncmp((CHAR *)p, "csi", 3) == 0) {
+		csi_mode = CSI_INTERFACE;
+	} else if(strncmp((CHAR *)p, "cdsp", 4) == 0) {
+		csi_mode = CDSP_INTERFACE;
+	} else {
+        DBG_PRINT("csi mode fail\r\n");
+        while(1);
+	}
+
+	for(i=0; i<3; i++) {
+		pInfo = pSencor->get_info(i);
+		if(pInfo->target_w == SENSOR_SRC_WIDTH && pInfo->target_h == SENSOR_SRC_HEIGHT) {
+			temp = i;
+			break;
+		}
+	}
+
+	if(i == 3) {
+        DBG_PRINT("get csi width and height fail\r\n");
+        while(1);
+	}
+
+	pSencor->init();
+	pSencor->stream_start(temp, csiBuffer, csiBuffer);
+
+	// PScaler
+	PScalerParam.pScalerNum = CSI_PSCALE_USE;
+	PScalerParam.inBuffer = csiBuffer;
+	PScalerParam.outBuffer_A = free_frame_buffer_get(1);
+	PScalerParam.outBuffer_B = free_frame_buffer_get(1);
+
+	PScalerParam.inWidth = SENSOR_SRC_WIDTH;
+	PScalerParam.inHeight = SENSOR_SRC_HEIGHT;
+
+	PScalerParam.outWidth = PRCESS_SRC_WIDTH;
+	PScalerParam.outHeight = PRCESS_SRC_HEIGHT;
+
+	PScalerParam.outLineCount = PRCESS_SRC_HEIGHT;
+
+	PScalerParam.inFormat = PIPELINE_SCALER_INPUT_FORMAT_YUYV;
+	PScalerParam.outFormat = PIPELINE_SCALER_OUTPUT_FORMAT_YUYV;
+
+    if (csi_mode == CSI_INTERFACE)
+    {
+        // CSI
+        PScalerParam.inSource = PIPELINE_SCALER_INPUT_SOURCE_CSI;
+        // Open CSI data path
+        drvl1_csi_input_pscaler_set(1);
+    }
+    else
+    {
+        // CDSP
+        PScalerParam.inSource = PIPELINE_SCALER_INPUT_SOURCE_CDSP;
+        // Open CDSP data path
+        drv_l1_CdspSetYuvPscalePath(1);
+    }
+
+	PScalerParam.intEnableFlag = PIPELINE_SCALER_INT_ENABLE_ALL;
+    PScalerParam.callbackFunc = PScaler_Callback_ISR_AutoZoom;
+
+	mazePscalerSet(&PScalerParam);
+}
+
+
+
 static void csi_task_entry(void const *parm)
 {
     INT32U csi_buf,PscalerBuffer,PscalerBufferSize;
@@ -767,7 +941,10 @@ static void prcess_task_entry(void const *parm)
 
 void GPM4_CSI_DISP_Demo(void)
 {
-    osThreadDef_t csi_task = {"csi_task", csi_task_entry, osPriorityAboveNormal, 1, 8192};
+    //osThreadDef_t csi_task = {"csi_task", csi_task_entry, osPriorityAboveNormal, 1, 8192};
+  //  thermal_task_entry
+  	
+    osThreadDef_t thermal_task = {"thermal_task", thermal_task_entry, osPriorityAboveNormal, 1, 8192};
     osThreadDef_t disp_task = {"disp_task", disp_task_entry, osPriorityNormal, 1, 8192};
     osThreadDef_t prcess_task = {"prcess_task", prcess_task_entry, osPriorityNormal, 1, 32768};
     osMessageQDef_t disp_q = {DISP_QUEUE_MAX, sizeof(INT32U), 0};
@@ -886,7 +1063,8 @@ void GPM4_CSI_DISP_Demo(void)
 	}
 
 	// osThreadCreate
-    csi_id = osThreadCreate(&csi_task, (void *)NULL);
+	//csi_id = osThreadCreate(&csi_task, (void *)NULL);
+    csi_id = osThreadCreate(&thermal_task, (void *)NULL);
     if(csi_id == 0)
     {
         DBG_PRINT("osThreadCreate: csi_id error\r\n");

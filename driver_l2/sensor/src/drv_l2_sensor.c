@@ -322,6 +322,12 @@ void drv_l2_sensor_init(void)
 #if (defined _SENSOR_GC5025_CDSP_MIPI) && (_SENSOR_GC5025_CDSP_MIPI == 1)
     drv_l2_sensor_register_ops((drv_l2_sensor_ops_t*)&gc5025_cdsp_mipi_ops);
 #endif
+
+#if (defined _SENSOR_MXL90640_THERMOPILE) && (_SENSOR_MXL90640_THERMOPILE == 1)
+		drv_l2_sensor_register_ops((drv_l2_sensor_ops_t*)&mlx90640_sensor_thermal_ops);
+#endif
+
+
 }
 
 /**

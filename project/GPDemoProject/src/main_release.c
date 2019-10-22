@@ -15,7 +15,7 @@
 #define AUDIO_I2S_DECODE        0
 #define AUDIO_ENCODE            0
 #define DIGITAL_VIDEO_DEMO      0
-#define GPM4_PPU_DEMO           1
+#define GPM4_PPU_DEMO           0
 #define FACE_DETECTION_DEMO     0
 #define USBD_UAC_DEMO           0
 #define USBD_UVC_DEMO           0	//if #define UVC_H264  1 @ usbd_uvc_dec.c, please #define AVI_AUDIO_ENCODE_EN   0 @ avi_encoder_scaler_jpeg.h
@@ -26,7 +26,7 @@
 #define OBJECT_RECOGNIZE_DEMO   0
 #define WIFI_DEMO               0
 #define VR_DEMO                 0   //to run VrDemo(); please set VR_DEMO_OPTION as VR_ONLY
-#define CSI_DISP_DEMO           0
+#define CSI_DISP_DEMO           1
 #define CP_DEMO					0
 #define CT_FDWA_VR_DEMO         0
 #define CMSIS_DSP_DEMO          0

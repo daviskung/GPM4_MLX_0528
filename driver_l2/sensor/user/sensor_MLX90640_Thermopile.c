@@ -12,7 +12,6 @@
 //#include "drv_l2_csi.h"
 #include "drv_l2_sccb.h"
 #include "gp_aeawb.h"
-//#include "defs_th32x32.h"
 #include	"defs_MLX.h"
 #include <math.h>		// for pow()
 #include "avi_encoder_app.h" // for MLX90640_GetVdd
@@ -859,6 +858,44 @@ void MXL90640_thermopile_init(void)
 	DBG_PRINT("MXL_sccb_open() \r\n");
 }
 
+/**
+ * @brief   MLX un-initialization function
+ * @param   sensor format parameters
+ * @return 	none
+ */
+void MXL90640_thermopile_uninit(void)
+{
+
+	// release sccb
+	MXL_sccb_close();
+
+	// Turn off LDO 2.8V for CSI sensor
+	//drv_l1_power_ldo_28_ctrl(0, LDO_LDO28_2P8V);
+	//gpio_write_io(GC0308_RESET,DATA_LOW);
+}
+
+/**
+ * @brief   gc0308 stream start function
+ * @param   info index
+ *
+ * @return 	none
+ */
+void MXL90640_thermopile_stream_start(void)
+{
+   // gpCSIPara_t csi_Para;
+	paramsMLX90640_t thermal_Para;
+
+	gp_memset((INT8S *)&thermal_Para, 0, sizeof(paramsMLX90640_t));
+	//pMLX_TH32x24_Para = &MLX_TH32x24_Para;	// 2019.03.28 davis
+    gp_memset((INT8S *)pMLX_TH32x24_Para, 0, sizeof(MLX_TH32x24Para_t));
+
+	
+
+	DBG_PRINT("%s = %d _davis\r\n", __func__, 0);
+
+
+
+}
 
 void MXL_TEST_LOW(void)
 {
@@ -922,7 +959,7 @@ void MLX90640_GetTa(void)
 	ta = (ptatArt / (1 + pMLX32x24_Para->KvPTAT * (vdd - 3.3)) - pMLX32x24_Para->vPTAT25);
 	ta = ta / pMLX32x24_Para->KtPTAT + 25;
 	pMLX_TH32x24_Para->MLX_TH32x24_ta = ta;
-	
+
     return ;
 }
 
@@ -938,7 +975,7 @@ void MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t MXL_handle)
 	INT16U	EEaddress16,*pEEcopy16BIT;
 	INT8U 	EEaddr[2],*pEEaddr;
 	INT16U	cnt,i,frameData_cnt;
-	
+
 	INT16U  *pMLX32x32_READ_INT16U_buf,*pMLX32x32_frameData_INT16U_buf;
 	INT8U  *pMLX32x32_READ_INT8U_buf;
 
@@ -946,9 +983,9 @@ void MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t MXL_handle)
 	dataReady = 0;
 	frameData_cnt=0;
 
-	
+
 	DBG_PRINT("MLX90640_GetFrameData \r\n");	// return data length , if error = -1
-	
+
 	while(dataReady == 0)
 	{
 	    //error = MLX90640_I2CRead(slaveAddr, 0x8000, 1, &statusRegister);
@@ -1026,6 +1063,20 @@ void MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t MXL_handle)
 }
 
 #endif
+
+
+/*********************************************
+*	sensor ops declaration
+*********************************************/
+const drv_l2_thermal_sensor_ops_t mlx90640_sensor_thermal_ops =
+{
+	SENSOR_MLX90640_THERMAL_NAME,	/* sensor name */
+	MXL90640_thermopile_init,
+	MXL90640_thermopile_uninit,
+	MXL90640_thermopile_stream_start,
+	MLX_LINE,
+	MLX_COLUMN
+};
 
 
 #endif //(defined _SENSOR_MXL90640_THERMOPILE) && (_SENSOR_MXL90640_THERMOPILE == 1)

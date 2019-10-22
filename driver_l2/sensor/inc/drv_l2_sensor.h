@@ -68,12 +68,18 @@
 #define SENSOR_GC5025_CDSP_MIPI_NAME   "gc_5025_cdsp_mipi"
 #define SENSOR_H62_CDSP_MIPI_NAME		"h62_cdsp_mipi"
 
+#define SENSOR_MLX90640_THERMAL_NAME	"mlx_90640_thermal"
+
 
 // sensor device enable
 #if CP_DEMO_EN == 1
     #define _SENSOR_GC0308_CSI				1
     #define _SENSOR_H42_CDSP_MIPI           1
 #else
+
+	
+	#define _SENSOR_MXL90640_THERMOPILE 	1
+
     #define _SENSOR_OV7670_CSI				0
     #define _SENSOR_GC0308_CSI				1
     #define _SENSOR_OV3640_CSI				0
@@ -99,9 +105,8 @@
     #define _SENSOR_GC5025_CDSP_MIPI        0
     #define _SENSOR_H62_CDSP_MIPI			0
 
-	
-	#define _SENSOR_MXL90640_THERMOPILE		1
-	
+
+
 #endif
 /*ISP Pin Position Configuration*/
 #define ISP_CLKO__IOC9								0x00006661
@@ -271,6 +276,18 @@ typedef struct drv_l2_sensor_para_s
     void (*md_callback)(void); /* sensor modition callback function for CDSP */
 } drv_l2_sensor_para_t;
 
+
+typedef struct drv_l2_thermal_sensor_ops_s
+{
+	char*	name;
+	void   (*init)(void);
+	void   (*uninit)(void);
+	void   (*stream_start)(void);
+	INT16U sensor_w; 			/* sensor width */
+	INT16U sensor_h;			/* sensor height */
+} drv_l2_thermal_sensor_ops_t;
+
+
 /*********************************************************************
         External ops declaration for sensors we spport now
 **********************************************************************/
@@ -346,6 +363,11 @@ extern const drv_l2_sensor_ops_t sp5506_cdsp_mipi_ops;
 #if (defined _SENSOR_GC5025_CDSP_MIPI) && (_SENSOR_GC5025_CDSP_MIPI == 1)
 extern const drv_l2_sensor_ops_t gc5025_cdsp_mipi_ops;
 #endif
+
+#if (defined _SENSOR_MXL90640_THERMOPILE) && (_SENSOR_MXL90640_THERMOPILE == 1)
+extern const drv_l2_thermal_sensor_ops_t mlx90640_sensor_thermal_ops;
+#endif
+
 
 /*********************************************************************
         External function declaration
