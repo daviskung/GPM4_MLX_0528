@@ -712,7 +712,7 @@ static void thermal_task_entry(void const *parm)
 }
 
 
-
+/*
 static void ThermalTest_Preview_PScaler(void)
 {
     CHAR *p;
@@ -813,7 +813,7 @@ static void ThermalTest_Preview_PScaler(void)
 	mazePscalerSet(&PScalerParam);
 }
 
-
+*/
 
 static void csi_task_entry(void const *parm)
 {
@@ -941,10 +941,9 @@ static void prcess_task_entry(void const *parm)
 
 void GPM4_CSI_DISP_Demo(void)
 {
-    //osThreadDef_t csi_task = {"csi_task", csi_task_entry, osPriorityAboveNormal, 1, 8192};
-  //  thermal_task_entry
-  	
-    osThreadDef_t thermal_task = {"thermal_task", thermal_task_entry, osPriorityAboveNormal, 1, 8192};
+    osThreadDef_t csi_task = {"csi_task", csi_task_entry, osPriorityAboveNormal, 1, 8192};
+  	//  thermal_task_entry
+    //osThreadDef_t thermal_task = {"thermal_task", thermal_task_entry, osPriorityAboveNormal, 1, 8192};
     osThreadDef_t disp_task = {"disp_task", disp_task_entry, osPriorityNormal, 1, 8192};
     osThreadDef_t prcess_task = {"prcess_task", prcess_task_entry, osPriorityNormal, 1, 32768};
     osMessageQDef_t disp_q = {DISP_QUEUE_MAX, sizeof(INT32U), 0};
@@ -1063,8 +1062,8 @@ void GPM4_CSI_DISP_Demo(void)
 	}
 
 	// osThreadCreate
-	//csi_id = osThreadCreate(&csi_task, (void *)NULL);
-    csi_id = osThreadCreate(&thermal_task, (void *)NULL);
+	csi_id = osThreadCreate(&csi_task, (void *)NULL);
+    //csi_id = osThreadCreate(&thermal_task, (void *)NULL);
     if(csi_id == 0)
     {
         DBG_PRINT("osThreadCreate: csi_id error\r\n");
