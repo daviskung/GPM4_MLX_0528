@@ -13,7 +13,7 @@
 
 #include "drv_l1_scaler.h"
 #include "drv_l2_scaler.h"
-#include "32X32RGB565NEW.h" 	//  davis 2019.04.23
+//#include "32X32RGB565NEW.h" 	//  davis 2019.04.23
 #include "avi_encoder_app.h"
 
 #include "defs_MLX.h"
@@ -1408,10 +1408,10 @@ void GPM4_PPU_THERMAL_IMG(void)
 			}
 
 		if(index % 2 == 0){
-		scale.input_y_addr = &(sensor32X32_RGB565_2);
+		//scale.input_y_addr = &(sensor32X32_RGB565_2);
 			}
 		else{
-		scale.input_y_addr = &(sensor32X32_RGB565);
+		//scale.input_y_addr = &(sensor32X32_RGB565);
 			}
 	#else
 		scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;

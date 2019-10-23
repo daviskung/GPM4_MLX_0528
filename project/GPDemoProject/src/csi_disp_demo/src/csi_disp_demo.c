@@ -11,6 +11,11 @@
 #include "drv_l2_ad_key_scan.h"
 #include "FaceDetectAP.h"
 
+#include "32X32RGB565NEW.h" 	//  davis 2019.10.23
+#include "defs_MLX.h"
+
+
+
 #define FRAME_BUF_ALIGN64                   0x3F
 #define FRAME_BUF_ALIGN32                   0x1F
 #define FRAME_BUF_ALIGN16                   0xF
@@ -21,10 +26,21 @@
 #define DISP_QUEUE_MAX		                3
 #define C_DEVICE_FRAME_NUM		            3
 #define DUMMY_BUFFER_ADDRESS                0x50000000
+
+/*
+#define SENSOR_SRC_WIDTH		            32
+#define SENSOR_SRC_HEIGHT		            32
+#define PRCESS_SRC_WIDTH		            640	//SENSOR_SRC_WIDTH
+#define PRCESS_SRC_HEIGHT		            480	//SENSOR_SRC_HEIGHT
+*/
+
+
 #define SENSOR_SRC_WIDTH		            640
 #define SENSOR_SRC_HEIGHT		            480
 #define PRCESS_SRC_WIDTH		            SENSOR_SRC_WIDTH
 #define PRCESS_SRC_HEIGHT		            SENSOR_SRC_HEIGHT
+
+
 #define PRCESS_STATE_OK                     0x80
 #define DISP_USE_PSCALE_EN                  1
 #define CSI_PSCALE_USE                      PSCALER_A
@@ -569,7 +585,7 @@ static void mazeTest_Preview_PScaler(void)
     // sensor init
 	drv_l2_sensor_init();
     pSencor = drv_l2_sensor_get_ops(0);
-    DBG_PRINT("SensorName = %s\r\n", pSencor->name);
+	DBG_PRINT("sensor get_info(%d)_davis\r\n",temp);
 
  	// get csi or cdsp
 	p = (CHAR *)strrchr((CHAR *)pSencor->name, 'c');
@@ -599,7 +615,7 @@ static void mazeTest_Preview_PScaler(void)
         DBG_PRINT("get csi width and height fail\r\n");
         while(1);
 	}
-
+	DBG_PRINT("sensor get_info(%d)_davis\r\n",temp);
 	pSencor->init();
 	pSencor->stream_start(temp, csiBuffer, csiBuffer);
 
@@ -641,78 +657,114 @@ static void mazeTest_Preview_PScaler(void)
 	mazePscalerSet(&PScalerParam);
 }
 
-static void thermal_task_entry(void const *parm)
+
+
+static void ImageTest_Preview_PScaler(void)
 {
-    INT32U csi_buf,PscalerBuffer,PscalerBufferSize;
-    INT32U i,event;
-    osEvent result;
+    CHAR *p;
+	INT32U i,PrcessBuffer,csi_mode,temp;
+	INT32U csiBufferSize,csiBuffer;
+	drv_l2_sensor_ops_t *pSencor;
+	drv_l2_sensor_info_t *pInfo;
 
-    DBG_PRINT("thermal_task_entry start \r\n");
-    // thermal init
-    ThermalTest_Preview_PScaler();
+	csiBufferSize = PRCESS_SRC_WIDTH*PRCESS_SRC_HEIGHT*2;
+    csiBuffer = DUMMY_BUFFER_ADDRESS;
 
-    // disp size
-    drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
-	PscalerBufferSize = (device_h_size * device_v_size * 2);
-	PscalerBuffer = (INT32U) gp_malloc_align(((PscalerBufferSize*C_DEVICE_FRAME_NUM)+64), 32);
-    if(PscalerBuffer == 0)
+	PrcessBuffer = (INT32U) gp_malloc_align(((csiBufferSize*DISP_QUEUE_MAX)+64), 32);
+    if(PrcessBuffer == 0)
     {
-        DBG_PRINT("PscalerBuffer fail\r\n");
+        DBG_PRINT("PrcessBuffer fail\r\n");
         while(1);
     }
-	PscalerBuffer = (INT32U)((PscalerBuffer + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
-	for(i=0; i<C_DEVICE_FRAME_NUM; i++)
+	PrcessBuffer = (INT32U)((PrcessBuffer + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
+	for(i=0; i<DISP_QUEUE_MAX; i++)
 	{
-		csi_buf = (PscalerBuffer+i*PscalerBufferSize);
-		pscaler_frame_buffer_add((INT32U *)csi_buf,1);
-		DBG_PRINT("PscalerBuffer:0x%X \r\n",csi_buf);
+		temp = (PrcessBuffer+i*csiBufferSize);
+		free_frame_buffer_add((INT32U *)temp,1);
+		DBG_PRINT("CSIBuffer:0x%X \r\n",temp);
 	}
-    prcess_state_post(PRCESS_STATE_OK);
 
-    while(1)
+    // sensor init
+	drv_l2_sensor_init();
+    pSencor = drv_l2_sensor_get_ops(0);
+    DBG_PRINT("SensorName = %s _davis\r\n", pSencor->name);
+
+ 	// get csi or cdsp
+	p = (CHAR *)strrchr((CHAR *)pSencor->name, 'c');
+	if(p == 0) {
+        DBG_PRINT("get csi or cdsp fail\r\n");
+        while(1);
+	}
+
+	if(strncmp((CHAR *)p, "csi", 3) == 0) {
+		csi_mode = CSI_INTERFACE;
+	} else if(strncmp((CHAR *)p, "cdsp", 4) == 0) {
+		csi_mode = CDSP_INTERFACE;
+	} else {
+        DBG_PRINT("csi mode fail\r\n");
+        while(1);
+	}
+
+	for(i=0; i<3; i++) {
+		pInfo = pSencor->get_info(i);
+		if(pInfo->target_w == SENSOR_SRC_WIDTH && pInfo->target_h == SENSOR_SRC_HEIGHT) {
+			temp = i;
+			break;
+		}
+	}
+
+	if(i == 3) {
+        DBG_PRINT("get csi width and height fail\r\n");
+        while(1);
+	}
+
+	pInfo->target_w = 32;
+	pInfo->target_h = 32;
+
+	DBG_PRINT("change sensor target_w = %d , target_h = %d ->davis\r\n",pInfo->target_w ,pInfo->target_h);
+	pSencor->init();
+	pSencor->stream_start(temp, csiBuffer, csiBuffer);
+
+	// PScaler
+	PScalerParam.pScalerNum = CSI_PSCALE_USE;
+	PScalerParam.inBuffer = csiBuffer;
+	PScalerParam.outBuffer_A = free_frame_buffer_get(1);
+	PScalerParam.outBuffer_B = free_frame_buffer_get(1);
+
+	PScalerParam.inWidth = SENSOR_SRC_WIDTH;
+	PScalerParam.inHeight = SENSOR_SRC_HEIGHT;
+
+	PScalerParam.outWidth = PRCESS_SRC_WIDTH;
+	PScalerParam.outHeight = PRCESS_SRC_HEIGHT;
+
+	PScalerParam.outLineCount = PRCESS_SRC_HEIGHT;
+
+	PScalerParam.inFormat = PIPELINE_SCALER_INPUT_FORMAT_YUYV;
+	PScalerParam.outFormat = PIPELINE_SCALER_OUTPUT_FORMAT_YUYV;
+
+    if (csi_mode == CSI_INTERFACE)
     {
-        result = osMessageGet(csi_frame_buffer_queue, osWaitForever);
-        csi_buf = result.value.v;
-        if((result.status != osEventMessage) || !csi_buf) {
-            continue;
-        }
-        //DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
-        //DBG_PRINT(".");
-
-        PscalerBuffer = pscaler_frame_buffer_get(1);
-        if(PscalerBuffer)
-            fd_display_set_frame(csi_buf, PscalerBuffer, PRCESS_SRC_WIDTH, PRCESS_SRC_HEIGHT, device_h_size, device_v_size);
-
-        event = prcess_state_get();
-        if(event == PRCESS_STATE_OK)
-        {
-            //**************************************//
-                //DBG_PRINT("user result get \r\n");
-
-            //**************************************//
-            prcess_frame_buffer_add((INT32U *)csi_buf, 1);
-        }
-
-        if(PscalerBuffer)
-        {
-            if(event == PRCESS_STATE_OK)
-            {
-                //**************************************//
-                //DBG_PRINT("user draw image \r\n");
-
-                //**************************************//
-            }
-            disp_frame_buffer_add((INT32U *)PscalerBuffer, 1);
-        }
-        //else
-            //DBG_PRINT("@");
-        if(event != PRCESS_STATE_OK)
-            free_frame_buffer_add((INT32U *)csi_buf, 1);
+        // CSI
+        PScalerParam.inSource = PIPELINE_SCALER_INPUT_SOURCE_CSI;
+        // Open CSI data path
+        drvl1_csi_input_pscaler_set(1);
     }
+    else
+    {
+        // CDSP
+        PScalerParam.inSource = PIPELINE_SCALER_INPUT_SOURCE_CDSP;
+        // Open CDSP data path
+        drv_l1_CdspSetYuvPscalePath(1);
+    }
+
+	PScalerParam.intEnableFlag = PIPELINE_SCALER_INT_ENABLE_ALL;
+    PScalerParam.callbackFunc = PScaler_Callback_ISR_AutoZoom;
+
+	mazePscalerSet(&PScalerParam);
 }
 
 
-/*
+
 static void ThermalTest_Preview_PScaler(void)
 {
     CHAR *p;
@@ -813,17 +865,18 @@ static void ThermalTest_Preview_PScaler(void)
 	mazePscalerSet(&PScalerParam);
 }
 
-*/
 
-static void csi_task_entry(void const *parm)
+#if 1
+
+static void thermal_task_entry(void const *parm)
 {
     INT32U csi_buf,PscalerBuffer,PscalerBufferSize;
     INT32U i,event;
     osEvent result;
 
-    DBG_PRINT("csi_task_entry start \r\n");
-    // csi init
-    mazeTest_Preview_PScaler();
+    DBG_PRINT("thermal_task_entry start \r\n");
+    // thermal init
+    ThermalTest_Preview_PScaler();  // 必須 在之前 定義完成 
 
     // disp size
     drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
@@ -885,6 +938,177 @@ static void csi_task_entry(void const *parm)
     }
 }
 
+#endif
+
+static void csi_task_entry(void const *parm)
+{
+    INT32U csi_buf,PscalerBuffer,PscalerBufferSize;
+    INT32U i,event;
+    osEvent result;
+	
+	ScalerFormat_t scale;
+	ScalerPara_t para;
+	INT32S  nRet;
+	INT16U	LoopCnt;
+	INT8U	Cnt_index;
+
+    DBG_PRINT("csi_task_entry start \r\n");
+    // csi init
+    //mazeTest_Preview_PScaler();
+	ImageTest_Preview_PScaler();
+
+    // disp size
+    drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
+	PscalerBufferSize = (device_h_size * device_v_size * 2);
+	PscalerBuffer = (INT32U) gp_malloc_align(((PscalerBufferSize*C_DEVICE_FRAME_NUM)+64), 32);
+    if(PscalerBuffer == 0)
+    {
+        DBG_PRINT("PscalerBuffer fail\r\n");
+        while(1);
+    }
+	PscalerBuffer = (INT32U)((PscalerBuffer + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
+	for(i=0; i<C_DEVICE_FRAME_NUM; i++)
+	{
+		csi_buf = (PscalerBuffer+i*PscalerBufferSize);
+		pscaler_frame_buffer_add((INT32U *)csi_buf,1);
+		DBG_PRINT("PscalerBuffer:0x%X \r\n",csi_buf);
+	}
+    prcess_state_post(PRCESS_STATE_OK);
+	
+	LoopCnt = 0;
+	Cnt_index = 0;
+	
+    while(1)
+    {
+        result = osMessageGet(csi_frame_buffer_queue, osWaitForever);
+        csi_buf = result.value.v;
+        if((result.status != osEventMessage) || !csi_buf) {
+            continue;
+        }
+        //DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
+        //DBG_PRINT(".");
+
+        PscalerBuffer = pscaler_frame_buffer_get(1);
+        //if(PscalerBuffer)
+        //    fd_display_set_frame(csi_buf, PscalerBuffer, PRCESS_SRC_WIDTH, PRCESS_SRC_HEIGHT, device_h_size, device_v_size);
+
+		
+		if(PscalerBuffer){
+
+		//gp_memcpy((INT8S *)(csi_buf),(INT8S *)&(sensor32X32_RGB565),32*32*2);
+			
+		//	fd_display_set_frame(csi_buf, PscalerBuffer, 32, 32,
+		//		device_h_size, device_v_size);
+
+		//
+		// MLX_TH32x24 sensor scaler -[ first time]
+		//
+
+		gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
+			//drv_l2_scaler_init();
+			//scale.input_format = pAviEncVidPara->sensor_output_format;
+		//#if COLOR_FRAME_OUT
+			scale.input_format = C_SCALER_CTRL_IN_RGB565;
+		//#else
+		//	scale.input_format = C_SCALER_CTRL_IN_Y_ONLY; 	// gray value
+		//#endif
+			scale.input_width = 32;
+			scale.input_height = 32;
+			scale.input_visible_width = 32;
+			scale.input_visible_height = 32;
+			scale.input_x_offset = 0;
+			scale.input_y_offset = 0;
+
+			//scale.input_y_addr = sensor_frame;
+			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
+
+		//#if COLOR_FRAME_OUT
+		LoopCnt++;
+		if (LoopCnt % 40 == 0) Cnt_index++;
+		//DBG_PRINT("Cnt_index %d \r\n",Cnt_index);
+		
+		if (Cnt_index%2) scale.input_y_addr = &(sensor32X32_RGB565);
+			
+		else	scale.input_y_addr = &(sensor32X32_RGB565_2);
+		//#else
+		//	scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
+		//#endif
+
+			scale.input_u_addr = 0;
+			scale.input_v_addr = 0;
+			#if 1
+			scale.input_b_y_addr =0;
+			scale.input_b_u_addr = 0;
+			scale.input_b_v_addr = 0;
+			#endif
+
+			scale.output_format = C_SCALER_CTRL_OUT_YUYV;
+			scale.output_width = device_h_size;
+			scale.output_height = device_v_size;
+			scale.output_buf_width = device_h_size;
+			scale.output_buf_height = device_v_size;
+			scale.output_x_offset = 0;
+
+			//scale.output_y_addr = scaler_frame;
+			scale.output_y_addr = PscalerBuffer;
+			scale.output_u_addr = 0;
+			scale.output_v_addr = 0;
+
+
+			scale.fifo_mode = C_SCALER_CTRL_FIFO_DISABLE;
+			//scale.scale_mode = C_SCALER_FULL_SCREEN;
+			scale.scale_mode = C_SCALER_BY_RATIO;
+			scale.digizoom_m = 10;
+			scale.digizoom_n = 10;
+			//#endif
+			memset((void *)&para, 0x00, sizeof(para));
+
+			//para.gamma_en = 1;
+			//para.color_matrix_en = 1;
+			para.boundary_color = 0x008080;
+			//para.yuv_type = C_SCALER_CTRL_TYPE_YUV;
+
+    		nRet = drv_l2_scaler_trigger(SCALER_0, 1, &scale, &para);
+			if(nRet == C_SCALER_STATUS_DONE || nRet == C_SCALER_STATUS_STOP) {
+				drv_l2_scaler_stop(SCALER_0);
+			}
+			else {
+				DBG_PRINT("Scale1 Fail\r\n");
+			while(1);
+			}
+
+
+		
+		}
+
+        event = prcess_state_get();
+        if(event == PRCESS_STATE_OK)
+        {
+            //**************************************//
+                //DBG_PRINT("user result get \r\n");
+
+            //**************************************//
+            prcess_frame_buffer_add((INT32U *)csi_buf, 1);
+        }
+
+        if(PscalerBuffer)
+        {
+            if(event == PRCESS_STATE_OK)
+            {
+                //**************************************//
+                //DBG_PRINT("user draw image \r\n");
+
+                //**************************************//
+            }
+            disp_frame_buffer_add((INT32U *)PscalerBuffer, 1);
+        }
+        //else
+            //DBG_PRINT("@");
+        if(event != PRCESS_STATE_OK)
+            free_frame_buffer_add((INT32U *)csi_buf, 1);
+    }
+}
+
 static void disp_task_entry(void const *parm)
 {
     INT32U display_buf;
@@ -904,6 +1128,9 @@ static void disp_task_entry(void const *parm)
             }
             //DBG_PRINT("display_buf = 0x%x\r\n", display_buf);
             //DBG_PRINT("D");
+
+			//gp_memcpy((INT8S *)(display_buf),
+			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);
 
             drv_l2_display_update(DISPLAY_DEVICE,display_buf);
             pscaler_frame_buffer_add((INT32U *)display_buf, 1);
