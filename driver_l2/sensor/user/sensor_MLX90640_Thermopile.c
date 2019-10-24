@@ -12,7 +12,7 @@
 //#include "drv_l2_csi.h"
 #include "drv_l2_sccb.h"
 #include "gp_aeawb.h"
-#include	"defs_MLX.h"
+#include "defs_MLX.h"
 #include <math.h>		// for pow()
 #include "avi_encoder_app.h" // for MLX90640_GetVdd
 
@@ -34,6 +34,8 @@
 /**************************************************************************
  *                         G L O B A L    D A T A                         *
  **************************************************************************/
+
+
 
 
 #if MXL_SCCB_MODE == SCCB_HW_I2C
@@ -880,22 +882,39 @@ void MXL90640_thermopile_uninit(void)
  *
  * @return 	none
  */
-void MXL90640_thermopile_stream_start(void)
+void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 {
    // gpCSIPara_t csi_Para;
-	paramsMLX90640_t thermal_Para;
+	paramsMLX90640_t MLX90640_Para,*pMLX90640_Para;
+	MLX_TH32x24Para_t MLX_TH32x24_Para,*pMLX_TH32x24_Para;	// 2019.03.28 davis
 
-	gp_memset((INT8S *)&thermal_Para, 0, sizeof(paramsMLX90640_t));
-	//pMLX_TH32x24_Para = &MLX_TH32x24_Para;	// 2019.03.28 davis
-    gp_memset((INT8S *)pMLX_TH32x24_Para, 0, sizeof(MLX_TH32x24Para_t));
+	gp_memset((INT8S *)&MLX90640_Para, 0, sizeof(paramsMLX90640_t));
+	pMLX_TH32x24_Para = &MLX_TH32x24_Para;	// 2019.03.28 davis
+    gp_memset((INT8S *)&MLX_TH32x24_Para, 0, sizeof(MLX_TH32x24Para_t));
 
-	
+
 
 	DBG_PRINT("%s = %d _davis\r\n", __func__, 0);
-
+	while(1);
 
 
 }
+
+
+/**
+ * @brief    stream stop function
+ * @param   info index
+ *
+ * @return 	none
+ */
+void MXL90640_thermopile_stream_stop(void)
+{
+   
+	DBG_PRINT("%s = %d _davis\r\n", __func__, 0);
+
+}
+
+
 
 void MXL_TEST_LOW(void)
 {
@@ -1064,18 +1083,49 @@ void MLX90640_GetFrameData(drv_l1_i2c_bus_handle_t MXL_handle)
 
 #endif
 
+/**
+ * @brief   gc0308 get info function
+ * @param   none
+ * @return 	pointer to sensor information data
+ */
+drv_l2_sensor_info_t* MXL90640_thermopile_get_info(INT32U index)
+{
+	if(index > (MAX_INFO_NUM - 1))
+		return NULL;
+	else
+		return (drv_l2_sensor_info_t*)&mlx90640_sensor_thermal_ops.info[index];
+}
 
 /*********************************************
 *	sensor ops declaration
 *********************************************/
-const drv_l2_thermal_sensor_ops_t mlx90640_sensor_thermal_ops =
+const drv_l2_sensor_ops_t mlx90640_sensor_thermal_ops =
 {
 	SENSOR_MLX90640_THERMAL_NAME,	/* sensor name */
 	MXL90640_thermopile_init,
 	MXL90640_thermopile_uninit,
 	MXL90640_thermopile_stream_start,
-	MLX_LINE,
-	MLX_COLUMN
+	MXL90640_thermopile_stream_stop,
+	MXL90640_thermopile_get_info,
+	{
+		/* 1rd info */
+		{
+			MCLK_24M,					/* CSI clock */
+			V4L2_PIX_FMT_VYUY,			/* input format */
+			V4L2_PIX_FMT_VYUY,			/* output format */
+			0,			/* FPS in sensor */
+			32,					/* target width */
+			32, 				/* target height */
+			32,					/* sensor width */
+			32, 				/* sensor height */
+			0,							/* sensor h offset */
+			0,							/* sensor v offset */
+			MODE_CCIR_HREF,				/* input interface */
+			MODE_NONE_INTERLACE,		/* interlace mode */
+			MODE_ACTIVE_HIGH,			/* hsync pin active level */
+			MODE_ACTIVE_LOW,			/* vsync pin active level */
+		}
+	}
 };
 
 

@@ -27,19 +27,18 @@
 #define C_DEVICE_FRAME_NUM		            3
 #define DUMMY_BUFFER_ADDRESS                0x50000000
 
-/*
+
 #define SENSOR_SRC_WIDTH		            32
 #define SENSOR_SRC_HEIGHT		            32
-#define PRCESS_SRC_WIDTH		            640	//SENSOR_SRC_WIDTH
-#define PRCESS_SRC_HEIGHT		            480	//SENSOR_SRC_HEIGHT
-*/
+#define PRCESS_SRC_WIDTH		            SENSOR_SRC_WIDTH
+#define PRCESS_SRC_HEIGHT		            SENSOR_SRC_HEIGHT
 
-
+/*
 #define SENSOR_SRC_WIDTH		            640
 #define SENSOR_SRC_HEIGHT		            480
 #define PRCESS_SRC_WIDTH		            SENSOR_SRC_WIDTH
 #define PRCESS_SRC_HEIGHT		            SENSOR_SRC_HEIGHT
-
+*/
 
 #define PRCESS_STATE_OK                     0x80
 #define DISP_USE_PSCALE_EN                  1
@@ -89,6 +88,9 @@ static xQueueHandle disp_frame_buffer_queue = NULL;
 static xSemaphoreHandle sem_disp_engine = NULL;
 static PSCALER_PARAM_STRUCT PScalerParam = {0};
 static INT32U device_h_size, device_v_size;
+
+
+
 
 static void drv_disp_lock(void)
 {
@@ -665,6 +667,7 @@ static void ImageTest_Preview_PScaler(void)
 	INT32U i,PrcessBuffer,csi_mode,temp;
 	INT32U csiBufferSize,csiBuffer;
 	drv_l2_sensor_ops_t *pSencor;
+	//drv_l2_thermal_sensor_ops_s *pSencor;
 	drv_l2_sensor_info_t *pInfo;
 
 	csiBufferSize = PRCESS_SRC_WIDTH*PRCESS_SRC_HEIGHT*2;
@@ -693,7 +696,7 @@ static void ImageTest_Preview_PScaler(void)
 	p = (CHAR *)strrchr((CHAR *)pSencor->name, 'c');
 	if(p == 0) {
         DBG_PRINT("get csi or cdsp fail\r\n");
-        while(1);
+        //while(1);
 	}
 
 	if(strncmp((CHAR *)p, "csi", 3) == 0) {
@@ -702,7 +705,7 @@ static void ImageTest_Preview_PScaler(void)
 		csi_mode = CDSP_INTERFACE;
 	} else {
         DBG_PRINT("csi mode fail\r\n");
-        while(1);
+       // while(1);
 	}
 
 	for(i=0; i<3; i++) {
@@ -715,7 +718,8 @@ static void ImageTest_Preview_PScaler(void)
 
 	if(i == 3) {
         DBG_PRINT("get csi width and height fail\r\n");
-        while(1);
+		temp = 0;
+        //while(1);
 	}
 
 	pInfo->target_w = 32;
@@ -724,7 +728,7 @@ static void ImageTest_Preview_PScaler(void)
 	DBG_PRINT("change sensor target_w = %d , target_h = %d ->davis\r\n",pInfo->target_w ,pInfo->target_h);
 	pSencor->init();
 	pSencor->stream_start(temp, csiBuffer, csiBuffer);
-
+#if 0
 	// PScaler
 	PScalerParam.pScalerNum = CSI_PSCALE_USE;
 	PScalerParam.inBuffer = csiBuffer;
@@ -761,6 +765,7 @@ static void ImageTest_Preview_PScaler(void)
     PScalerParam.callbackFunc = PScaler_Callback_ISR_AutoZoom;
 
 	mazePscalerSet(&PScalerParam);
+#endif
 }
 
 
@@ -945,7 +950,7 @@ static void csi_task_entry(void const *parm)
     INT32U csi_buf,PscalerBuffer,PscalerBufferSize;
     INT32U i,event;
     osEvent result;
-	
+
 	ScalerFormat_t scale;
 	ScalerPara_t para;
 	INT32S  nRet;
@@ -974,10 +979,19 @@ static void csi_task_entry(void const *parm)
 		DBG_PRINT("PscalerBuffer:0x%X \r\n",csi_buf);
 	}
     prcess_state_post(PRCESS_STATE_OK);
-	
+
 	LoopCnt = 0;
 	Cnt_index = 0;
-	
+/*
+	// start timer_B
+	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
+	pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
+	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
+
+	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
+	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d \r\n",nRet) ;
+*/
+
     while(1)
     {
         result = osMessageGet(csi_frame_buffer_queue, osWaitForever);
@@ -992,11 +1006,11 @@ static void csi_task_entry(void const *parm)
         //if(PscalerBuffer)
         //    fd_display_set_frame(csi_buf, PscalerBuffer, PRCESS_SRC_WIDTH, PRCESS_SRC_HEIGHT, device_h_size, device_v_size);
 
-		
+
 		if(PscalerBuffer){
 
 		//gp_memcpy((INT8S *)(csi_buf),(INT8S *)&(sensor32X32_RGB565),32*32*2);
-			
+
 		//	fd_display_set_frame(csi_buf, PscalerBuffer, 32, 32,
 		//		device_h_size, device_v_size);
 
@@ -1026,9 +1040,9 @@ static void csi_task_entry(void const *parm)
 		LoopCnt++;
 		if (LoopCnt % 40 == 0) Cnt_index++;
 		//DBG_PRINT("Cnt_index %d \r\n",Cnt_index);
-		
+
 		if (Cnt_index%2) scale.input_y_addr = &(sensor32X32_RGB565);
-			
+
 		else	scale.input_y_addr = &(sensor32X32_RGB565_2);
 		//#else
 		//	scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
@@ -1078,7 +1092,7 @@ static void csi_task_entry(void const *parm)
 			}
 
 
-		
+
 		}
 
         event = prcess_state_get();

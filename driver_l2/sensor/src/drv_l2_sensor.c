@@ -253,6 +253,11 @@ void drv_l2_sensor_init(void)
 
 	/* register sensor ops for specified sensor */
 
+#if (defined _SENSOR_MXL90640_THERMOPILE) && (_SENSOR_MXL90640_THERMOPILE == 1)
+			drv_l2_sensor_register_ops((drv_l2_sensor_ops_t*)&mlx90640_sensor_thermal_ops);
+#endif
+
+
 #if (defined _SENSOR_OV7670_CSI) && (_SENSOR_OV7670_CSI == 1)
 	drv_l2_sensor_register_ops((drv_l2_sensor_ops_t*)&ov7670_sensor_csi_ops);
 #endif
@@ -323,9 +328,7 @@ void drv_l2_sensor_init(void)
     drv_l2_sensor_register_ops((drv_l2_sensor_ops_t*)&gc5025_cdsp_mipi_ops);
 #endif
 
-#if (defined _SENSOR_MXL90640_THERMOPILE) && (_SENSOR_MXL90640_THERMOPILE == 1)
-		drv_l2_sensor_register_ops((drv_l2_sensor_ops_t*)&mlx90640_sensor_thermal_ops);
-#endif
+
 
 
 }

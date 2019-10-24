@@ -265,6 +265,8 @@ typedef struct drv_l2_sensor_ops_s
 	drv_l2_sensor_info_t	info[MAX_INFO_NUM];
 } drv_l2_sensor_ops_t;
 
+
+
 typedef struct drv_l2_sensor_para_s
 {
     INT8U md_threshold;        /* sensor modition threshold */
@@ -276,7 +278,7 @@ typedef struct drv_l2_sensor_para_s
     void (*md_callback)(void); /* sensor modition callback function for CDSP */
 } drv_l2_sensor_para_t;
 
-
+#if 0
 typedef struct drv_l2_thermal_sensor_ops_s
 {
 	char*	name;
@@ -286,7 +288,7 @@ typedef struct drv_l2_thermal_sensor_ops_s
 	INT16U sensor_w; 			/* sensor width */
 	INT16U sensor_h;			/* sensor height */
 } drv_l2_thermal_sensor_ops_t;
-
+#endif
 
 /*********************************************************************
         External ops declaration for sensors we spport now
@@ -365,7 +367,7 @@ extern const drv_l2_sensor_ops_t gc5025_cdsp_mipi_ops;
 #endif
 
 #if (defined _SENSOR_MXL90640_THERMOPILE) && (_SENSOR_MXL90640_THERMOPILE == 1)
-extern const drv_l2_thermal_sensor_ops_t mlx90640_sensor_thermal_ops;
+extern const drv_l2_sensor_ops_t mlx90640_sensor_thermal_ops;
 #endif
 
 
