@@ -37,8 +37,8 @@ GP_AVI_AVISTREAMHEADER	avi_vid_stream_header;
 GP_AVI_BITMAPINFO		avi_bitmap_info;
 GP_AVI_PCMWAVEFORMAT	avi_wave_info;
 
-MLX_TH32x24Para_t MLX_TH32x24_Para, *pMLX_TH32x24_Para;	// 2019.03.28 davis
-paramsMLX90640_t	MLX32x24_Para, *pMLX32x24_Para;
+//MLX_TH32x24Para_t MLX_TH32x24_Para, *pMLX_TH32x24_Para;	// 2019.03.28 davis
+//paramsMLX90640_t	MLX32x24_Para, *pMLX32x24_Para;
 
 
 static INT8U g_csi_index;
@@ -62,11 +62,11 @@ void avi_encode_init(void)
     pAviEncPacker1 = &AviEncPacker1;
     memset((INT8S *)pAviEncPacker1, 0, sizeof(AviEncPacker_t));
 
-	pMLX_TH32x24_Para = &MLX_TH32x24_Para;	// 2019.03.28 davis
-    gp_memset((INT8S *)pMLX_TH32x24_Para, 0, sizeof(MLX_TH32x24Para_t));
+	//pMLX_TH32x24_Para = &MLX_TH32x24_Para;	// 2019.03.28 davis
+    //gp_memset((INT8S *)pMLX_TH32x24_Para, 0, sizeof(MLX_TH32x24Para_t));
 
-	pMLX32x24_Para = &MLX32x24_Para ;	// 2019.05.28 davis
-    gp_memset((INT8S *)pMLX32x24_Para, 0, sizeof(paramsMLX90640_t));
+	//pMLX32x24_Para = &MLX32x24_Para ;	// 2019.05.28 davis
+    //gp_memset((INT8S *)pMLX32x24_Para, 0, sizeof(paramsMLX90640_t));
 
 	pAviEncPacker0->file_handle = -1;
 	pAviEncPacker0->index_handle = -1;
@@ -508,7 +508,7 @@ Return:
 	return nRet;
 }
 
-
+#if 0
 static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 {
 	INT32U buffer_addr;
@@ -646,7 +646,7 @@ Return:
 	return nRet;
 }
 
-
+#endif
 
 static INT32S scaler_mem_alloc(void)
 {

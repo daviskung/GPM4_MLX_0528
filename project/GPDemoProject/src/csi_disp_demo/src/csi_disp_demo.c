@@ -5,6 +5,7 @@
 #include "drv_l1_gpio.h"
 #include "drv_l1_scaler.h"
 #include "drv_l1_pscaler.h"
+
 #include "drv_l2_scaler.h"
 #include "drv_l2_sensor.h"
 #include "drv_l2_display.h"
@@ -27,19 +28,19 @@
 #define C_DEVICE_FRAME_NUM		            3
 #define DUMMY_BUFFER_ADDRESS                0x50000000
 
-/*
+
 #define SENSOR_SRC_WIDTH		            32
 #define SENSOR_SRC_HEIGHT		            32
 #define PRCESS_SRC_WIDTH		            SENSOR_SRC_WIDTH
 #define PRCESS_SRC_HEIGHT		            SENSOR_SRC_HEIGHT
-*/
 
 
+/*
 #define SENSOR_SRC_WIDTH		            640
 #define SENSOR_SRC_HEIGHT		            480
 #define PRCESS_SRC_WIDTH		            SENSOR_SRC_WIDTH
 #define PRCESS_SRC_HEIGHT		            SENSOR_SRC_HEIGHT
-
+*/
 
 #define PRCESS_STATE_OK                     0x80
 #define DISP_USE_PSCALE_EN                  1
@@ -90,6 +91,9 @@ static xSemaphoreHandle sem_disp_engine = NULL;
 static PSCALER_PARAM_STRUCT PScalerParam = {0};
 static INT32U device_h_size, device_v_size;
 
+
+static MLX_TH32x24Para_t *pMLX_TH32x24_Para;	
+static paramsMLX90640_t *pMLX90640_Para;
 
 
 
@@ -588,7 +592,6 @@ static void mazeTest_Preview_PScaler(void)
     // sensor init
 	drv_l2_sensor_init();
     pSencor = drv_l2_sensor_get_ops(0);
-	DBG_PRINT("sensor get_info(%d)_davis\r\n",temp);
 
  	// get csi or cdsp
 	p = (CHAR *)strrchr((CHAR *)pSencor->name, 'c');
@@ -958,10 +961,10 @@ static void csi_task_entry(void const *parm)
 	INT16U	LoopCnt;
 	INT8U	Cnt_index;
 
-    DBG_PRINT("csi_task_entry start \r\n");
+    //DBG_PRINT("csi_task_entry start \r\n");
     // csi init
-    mazeTest_Preview_PScaler();
-	//ImageTest_Preview_PScaler();
+    //mazeTest_Preview_PScaler();
+	ImageTest_Preview_PScaler();
 
     // disp size
     drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
@@ -983,15 +986,9 @@ static void csi_task_entry(void const *parm)
 
 	LoopCnt = 0;
 	Cnt_index = 0;
-/*
-	// start timer_B
-	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
-	pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
-	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
 
-	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
-	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d \r\n",nRet) ;
-*/
+	
+	
 
     while(1)
     {
@@ -1000,7 +997,7 @@ static void csi_task_entry(void const *parm)
         if((result.status != osEventMessage) || !csi_buf) {
             continue;
         }
-        //DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
+        DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
         //DBG_PRINT(".");
 
 		#if 0

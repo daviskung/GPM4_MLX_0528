@@ -240,65 +240,6 @@ typedef struct capture_s
 
 
 
-typedef struct MLX_TH32x24Para_s
-{
-	//sensor input
-    INT32U  MLX_TH32x24_output_format;   // MLX_TH32x24 output format
-    INT16U  MLX_TH32x24_width;   // MLX_TH32x24 width
-    INT16U  MLX_TH32x24_height;  // MLX_TH32x24 height
-
-    INT32U  MLX_TH32x24_ColorOutputFrame_addr;	// MLX_TH32x24 color table output buffer addr
-    INT32U  MLX_TH32x24_TmpOutput_format_addr[MLX_TH32x24_SCALERUP_BUFFER_NO];   // MLX_TH32x24 Temperature output
-    INT8U   MLX_TH32x24_PPU_frame_ON; // 0: none , 1:keep sensor_frame ;
-
-	// data read
-
-	INT32U  MLX_TH32x24_display_frame;
-	INT32U  MLX_TH32x24_PPU_frame;
-    INT32U  MLX_TH32x24_ScalerUp_status;      // 0: read E. offset
-	INT16U  MLX_TH32x24_sampleCnt;      // for MLX_TH32x24_start_timer_isr
-
-	INT16U  MLX_TH32x24_sampleHz;	//  5.7~ 732 Hz
-
-	INT8U  MLX_TH32x24_ReadElecOffset_TA_startON;
-	INT8U  MLX_TH32x24_readout_block_startON;
-
-	INT32U  MLX_TH32x24_BadPixAdr_buf;
-	INT32U  MLX_TH32x24_BadPixMask_buf;
-
-	INT8U   MLX_TH32x24_move_dect;	// 0 - 2
-	INT8U   MLX_TH32x24_CMOS_OFF;
-
-	float  MLX_TH32x24_ta;
-	INT16U  MLX_TH32x24_ImgValAry[IMG_VAL_buf_len]; // over zero max/min , under zero max/min
-	INT16S  MLX_TH32x24_ImgTempAry[IMG_VAL_buf_len]; // over zero max/min , under zero max/min
-	INT16U  MLX_TH32x24_Tmin;
-	
-	INT32U  MLX_TH32x24_avg_buf_addr[AVG_buf_len];	// MLX_TH32x24 temperature buffer addr
-	INT32U  MLX_TH32x24_display_background_frame;
-	INT32U  MLX32x24_EE_READ_8bitBUF;
-	INT32U  MLX32x24_EE_READ_16bitBUF;
-	//INT32U  MLX32x24_READ_frameData_BUF; -> 直接以 frameData[834]
-	INT16U	frameData[MLX90640_frameDataSize];
-
-	float  MLX_TH32x24_vdd;
-
-	INT16S	result[MLX_Pixel];
-	float	result_image[MLX_Pixel];
-
-	INT32U  MLX_TH32x24_ImgAvg_buf_addr[IMG_AVG_buf_len];	// MLX_TH32x24 image buffer addr
-	INT32U  MLX_TH32x24_GrayOutputFrame_addr;
-	INT32U 	MLX_TH32x24_GrayScaleUpFrame_addr;
-	INT32U  MLX_TH32x24_ScaleUpFrame_addr;
-	
-	INT8U  MLX_TH32x24_GrayOutputFactor;
-	INT8U  MLX_TH32x24_GRAY_MAX_VAL;
-	INT8U  MLX_TH32x24_GRAY_START_VAL;
-	
-} MLX_TH32x24Para_t;
-
-
-
 /**************************************************************************
  *                              M A C R O S                               *
  **************************************************************************/

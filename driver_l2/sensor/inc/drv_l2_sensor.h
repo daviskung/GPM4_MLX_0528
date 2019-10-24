@@ -78,7 +78,7 @@
 #else
 
 	
-	//#define _SENSOR_MXL90640_THERMOPILE 	1
+	#define _SENSOR_MXL90640_THERMOPILE 	1
 
     #define _SENSOR_OV7670_CSI				0
     #define _SENSOR_GC0308_CSI				1
