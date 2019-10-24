@@ -895,7 +895,7 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 
 
 	DBG_PRINT("%s = %d _davis\r\n", __func__, 0);
-	while(1);
+	//while(1);
 
 
 }
@@ -909,7 +909,7 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
  */
 void MXL90640_thermopile_stream_stop(void)
 {
-   
+
 	DBG_PRINT("%s = %d _davis\r\n", __func__, 0);
 
 }

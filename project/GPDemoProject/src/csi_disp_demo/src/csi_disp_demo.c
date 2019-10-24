@@ -27,18 +27,19 @@
 #define C_DEVICE_FRAME_NUM		            3
 #define DUMMY_BUFFER_ADDRESS                0x50000000
 
-
+/*
 #define SENSOR_SRC_WIDTH		            32
 #define SENSOR_SRC_HEIGHT		            32
 #define PRCESS_SRC_WIDTH		            SENSOR_SRC_WIDTH
 #define PRCESS_SRC_HEIGHT		            SENSOR_SRC_HEIGHT
+*/
 
-/*
+
 #define SENSOR_SRC_WIDTH		            640
 #define SENSOR_SRC_HEIGHT		            480
 #define PRCESS_SRC_WIDTH		            SENSOR_SRC_WIDTH
 #define PRCESS_SRC_HEIGHT		            SENSOR_SRC_HEIGHT
-*/
+
 
 #define PRCESS_STATE_OK                     0x80
 #define DISP_USE_PSCALE_EN                  1
@@ -959,8 +960,8 @@ static void csi_task_entry(void const *parm)
 
     DBG_PRINT("csi_task_entry start \r\n");
     // csi init
-    //mazeTest_Preview_PScaler();
-	ImageTest_Preview_PScaler();
+    mazeTest_Preview_PScaler();
+	//ImageTest_Preview_PScaler();
 
     // disp size
     drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
@@ -1002,6 +1003,29 @@ static void csi_task_entry(void const *parm)
         //DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
         //DBG_PRINT(".");
 
+		#if 0
+		switch(msg_id)
+		{
+		case MSG_MLX_TH32x24_TASK_INIT:
+					DEBUG_MSG("[MSG_MLX_TH32x24_TASK_INIT]\r\n");
+			break;
+
+		case MSG_MLX_TH32x24_TASK_STOP:
+			DEBUG_MSG("[MSG_MLX_TH32x24_TASK_STOP]\r\n");
+			OSQFlush(MLX_TH32x24_task_q);
+			ack_msg = ACK_OK;
+			osMessagePut(MLX_TH32x24_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			break;
+
+		default:
+			ERROR_QUIT:
+
+
+			break;
+
+		}
+		#endif
+		
         PscalerBuffer = pscaler_frame_buffer_get(1);
         //if(PscalerBuffer)
         //    fd_display_set_frame(csi_buf, PscalerBuffer, PRCESS_SRC_WIDTH, PRCESS_SRC_HEIGHT, device_h_size, device_v_size);
