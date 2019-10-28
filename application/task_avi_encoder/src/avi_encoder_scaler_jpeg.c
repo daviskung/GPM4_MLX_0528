@@ -41,7 +41,7 @@
 #include "TABLE114.h"	// for FOV = 90
 #endif
 
-#include	"defs_MLX.h"
+//#include	"defs_MLX.h"
 
 
 
@@ -125,8 +125,8 @@ const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  
 
 
 
-#define	emissivity_byUser	0.95
-#define	TA_SHIFT			8
+//#define	emissivity_byUser	0.95
+//#define	TA_SHIFT			8
 
 
 #define CORE_AREA_limit		1
@@ -662,7 +662,7 @@ static void MLX_TH32x24_start_timer_isr(void)
 	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 2 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 200ms
 
 	if ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 500 ){	// per 5 sec
-		pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
+		//pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
 		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
 
 

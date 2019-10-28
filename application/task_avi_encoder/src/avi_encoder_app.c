@@ -17,7 +17,7 @@
 #include "drv_l1_h264.h"
 #include "drv_l2_h264enc.h"
 //#include "defs_th32x32.h"
-#include "defs_MLX.h"
+//#include "defs_MLX.h"
 
 #if (defined APP_VIDEO_ENCODER_EN) && (APP_VIDEO_ENCODER_EN == 1)
 

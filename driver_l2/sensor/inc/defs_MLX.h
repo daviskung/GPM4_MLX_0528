@@ -114,6 +114,13 @@
 #define MLX_TH32x24_ReadoutBlockBuf_max	1
 #define MLX_TH32x24_SCALERUP_BUFFER_NO	1
 
+#define	emissivity_byUser	1
+#define	TA_SHIFT			8
+
+//const INT16U DELAYTIME_at_REFRESH_RATE [8]={2000,1000,500,250,125,63,32,15};
+//const INT8U MLX_REFRESH_RATE_HZ [8]={0,1,2,4,8,16,32,64};
+
+
 
 
 #ifndef _MLX640_API_H_
@@ -139,8 +146,9 @@
   
 	  INT16U  MLX_TH32x24_sampleHz;   //  5.7~ 732 Hz
   
-	  INT8U  MLX_TH32x24_ReadElecOffset_TA_startON;
+	  INT8U  MLX_TH32x24_InitReadEE_startON;
 	  INT8U  MLX_TH32x24_readout_block_startON;
+	  INT8U  MLX_TH32x24_ReadElecOffset_TA_startON;
   
 	  INT32U  MLX_TH32x24_BadPixAdr_buf;
 	  INT32U  MLX_TH32x24_BadPixMask_buf;

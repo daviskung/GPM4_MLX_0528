@@ -689,9 +689,9 @@ static void mazeTest_Preview_PScaler(void)
 	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 2 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 200ms
 
 	if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 100 )
-		&&( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 )) {	// per 5 sec
+		&&( pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON == 1 )) {	// per 5 sec
 		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
-		DBG_PRINT("timer->MLX_TH32x24");
+		//DBG_PRINT("timer->MLX_TH32x24");
 		
 		//frame = avi_encode_get_empty(MLX_TH32x24_SCALERUP_buf_q);
 	
@@ -994,7 +994,7 @@ static void disp_task_entry(void const *parm)
             if((result.status != osEventMessage) || !display_buf) {
                 continue;
             }
-            DBG_PRINT("display_buf = 0x%x\r\n", display_buf);
+            //DBG_PRINT("display_buf = 0x%x\r\n", display_buf);
             //DBG_PRINT("D");
 
 			//gp_memcpy((INT8S *)(display_buf),
@@ -1013,9 +1013,7 @@ static void prcess_task_entry(void const *parm)
     DBG_PRINT("prcess_task_entry start \r\n");
     //**************************************//
     //DBG_PRINT("user init add \r\n");
-    
-    pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 1;
-	
+    	
     //**************************************//
 
     while(1)
@@ -1025,7 +1023,7 @@ static void prcess_task_entry(void const *parm)
             if((result.status != osEventMessage) || !prcess_buf) {
                 continue;
             }
-            DBG_PRINT("prcess_buf = 0x%x\r\n", prcess_buf);
+            //DBG_PRINT("prcess_buf = 0x%x\r\n", prcess_buf);
             //DBG_PRINT("P");
 
             //**************************************//
@@ -1205,7 +1203,7 @@ void GPM4_CSI_DISP_Demo(void)
 	
 	// start timer_B
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
-	pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
+	pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
 	
 	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );

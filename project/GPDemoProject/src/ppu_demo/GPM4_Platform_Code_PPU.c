@@ -16,7 +16,7 @@
 //#include "32X32RGB565NEW.h" 	//  davis 2019.04.23
 #include "avi_encoder_app.h"
 
-#include "defs_MLX.h"
+//#include "defs_MLX.h"
 #include "avi_encoder_state.h"
 
 
