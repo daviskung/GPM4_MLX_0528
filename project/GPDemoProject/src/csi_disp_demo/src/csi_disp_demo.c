@@ -14,6 +14,7 @@
 
 #include "32X32RGB565NEW.h" 	//  davis 2019.10.23
 #include "defs_MLX.h"
+#include "drv_l1_timer.h"
 
 
 
@@ -26,6 +27,9 @@
 #define CSI_SD_EN                           0
 #define DISP_QUEUE_MAX		                3
 #define C_DEVICE_FRAME_NUM		            3
+#define DISP_TH_QUEUE_MAX		            1
+#define C_DEVICE_TH_FRAME_NUM		        1
+
 #define DUMMY_BUFFER_ADDRESS                0x50000000
 
 
@@ -46,6 +50,14 @@
 #define DISP_USE_PSCALE_EN                  1
 #define CSI_PSCALE_USE                      PSCALER_A
 #define DISP_PSCALE_USE                     PSCALER_B
+
+typedef enum
+{
+	MSG_MLX_TH32x24_TASK_INIT = 0x2200,
+	MSG_MLX_TH32x24_TASK_STOP,
+	MSG_MLX_TH32x24_TASK_EXIT
+} MLX_TH32x24_SENSOR_ENUM;
+
 
 typedef struct
 {
@@ -664,8 +676,60 @@ static void mazeTest_Preview_PScaler(void)
 }
 
 
+ void MLX_TH32x24_start_timer_isr(void)
+{
+	INT8U err;
+	INT32U frame;
 
-static void ImageTest_Preview_PScaler(void)
+
+	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt ++;
+
+	//if ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 10 ){	// per sec
+	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 5 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 500ms
+	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 2 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 200ms
+
+	if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 100 )
+		&&( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 )) {	// per 5 sec
+		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
+		DBG_PRINT("timer->MLX_TH32x24");
+		
+		//frame = avi_encode_get_empty(MLX_TH32x24_SCALERUP_buf_q);
+	
+        frame = free_frame_buffer_get(0);
+		if(frame == 0)	DBG_PRINT("L->MLX_TH32x24");
+		else{
+
+			//DEBUG_MSG("davis -->frame = 0x%x in csi_eof_isr \r\n",frame );
+			//avi_encode_post_empty(MLX_TH32x24_task_q,frame);
+            csi_frame_buffer_add((INT32U *)frame, 0);
+		}
+	
+	}
+
+
+
+#if 0
+	if(( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) && // per 20 ms
+		(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt %2 == 0 )) {
+
+
+		frame = avi_encode_get_empty(MLX_TH32x24_SCALERUP_buf_q);
+		if(frame == 0)
+				DEBUG_MSG("L->MLX_TH32x24");
+		else{
+
+			//DEBUG_MSG("davis -->frame = 0x%x in csi_eof_isr \r\n",frame );
+			avi_encode_post_empty(MLX_TH32x24_task_q,frame);
+
+			pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 1;
+		}
+
+	}
+#endif
+}
+
+
+static void Thermal_Preview_PScaler(void)
 {
     CHAR *p;
 	INT32U i,PrcessBuffer,csi_mode,temp;
@@ -675,7 +739,7 @@ static void ImageTest_Preview_PScaler(void)
 	drv_l2_sensor_info_t *pInfo;
 
 	csiBufferSize = PRCESS_SRC_WIDTH*PRCESS_SRC_HEIGHT*2;
-    csiBuffer = DUMMY_BUFFER_ADDRESS;
+    csiBuffer = DUMMY_BUFFER_ADDRESS; // dummy addr ro thermal
 
 	PrcessBuffer = (INT32U) gp_malloc_align(((csiBufferSize*DISP_QUEUE_MAX)+64), 32);
     if(PrcessBuffer == 0)
@@ -684,11 +748,11 @@ static void ImageTest_Preview_PScaler(void)
         while(1);
     }
 	PrcessBuffer = (INT32U)((PrcessBuffer + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
-	for(i=0; i<DISP_QUEUE_MAX; i++)
+	for(i=0; i<DISP_TH_QUEUE_MAX; i++)
 	{
 		temp = (PrcessBuffer+i*csiBufferSize);
 		free_frame_buffer_add((INT32U *)temp,1);
-		DBG_PRINT("CSIBuffer:0x%X \r\n",temp);
+		DBG_PRINT("CSIBuffer:0x%X ->width = %d / high = %d \r\n",temp,PRCESS_SRC_WIDTH,PRCESS_SRC_HEIGHT);
 	}
 
     // sensor init
@@ -696,22 +760,6 @@ static void ImageTest_Preview_PScaler(void)
     pSencor = drv_l2_sensor_get_ops(0);
     DBG_PRINT("SensorName = %s _davis\r\n", pSencor->name);
 
- 	// get csi or cdsp
-	p = (CHAR *)strrchr((CHAR *)pSencor->name, 'c');
-	if(p == 0) {
-        DBG_PRINT("get csi or cdsp fail\r\n");
-        //while(1);
-	}
-
-	if(strncmp((CHAR *)p, "csi", 3) == 0) {
-		csi_mode = CSI_INTERFACE;
-	} else if(strncmp((CHAR *)p, "cdsp", 4) == 0) {
-		csi_mode = CDSP_INTERFACE;
-	} else {
-        DBG_PRINT("csi mode fail\r\n");
-       // while(1);
-	}
-
 	for(i=0; i<3; i++) {
 		pInfo = pSencor->get_info(i);
 		if(pInfo->target_w == SENSOR_SRC_WIDTH && pInfo->target_h == SENSOR_SRC_HEIGHT) {
@@ -721,237 +769,22 @@ static void ImageTest_Preview_PScaler(void)
 	}
 
 	if(i == 3) {
-        DBG_PRINT("get csi width and height fail\r\n");
+        DBG_PRINT("get thermal sensor width and height fail\r\n");
 		temp = 0;
-        //while(1);
-	}
-
-	pInfo->target_w = 32;
-	pInfo->target_h = 32;
-
-	DBG_PRINT("change sensor target_w = %d , target_h = %d ->davis\r\n",pInfo->target_w ,pInfo->target_h);
-	pSencor->init();
-	pSencor->stream_start(temp, csiBuffer, csiBuffer);
-#if 0
-	// PScaler
-	PScalerParam.pScalerNum = CSI_PSCALE_USE;
-	PScalerParam.inBuffer = csiBuffer;
-	PScalerParam.outBuffer_A = free_frame_buffer_get(1);
-	PScalerParam.outBuffer_B = free_frame_buffer_get(1);
-
-	PScalerParam.inWidth = SENSOR_SRC_WIDTH;
-	PScalerParam.inHeight = SENSOR_SRC_HEIGHT;
-
-	PScalerParam.outWidth = PRCESS_SRC_WIDTH;
-	PScalerParam.outHeight = PRCESS_SRC_HEIGHT;
-
-	PScalerParam.outLineCount = PRCESS_SRC_HEIGHT;
-
-	PScalerParam.inFormat = PIPELINE_SCALER_INPUT_FORMAT_YUYV;
-	PScalerParam.outFormat = PIPELINE_SCALER_OUTPUT_FORMAT_YUYV;
-
-    if (csi_mode == CSI_INTERFACE)
-    {
-        // CSI
-        PScalerParam.inSource = PIPELINE_SCALER_INPUT_SOURCE_CSI;
-        // Open CSI data path
-        drvl1_csi_input_pscaler_set(1);
-    }
-    else
-    {
-        // CDSP
-        PScalerParam.inSource = PIPELINE_SCALER_INPUT_SOURCE_CDSP;
-        // Open CDSP data path
-        drv_l1_CdspSetYuvPscalePath(1);
-    }
-
-	PScalerParam.intEnableFlag = PIPELINE_SCALER_INT_ENABLE_ALL;
-    PScalerParam.callbackFunc = PScaler_Callback_ISR_AutoZoom;
-
-	mazePscalerSet(&PScalerParam);
-#endif
-}
-
-
-
-static void ThermalTest_Preview_PScaler(void)
-{
-    CHAR *p;
-	INT32U i,PrcessBuffer,csi_mode,temp;
-	INT32U csiBufferSize,csiBuffer;
-	drv_l2_sensor_ops_t *pSencor;
-	drv_l2_sensor_info_t *pInfo;
-
-	csiBufferSize = PRCESS_SRC_WIDTH*PRCESS_SRC_HEIGHT*2;
-    csiBuffer = DUMMY_BUFFER_ADDRESS;
-
-	PrcessBuffer = (INT32U) gp_malloc_align(((csiBufferSize*DISP_QUEUE_MAX)+64), 32);
-    if(PrcessBuffer == 0)
-    {
-        DBG_PRINT("PrcessBuffer fail\r\n");
-        while(1);
-    }
-	PrcessBuffer = (INT32U)((PrcessBuffer + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
-	for(i=0; i<DISP_QUEUE_MAX; i++)
-	{
-		temp = (PrcessBuffer+i*csiBufferSize);
-		free_frame_buffer_add((INT32U *)temp,1);
-		DBG_PRINT("CSIBuffer:0x%X \r\n",temp);
-	}
-
-    // sensor init
-	drv_l2_sensor_init();
-    pSencor = drv_l2_sensor_get_ops(0);
-    DBG_PRINT("SensorName = %s\r\n", pSencor->name);
-
- 	// get csi or cdsp
-	p = (CHAR *)strrchr((CHAR *)pSencor->name, 'c');
-	if(p == 0) {
-        DBG_PRINT("get csi or cdsp fail\r\n");
         while(1);
 	}
 
-	if(strncmp((CHAR *)p, "csi", 3) == 0) {
-		csi_mode = CSI_INTERFACE;
-	} else if(strncmp((CHAR *)p, "cdsp", 4) == 0) {
-		csi_mode = CDSP_INTERFACE;
-	} else {
-        DBG_PRINT("csi mode fail\r\n");
-        while(1);
-	}
-
-	for(i=0; i<3; i++) {
-		pInfo = pSencor->get_info(i);
-		if(pInfo->target_w == SENSOR_SRC_WIDTH && pInfo->target_h == SENSOR_SRC_HEIGHT) {
-			temp = i;
-			break;
-		}
-	}
-
-	if(i == 3) {
-        DBG_PRINT("get csi width and height fail\r\n");
-        while(1);
-	}
-
+	DBG_PRINT("sensor target_w = %d , target_h = %d ->davis\r\n",pInfo->target_w ,pInfo->target_h);
 	pSencor->init();
 	pSencor->stream_start(temp, csiBuffer, csiBuffer);
 
-	// PScaler
-	PScalerParam.pScalerNum = CSI_PSCALE_USE;
-	PScalerParam.inBuffer = csiBuffer;
-	PScalerParam.outBuffer_A = free_frame_buffer_get(1);
-	PScalerParam.outBuffer_B = free_frame_buffer_get(1);
-
-	PScalerParam.inWidth = SENSOR_SRC_WIDTH;
-	PScalerParam.inHeight = SENSOR_SRC_HEIGHT;
-
-	PScalerParam.outWidth = PRCESS_SRC_WIDTH;
-	PScalerParam.outHeight = PRCESS_SRC_HEIGHT;
-
-	PScalerParam.outLineCount = PRCESS_SRC_HEIGHT;
-
-	PScalerParam.inFormat = PIPELINE_SCALER_INPUT_FORMAT_YUYV;
-	PScalerParam.outFormat = PIPELINE_SCALER_OUTPUT_FORMAT_YUYV;
-
-    if (csi_mode == CSI_INTERFACE)
-    {
-        // CSI
-        PScalerParam.inSource = PIPELINE_SCALER_INPUT_SOURCE_CSI;
-        // Open CSI data path
-        drvl1_csi_input_pscaler_set(1);
-    }
-    else
-    {
-        // CDSP
-        PScalerParam.inSource = PIPELINE_SCALER_INPUT_SOURCE_CDSP;
-        // Open CDSP data path
-        drv_l1_CdspSetYuvPscalePath(1);
-    }
-
-	PScalerParam.intEnableFlag = PIPELINE_SCALER_INT_ENABLE_ALL;
-    PScalerParam.callbackFunc = PScaler_Callback_ISR_AutoZoom;
-
-	mazePscalerSet(&PScalerParam);
 }
 
 
-#if 1
-
-static void thermal_task_entry(void const *parm)
-{
-    INT32U csi_buf,PscalerBuffer,PscalerBufferSize;
-    INT32U i,event;
-    osEvent result;
-
-    DBG_PRINT("thermal_task_entry start \r\n");
-    // thermal init
-    ThermalTest_Preview_PScaler();  // 必須 在之前 定義完成 
-
-    // disp size
-    drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
-	PscalerBufferSize = (device_h_size * device_v_size * 2);
-	PscalerBuffer = (INT32U) gp_malloc_align(((PscalerBufferSize*C_DEVICE_FRAME_NUM)+64), 32);
-    if(PscalerBuffer == 0)
-    {
-        DBG_PRINT("PscalerBuffer fail\r\n");
-        while(1);
-    }
-	PscalerBuffer = (INT32U)((PscalerBuffer + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
-	for(i=0; i<C_DEVICE_FRAME_NUM; i++)
-	{
-		csi_buf = (PscalerBuffer+i*PscalerBufferSize);
-		pscaler_frame_buffer_add((INT32U *)csi_buf,1);
-		DBG_PRINT("PscalerBuffer:0x%X \r\n",csi_buf);
-	}
-    prcess_state_post(PRCESS_STATE_OK);
-
-    while(1)
-    {
-        result = osMessageGet(csi_frame_buffer_queue, osWaitForever);
-        csi_buf = result.value.v;
-        if((result.status != osEventMessage) || !csi_buf) {
-            continue;
-        }
-        //DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
-        //DBG_PRINT(".");
-
-        PscalerBuffer = pscaler_frame_buffer_get(1);
-        if(PscalerBuffer)
-            fd_display_set_frame(csi_buf, PscalerBuffer, PRCESS_SRC_WIDTH, PRCESS_SRC_HEIGHT, device_h_size, device_v_size);
-
-        event = prcess_state_get();
-        if(event == PRCESS_STATE_OK)
-        {
-            //**************************************//
-                //DBG_PRINT("user result get \r\n");
-
-            //**************************************//
-            prcess_frame_buffer_add((INT32U *)csi_buf, 1);
-        }
-
-        if(PscalerBuffer)
-        {
-            if(event == PRCESS_STATE_OK)
-            {
-                //**************************************//
-                //DBG_PRINT("user draw image \r\n");
-
-                //**************************************//
-            }
-            disp_frame_buffer_add((INT32U *)PscalerBuffer, 1);
-        }
-        //else
-            //DBG_PRINT("@");
-        if(event != PRCESS_STATE_OK)
-            free_frame_buffer_add((INT32U *)csi_buf, 1);
-    }
-}
-
-#endif
 
 static void csi_task_entry(void const *parm)
 {
-    INT32U csi_buf,PscalerBuffer,PscalerBufferSize;
+    INT32U msg_id,csi_buf,PscalerBuffer,PscalerBufferSize;
     INT32U i,event;
     osEvent result;
 
@@ -964,7 +797,7 @@ static void csi_task_entry(void const *parm)
     //DBG_PRINT("csi_task_entry start \r\n");
     // csi init
     //mazeTest_Preview_PScaler();
-	ImageTest_Preview_PScaler();
+	Thermal_Preview_PScaler();
 
     // disp size
     drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
@@ -976,11 +809,11 @@ static void csi_task_entry(void const *parm)
         while(1);
     }
 	PscalerBuffer = (INT32U)((PscalerBuffer + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
-	for(i=0; i<C_DEVICE_FRAME_NUM; i++)
+	for(i=0; i<C_DEVICE_TH_FRAME_NUM; i++)
 	{
 		csi_buf = (PscalerBuffer+i*PscalerBufferSize);
 		pscaler_frame_buffer_add((INT32U *)csi_buf,1);
-		DBG_PRINT("PscalerBuffer:0x%X \r\n",csi_buf);
+		DBG_PRINT("PscalerBuffer:0x%X ->width = %d / high = %d\r\n",csi_buf,device_h_size,device_v_size);
 	}
     prcess_state_post(PRCESS_STATE_OK);
 
@@ -994,10 +827,11 @@ static void csi_task_entry(void const *parm)
     {
         result = osMessageGet(csi_frame_buffer_queue, osWaitForever);
         csi_buf = result.value.v;
+        //msg_id = result.value.v;
         if((result.status != osEventMessage) || !csi_buf) {
             continue;
         }
-        DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
+        //DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
         //DBG_PRINT(".");
 
 		#if 0
@@ -1009,15 +843,14 @@ static void csi_task_entry(void const *parm)
 
 		case MSG_MLX_TH32x24_TASK_STOP:
 			DEBUG_MSG("[MSG_MLX_TH32x24_TASK_STOP]\r\n");
-			OSQFlush(MLX_TH32x24_task_q);
-			ack_msg = ACK_OK;
-			osMessagePut(MLX_TH32x24_task_ack_m, (INT32U)&ack_msg, osWaitForever);
+			
 			break;
 
 		default:
 			ERROR_QUIT:
 
-
+			csi_buf = msg_id;
+			DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
 			break;
 
 		}
@@ -1030,13 +863,13 @@ static void csi_task_entry(void const *parm)
 
 		if(PscalerBuffer){
 
-		//gp_memcpy((INT8S *)(csi_buf),(INT8S *)&(sensor32X32_RGB565),32*32*2);
+		gp_memcpy((INT8S *)(csi_buf),(INT8S *)&(sensor32X32_RGB565),32*32*2);
 
 		//	fd_display_set_frame(csi_buf, PscalerBuffer, 32, 32,
 		//		device_h_size, device_v_size);
 
 		//
-		// MLX_TH32x24 sensor scaler -[ first time]
+		// MLX_TH32x24 sensor scaler
 		//
 
 		gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
@@ -1059,7 +892,7 @@ static void csi_task_entry(void const *parm)
 
 		//#if COLOR_FRAME_OUT
 		LoopCnt++;
-		if (LoopCnt % 40 == 0) Cnt_index++;
+		if (LoopCnt % 2 == 0) Cnt_index++;
 		//DBG_PRINT("Cnt_index %d \r\n",Cnt_index);
 
 		if (Cnt_index%2) scale.input_y_addr = &(sensor32X32_RGB565);
@@ -1161,7 +994,7 @@ static void disp_task_entry(void const *parm)
             if((result.status != osEventMessage) || !display_buf) {
                 continue;
             }
-            //DBG_PRINT("display_buf = 0x%x\r\n", display_buf);
+            DBG_PRINT("display_buf = 0x%x\r\n", display_buf);
             //DBG_PRINT("D");
 
 			//gp_memcpy((INT8S *)(display_buf),
@@ -1179,7 +1012,10 @@ static void prcess_task_entry(void const *parm)
 
     DBG_PRINT("prcess_task_entry start \r\n");
     //**************************************//
-        //DBG_PRINT("user init add \r\n");
+    //DBG_PRINT("user init add \r\n");
+    
+    pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 1;
+	
     //**************************************//
 
     while(1)
@@ -1189,7 +1025,7 @@ static void prcess_task_entry(void const *parm)
             if((result.status != osEventMessage) || !prcess_buf) {
                 continue;
             }
-            //DBG_PRINT("prcess_buf = 0x%x\r\n", prcess_buf);
+            DBG_PRINT("prcess_buf = 0x%x\r\n", prcess_buf);
             //DBG_PRINT("P");
 
             //**************************************//
@@ -1198,6 +1034,8 @@ static void prcess_task_entry(void const *parm)
             //**************************************//
             free_frame_buffer_add((INT32U *)prcess_buf, 1);
             prcess_state_post(PRCESS_STATE_OK);
+			
+			//pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
     }
 }
 
@@ -1210,6 +1048,9 @@ void GPM4_CSI_DISP_Demo(void)
     osThreadDef_t prcess_task = {"prcess_task", prcess_task_entry, osPriorityNormal, 1, 32768};
     osMessageQDef_t disp_q = {DISP_QUEUE_MAX, sizeof(INT32U), 0};
     osSemaphoreDef_t disp_sem = {0};
+
+	
+	INT32S  nRet;
 
 #if CSI_SD_EN == 1
     while(1)
@@ -1325,7 +1166,6 @@ void GPM4_CSI_DISP_Demo(void)
 
 	// osThreadCreate
 	csi_id = osThreadCreate(&csi_task, (void *)NULL);
-    //csi_id = osThreadCreate(&thermal_task, (void *)NULL);
     if(csi_id == 0)
     {
         DBG_PRINT("osThreadCreate: csi_id error\r\n");
@@ -1360,6 +1200,18 @@ void GPM4_CSI_DISP_Demo(void)
         osDelay(5);
         //DBG_PRINT("osThreadCreate: prcess_id = 0x%x \r\n", prcess_id);
     }
+
+
+	
+	// start timer_B
+	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
+	pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
+	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
+	
+	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
+	
+	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d \r\n",nRet) ;
+
 
     // ad key init
 	adc_key_scan_init();

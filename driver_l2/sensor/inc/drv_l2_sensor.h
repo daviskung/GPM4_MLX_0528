@@ -81,7 +81,7 @@
 	#define _SENSOR_MXL90640_THERMOPILE 	1
 
     #define _SENSOR_OV7670_CSI				0
-    #define _SENSOR_GC0308_CSI				1
+    #define _SENSOR_GC0308_CSI				0
     #define _SENSOR_OV3640_CSI				0
     #define _SENSOR_OV7670_CDSP				0
     #define _SENSOR_OV9712_CDSP				0

@@ -15,7 +15,6 @@
 #include "defs_MLX.h"
 #include <math.h>		// for pow()
 //#include "avi_encoder_app.h" // for MLX90640_GetVdd
-#include "drv_l1_timer.h"
 
 //_SENSOR_MLX90640_THERMOPILE
 
@@ -46,14 +45,14 @@
 /**************************************************************************
  *                         G L O B A L    D A T A                         *
  **************************************************************************/
- 
-//extern MLX_TH32x24Para_t *pMLX_TH32x24_Para;	
+
+//extern MLX_TH32x24Para_t *pMLX_TH32x24_Para;
 //extern paramsMLX90640_t *pMLX90640_Para;
 
-MLX_TH32x24Para_t *pMLX_TH32x24_Para;	
+MLX_TH32x24Para_t *pMLX_TH32x24_Para;
 paramsMLX90640_t *pMLX90640_Para;
 
-MLX_TH32x24Para_t MLX_TH32x24_Para; // , *pMLX_TH32x24_Para; 
+MLX_TH32x24Para_t MLX_TH32x24_Para; // , *pMLX_TH32x24_Para;
 paramsMLX90640_t MLX90640_Para;     //,*pMLX90640_Para;
 
 
@@ -157,47 +156,6 @@ static INT32S MXL_sccb_read(INT8U reg, INT8U *value)
 #endif
 
 
-static void MLX_TH32x24_start_timer_isr(void)
-{
-	INT8U err;
-	INT32U frame;
-
-
-	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt ++;
-	DBG_PRINT("timer->MLX_TH32x24");
-
-	//if ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 10 ){	// per sec
-	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 5 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 500ms
-	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 2 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 200ms
-
-	if ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 500 ){	// per 5 sec
-		pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
-		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
-		//DEBUG_MSG("timer->MLX_TH32x24");
-
-	}
-
-#if 0
-	if(( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) && // per 20 ms
-		(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt %2 == 0 )) {
-
-
-		frame = avi_encode_get_empty(MLX_TH32x24_SCALERUP_buf_q);
-		if(frame == 0)
-				DEBUG_MSG("L->MLX_TH32x24");
-		else{
-
-			//DEBUG_MSG("davis -->frame = 0x%x in csi_eof_isr \r\n",frame );
-			avi_encode_post_empty(MLX_TH32x24_task_q,frame);
-
-			pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 1;
-		}
-
-	}
-#endif		
-}
-
-
 static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 {
 	INT32U buffer_addr;
@@ -255,7 +213,7 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 		pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmpN1] = buffer_addr;
 		DBG_PRINT("davis --> MLX_TH32x24_avg_buf_addr[%d] addr = 0x%x\r\n",tmpN1, pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmpN1]);
 	}
-	
+
 	/*
 		buffer_size = pAviEncVidPara->display_width * pAviEncVidPara->display_height << 1;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
@@ -271,7 +229,7 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 		pMLX_TH32x24_Para->MLX_TH32x24_display_background_frame = buffer_addr;
 		DBG_PRINT("davis --> MLX_TH32x24_display_background_frame addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_display_background_frame);
 	*/
-	
+
 	buffer_size = sizeof(INT16U)*MAXNROFDEFECTS ;
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		if(buffer_addr == 0) {
@@ -1076,6 +1034,13 @@ void MXL90640_thermopile_uninit(void)
 	//gpio_write_io(GC0308_RESET,DATA_LOW);
 }
 
+
+
+
+
+
+
+
 /**
  * @brief   gc0308 stream start function
  * @param   info index
@@ -1084,15 +1049,12 @@ void MXL90640_thermopile_uninit(void)
  */
 void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 {
-   // gpCSIPara_t csi_Para;
-	//paramsMLX90640_t MLX90640_Para,*pMLX90640_Para;
-	//MLX_TH32x24Para_t MLX_TH32x24_Para,*pMLX_TH32x24_Para;	
-	
+
 	INT32S  nRet;
-	
-	pMLX90640_Para = &MLX90640_Para;	
+
+	pMLX90640_Para = &MLX90640_Para;
 	gp_memset((INT8S *)&MLX90640_Para, 0, sizeof(paramsMLX90640_t));
-	pMLX_TH32x24_Para = &MLX_TH32x24_Para;	
+	pMLX_TH32x24_Para = &MLX_TH32x24_Para;
     gp_memset((INT8S *)&MLX_TH32x24_Para, 0, sizeof(MLX_TH32x24Para_t));
 
 	MLX_TH32x24_mem_alloc();
@@ -1100,19 +1062,17 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	DBG_PRINT("%s = %d _davis\r\n", __func__, 0);
 	//while(1);
 
-	
+/*
 	// start timer_B
-		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
-		pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
-		pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
-	
-		nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
-		
-		//nRet = timer_freq_normal_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, MLX_TH32x24_start_timer_isr );
-		DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d \r\n",nRet) ;
+	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
+	pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
+	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
 
-		//while(1)	DBG_PRINT("read %d \r\n",pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt) ;
-		 
+	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
+
+	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d \r\n",nRet) ;
+*/
+
 }
 
 
