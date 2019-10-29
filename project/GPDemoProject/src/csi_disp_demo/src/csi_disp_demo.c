@@ -15,6 +15,8 @@
 #include "32X32RGB565NEW.h" 	//  davis 2019.10.23
 #include "defs_MLX.h"
 #include "drv_l1_timer.h"
+#include "drv_l2_sccb.h"
+#include "drv_l1_i2c.h"
 
 
 
@@ -90,6 +92,11 @@ typedef struct {
 	INT8U  textStamp1Enable;
 }PSCALER_PARAM_STRUCT;
 
+
+
+/**************************************************************************
+ *                         G L O B A L    D A T A                         *
+ **************************************************************************/
 static osThreadId prcess_id;
 static osThreadId csi_id;
 static osThreadId disp_id;
@@ -104,9 +111,11 @@ static PSCALER_PARAM_STRUCT PScalerParam = {0};
 static INT32U device_h_size, device_v_size;
 
 
-static MLX_TH32x24Para_t *pMLX_TH32x24_Para;	
-static paramsMLX90640_t *pMLX90640_Para;
+MLX_TH32x24Para_t *pMLX_TH32x24_Para;	
+paramsMLX90640_t *pMLX90640_Para;
 
+const INT16U DELAYTIME_at_REFRESH_RATE3[8]={2000,1000,500,250,125,63,32,15};
+const INT8U MLX_REFRESH_RATE_HZ3[8]={0,1,2,4,8,16,32,64};
 
 
 static void drv_disp_lock(void)
@@ -728,7 +737,6 @@ static void mazeTest_Preview_PScaler(void)
 #endif
 }
 
-
 static void Thermal_Preview_PScaler(void)
 {
     CHAR *p;
@@ -794,7 +802,26 @@ static void csi_task_entry(void const *parm)
 	INT16U	LoopCnt;
 	INT8U	Cnt_index;
 
-    //DBG_PRINT("csi_task_entry start \r\n");
+	
+	INT32U	TimeCnt1,TimeCnt2;
+	INT16U 	EEcopy16BIT[8]={0};
+	INT16U	EEaddress16,*pEEcopy16BIT;
+	INT8U 	EEaddr[2],*pEEaddr;
+
+    INT16U 	dataReady,statusRegister,controlRegister1,TmpControlRegister ;
+	INT16U	cnt,frameData_cnt;
+	INT8U  *pMLX32x32_READ_INT8U_buf;
+	INT16U  *pMLX32x32_READ_INT16U_buf,*pMLX32x32_frameData_INT16U_buf;
+	
+	INT16U pixelNumber;
+	
+    float ta,vdd,tr_byUser;
+	
+	int		error;
+	
+	drv_l1_i2c_bus_handle_t MXL_handle;
+
+    DBG_PRINT("csi_task_entry start \r\n");
     // csi init
     //mazeTest_Preview_PScaler();
 	Thermal_Preview_PScaler();
@@ -817,6 +844,17 @@ static void csi_task_entry(void const *parm)
 	}
     prcess_state_post(PRCESS_STATE_OK);
 
+	MXL_handle.devNumber = I2C_1;
+	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
+	MXL_handle.clkRate = 1000;
+
+	pEEcopy16BIT = EEcopy16BIT;
+	pEEaddr = EEaddr;
+	pMLX32x32_READ_INT8U_buf = (INT8U*)pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF;
+	
+	pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
+
+
 	LoopCnt = 0;
 	Cnt_index = 0;
 
@@ -834,27 +872,241 @@ static void csi_task_entry(void const *parm)
         //DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
         //DBG_PRINT(".");
 
-		#if 0
-		switch(msg_id)
-		{
-		case MSG_MLX_TH32x24_TASK_INIT:
-					DEBUG_MSG("[MSG_MLX_TH32x24_TASK_INIT]\r\n");
-			break;
-
-		case MSG_MLX_TH32x24_TASK_STOP:
-			DEBUG_MSG("[MSG_MLX_TH32x24_TASK_STOP]\r\n");
-			
-			break;
-
-		default:
-			ERROR_QUIT:
-
-			csi_buf = msg_id;
-			DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
-			break;
-
+#if 1
+	
+		
+	TimeCnt1 = xTaskGetTickCount();
+	
+	// 開始 計算 Tobject
+	
+	
+	//DBG_PRINT("************ GetFrameData frame 0 ************************************** \r\n");
+	dataReady = 0;
+	frameData_cnt=0;
+	while(dataReady == 0)
+	{
+		do{
+			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
+			DBG_PRINT("read return-1  = %d \r\n",error);	// return data length , if error = -1
+			//	需要 重新讀取 !! 改成 副程式 檢查 
+			if( error == -1){
+				DBG_PRINT("frame0 vdd/ta error !! \r\n");
+				osDelay(10);
+			}
+		}while(error == -1);
+	
+		dataReady = statusRegister & 0x0008; // 1 : A new data is available in RAM ?
+	
+		//DBG_PRINT(" 2.statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d \r\n",
+		//	statusRegister,dataReady,frameData_cnt);
+		if(dataReady == 0){
+				osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
+				DBG_PRINT("\r\n 1-frame0 delay  = %d ms \r\n",
+					DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
+				osDelay(CONVERT_WAIT_TIME);
+				//DBG_PRINT("\r\n frame0 delay = %d ms \r\n",CONVERT_WAIT_TIME);
+			frameData_cnt++;
 		}
+		if(frameData_cnt >4){	// reset MLX
+	
+			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
+			//DBG_PRINT("(reset)read controlRegister1 set frame0= 0x%04x \r\n",controlRegister1);
+			controlRegister1 = controlRegister1 & MLX90640_SetModeClear ;
+			controlRegister1 = controlRegister1 | MLX90640_SetStepModeSubpageRep ;
+	
+			drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,controlRegister1);
+			//DBG_PRINT("(subpage = 0)write controlRegister1 = 0x%04x \r\n",controlRegister1);
+			//osDelay(DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_32HZ]);
+			//	DBG_PRINT("\r\n frameData_cnt> frame0 delay  = %d ms \r\n",
+			//		DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_32HZ]);
+	
+			error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
+	
+			frameData_cnt = 0;
+			}
+	}
+	
+	 if(dataReady != 0)
+	 {
+	 	
+		//DBG_PRINT("drv_l1_i2c_multi_read MLX90640_RAMAddrstart \r\n");	
+		EEaddress16 = MLX90640_RAMAddrstart;
+		EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+		EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+		error = drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pMLX32x32_READ_INT8U_buf
+			,MLX90640_RAM_AddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
+	
+		//DBG_PRINT("read return-2	= %d \r\n",error);	// return data length , if error = -1
+		
+		for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
+		{
+			i = cnt << 1;
+			*(pMLX32x32_frameData_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
+				+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
+		}
+	
+		pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
+		//DBG_PRINT(" 3. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
+	
+		pMLX_TH32x24_Para->frameData[832] = controlRegister1;
+	
+		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
+	}
+	
+	MLX90640_GetVdd();
+		
+#if DEBUG_MLX_MSG_OUT
+	DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd = %f (t=%d) \r\n"
+			,pMLX_TH32x24_Para->MLX_TH32x24_vdd,xTaskGetTickCount());
+#endif
+		
+	MLX90640_GetTa();
+		
+#if DEBUG_MLX_MSG_OUT
+	DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
+			,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
+#endif
+		
+	tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
+	
+	MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
+	//	DBG_PRINT(" frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
+	//pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+	
+	//MLX90640_GetImage();
+	//DBG_PRINT(" frame %d MLX90640_GetImage->1 End[t=%d] \r\n",
+	//	  pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+	
+		#if DEBUG_TMP_READ_OUT
+			for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+		
+			if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+			DBG_PRINT("(%d)",pMLX_TH32x24_Para->result[pixelNumber]);
+		
+			}
 		#endif
+		
+		#if DEBUG_image_READ_OUT
+			for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+		
+			if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+			DBG_PRINT("%d/",pMLX_TH32x24_Para->result_image[pixelNumber]);
+		
+			}
+		#endif
+
+		
+	//DBG_PRINT("************ GetFrameData frame 1 ************************************** \r\n");
+		
+
+	dataReady = 0;
+	frameData_cnt=0;
+	while (dataReady == 0)
+	{
+	
+		do{
+	
+			osDelay(CONVERT_WAIT_TIME);
+			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
+			//DBG_PRINT("read return  = %d \r\n",error);	// return data length , if error = -1
+			//	需要 重新讀取 !! 改成 副程式 檢查 
+			if( error == -1){
+				DBG_PRINT("frame1 vdd/ta error !!(0x%04x)\r\n",statusRegister);
+				osDelay(10);
+				}
+		}while(error == -1);
+	
+		dataReady = statusRegister & 0x0008;
+	
+		//DBG_PRINT("\r\n 2. statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d [t=%d] \r\n",
+		//	statusRegister,dataReady,frameData_cnt,xTaskGetTickCount());
+	
+		if(dataReady == 0){
+				//osDelay(DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_64HZ]);
+				//DBG_PRINT("\r\n frame1 delay	= %d ms \r\n",
+				//	DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_64HZ]);
+				osDelay(CONVERT_WAIT_TIME);
+				//DBG_PRINT("\r\n frame1 delay = %d ms \r\n",CONVERT_WAIT_TIME);
+		}
+	
+	}
+	
+	if(dataReady != 0)
+	{
+		EEaddress16 = MLX90640_RAMAddrstart;
+		EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+		EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+		error = drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pMLX32x32_READ_INT8U_buf
+			,MLX90640_RAM_AddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
+	
+		//DBG_PRINT("multi_read return = %d \r\n",error);// return data length , if error = -1
+	
+		for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
+		{
+			i = cnt << 1;
+			*(pMLX32x32_frameData_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
+				+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
+		}
+	
+		pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
+		//DBG_PRINT(" 3. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
+	
+		pMLX_TH32x24_Para->frameData[832] = controlRegister1;
+	
+	//
+	// in Status register - 0x8000
+	// Bit3:
+	//	0:No new data is available in RAM (must be reset be the customer)
+	// 0x0030 :
+	// Bit4:
+	// 1: Data in RAM overwrite is enabled
+	// Bit5:
+	// 1: In step mode - start of measurement
+	//		(set by the customer and cleared once the measurement is done)
+	//
+	
+		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
+	
+	}
+	
+	MLX90640_GetVdd();
+		
+#if DEBUG_MLX_MSG_OUT
+	DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd =  %f (t=%d) \r\n"
+		,pMLX_TH32x24_Para->MLX_TH32x24_vdd,xTaskGetTickCount());
+#endif
+		
+	MLX90640_GetTa();
+		
+#if DEBUG_MLX_MSG_OUT
+	DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
+		,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
+#endif
+		
+	tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
+	
+	MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
+	DBG_PRINT(" frame %d MLX90640_CalculateTo->2 End[t=%d] \r\n",
+		pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+	
+	//MLX90640_GetImage();
+	//DBG_PRINT(" frame %d MLX90640_GetImage->2 End[t=%d] \r\n",
+	//	pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+	
+	
+	#if DEBUG_TMP_READ_OUT2
+	for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+		
+	if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+		DBG_PRINT("(%d)",pMLX_TH32x24_Para->result[pixelNumber]);
+		
+			}
+	#endif
+	
+	
+	
+	
+#endif
 		
         PscalerBuffer = pscaler_frame_buffer_get(1);
         //if(PscalerBuffer)

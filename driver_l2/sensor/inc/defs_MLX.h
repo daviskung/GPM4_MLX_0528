@@ -9,11 +9,12 @@
 #define	WRITE_CMD				0x00
 #define	READ_CMD				0x00
 #define	DEBUG_TMP_READ_OUT		0
+#define	DEBUG_TMP_READ_OUT2		1
+
 #define	DEBUG_image_READ_OUT	0
 #define	DEBUG_image_READ_OUT2	0
 
-#define	DEBUG_TMP_READ_OUT2		0
-#define	DEBUG_MLX_MSG_OUT		0
+#define	DEBUG_MLX_MSG_OUT		1
 
 #define	TWO_FRAME_OUT			1
 #define	TMP_AVGBUF_ON			0
@@ -117,8 +118,7 @@
 #define	emissivity_byUser	1
 #define	TA_SHIFT			8
 
-//const INT16U DELAYTIME_at_REFRESH_RATE [8]={2000,1000,500,250,125,63,32,15};
-//const INT8U MLX_REFRESH_RATE_HZ [8]={0,1,2,4,8,16,32,64};
+
 
 
 

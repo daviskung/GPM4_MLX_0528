@@ -395,9 +395,6 @@
 		<Unit filename="../../application/task_avi_encoder/src/avi_encoder_app.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../application/task_avi_encoder/src/avi_encoder_scaler_jpeg.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="../../application/task_avi_encoder/src/avi_encoder_state.c">
 			<Option compilerVar="CC" />
 		</Unit>

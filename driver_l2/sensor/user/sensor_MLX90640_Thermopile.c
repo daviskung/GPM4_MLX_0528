@@ -49,14 +49,29 @@ const INT8U MLX_REFRESH_RATE_HZ2 [8]={0,1,2,4,8,16,32,64};
  *                         G L O B A L    D A T A                         *
  **************************************************************************/
 
-//extern MLX_TH32x24Para_t *pMLX_TH32x24_Para;
-//extern paramsMLX90640_t *pMLX90640_Para;
+extern MLX_TH32x24Para_t *pMLX_TH32x24_Para;
+extern paramsMLX90640_t *pMLX90640_Para;
 
-MLX_TH32x24Para_t *pMLX_TH32x24_Para;
-paramsMLX90640_t *pMLX90640_Para;
+//MLX_TH32x24Para_t *pMLX_TH32x24_Para;
+//paramsMLX90640_t *pMLX90640_Para;
 
 MLX_TH32x24Para_t MLX_TH32x24_Para; // , *pMLX_TH32x24_Para;
 paramsMLX90640_t MLX90640_Para;     //,*pMLX90640_Para;
+
+/**************************************************************************
+*				 F U N C T I O N	D E C L A R A T I O N S 			  *
+**************************************************************************/
+static INT32S MXL_sccb_open(void);
+static void MXL_sccb_close(void);
+static INT32S MXL_sccb_write(INT8U reg, INT8U value);
+static INT32S MXL_sccb_read(INT8U reg, INT8U *value);
+static INT32S MLX_TH32x24_mem_alloc(void);	//davis
+INT32S MLX90640_SetResolution(INT8U resolution);
+INT32S MLX90640_SetRefreshRate(INT8U refreshRate);
+int CheckEEPROMValid(INT16U *pMLX32x24_READ_INT16U_buf);
+
+
+
 
 
 
@@ -1014,6 +1029,264 @@ int ExtractDeviatingPixels(INT16U	*pMLX32x24_READ_INT16U_buf, paramsMLX90640_t *
     return warn;
 
 }
+
+
+
+//------------------------------------------------------------------------------
+// example1:
+// Calculate  the  object  temperatures  for  all  the  pixels  in  a  frame,
+// object  emissivity  is  0.95  and  the reflected temperature is 23.15°C (measured by the user):
+// example2:
+// Calculate  the  object  temperatures  for  all  the  pixels  in  a  frame,
+// object  emissivity  is  0.95  and  the reflected temperature is the sensor ambient temperature:
+
+void MLX90640_CalculateTo(float emissivity, float tr)
+{
+    float vdd;
+    float ta;
+    float ta4;
+    float tr4;
+    float taTr;
+    float gain;
+    float irDataCP[2];
+    float irData;
+    float alphaCompensated;
+    uint8_t mode;
+    int8_t ilPattern;
+    int8_t chessPattern;
+    int8_t pattern;
+    int8_t conversionPattern;
+    float Sx;
+    float To;
+    float alphaCorrR[4];
+    int8_t range;
+    uint16_t subPage;
+    int i,pixelNumber;
+
+
+	subPage = pMLX_TH32x24_Para->frameData[833];
+    vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
+    ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
+
+    ta4 = pow((ta + 273.15), (double)4);
+    tr4 = pow((tr + 273.15), (double)4);
+    taTr = tr4 - (tr4-ta4)/emissivity;
+
+    alphaCorrR[0] = 1 / (1 + pMLX90640_Para->ksTo[0] * 40);
+    alphaCorrR[1] = 1 ;
+    alphaCorrR[2] = (1 + pMLX90640_Para->ksTo[2] * pMLX90640_Para->ct[2]);
+    alphaCorrR[3] = alphaCorrR[2] * (1 + pMLX90640_Para->ksTo[3] * (pMLX90640_Para->ct[3] - pMLX90640_Para->ct[2]));
+
+//------------------------- Gain calculation -----------------------------------
+    gain = pMLX_TH32x24_Para->frameData[778];
+    if(gain > 32767)
+    {
+        gain = gain - 65536;
+    }
+
+    gain = pMLX90640_Para->gainEE / gain;
+
+//------------------------- To calculation -------------------------------------
+    mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
+
+    irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
+    irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
+    for( i = 0; i < 2; i++)
+    {
+        if(irDataCP[i] > 32767)
+        {
+            irDataCP[i] = irDataCP[i] - 65536;
+        }
+        irDataCP[i] = irDataCP[i] * gain;
+    }
+    irDataCP[0] = irDataCP[0] - pMLX90640_Para->cpOffset[0] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+    if( mode ==  pMLX90640_Para->calibrationModeEE)
+    {
+        irDataCP[1] = irDataCP[1] - pMLX90640_Para->cpOffset[1] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+    }
+    else
+    {
+      irDataCP[1] = irDataCP[1] - (pMLX90640_Para->cpOffset[1] + pMLX90640_Para->ilChessC[0]) * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+    }
+
+    for( pixelNumber = 0; pixelNumber < 768; pixelNumber++)
+    {
+        ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
+        chessPattern = ilPattern ^ (pixelNumber - (pixelNumber/2)*2);
+        conversionPattern = ((pixelNumber + 2) / 4 - (pixelNumber + 3) / 4 + (pixelNumber + 1) / 4 - pixelNumber / 4) * (1 - 2 * ilPattern);
+
+        if(mode == 0)
+        {
+          pattern = ilPattern;
+        }
+        else
+        {
+          pattern = chessPattern;
+        }
+
+        if(pattern == pMLX_TH32x24_Para->frameData[833])
+        {
+            irData = pMLX_TH32x24_Para->frameData[pixelNumber];
+            if(irData > 32767)
+            {
+                irData = irData - 65536;
+            }
+            irData = irData * gain;
+
+            irData = irData - pMLX90640_Para->offset[pixelNumber]*(1 + pMLX90640_Para->kta[pixelNumber]*(ta - 25))*(1 + pMLX90640_Para->kv[pixelNumber]*(vdd - 3.3));
+            if(mode !=  pMLX90640_Para->calibrationModeEE)
+            {
+              irData = irData + pMLX90640_Para->ilChessC[2] * (2 * ilPattern - 1) - pMLX90640_Para->ilChessC[1] * conversionPattern;
+            }
+
+            irData = irData / emissivity;
+
+            irData = irData - pMLX90640_Para->tgc * irDataCP[subPage];
+
+            alphaCompensated = (pMLX90640_Para->alpha[pixelNumber] - pMLX90640_Para->tgc * pMLX90640_Para->cpAlpha[subPage])*(1 + pMLX90640_Para->KsTa * (ta - 25));
+
+            Sx = pow((double)alphaCompensated, (double)3) * (irData + alphaCompensated * taTr);
+            Sx = sqrt(sqrt(Sx)) * pMLX90640_Para->ksTo[1];
+
+            To = sqrt(sqrt(irData/(alphaCompensated * (1 - pMLX90640_Para->ksTo[1] * 273.15) + Sx) + taTr)) - 273.15;
+
+            if(To < pMLX90640_Para->ct[1])
+            {
+                range = 0;
+            }
+            else if(To < pMLX90640_Para->ct[2])
+            {
+                range = 1;
+            }
+            else if(To < pMLX90640_Para->ct[3])
+            {
+                range = 2;
+            }
+            else
+            {
+                range = 3;
+            }
+
+            To = sqrt(sqrt(irData / (alphaCompensated * alphaCorrR[range] * (1 + pMLX90640_Para->ksTo[range] * (To - pMLX90640_Para->ct[range]))) + taTr)) - 273.15;
+
+            pMLX_TH32x24_Para->result[pixelNumber] =(INT16S)(To*10);
+        }
+    }
+}
+
+
+
+
+void MLX90640_GetImage(void)
+{
+    float vdd;
+    float ta;
+    float gain;
+    float irDataCP[2];
+    float irData;
+    float alphaCompensated;
+    uint8_t mode;
+    int8_t ilPattern;
+    int8_t chessPattern;
+    int8_t pattern;
+    int8_t conversionPattern;
+    float image;
+    uint16_t subPage;
+    int i,pixelNumber;
+
+    subPage = pMLX_TH32x24_Para->frameData[833];
+    vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
+    ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
+
+//------------------------- Gain calculation -----------------------------------
+    gain = pMLX_TH32x24_Para->frameData[778];
+    if(gain > 32767)
+    {
+        gain = gain - 65536;
+    }
+
+    gain = pMLX90640_Para->gainEE / gain; // K-gain
+
+//------------------------- Image calculation -------------------------------------
+    mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
+	//DBG_PRINT(" GetImage mode = 0x%04x \r\n",mode);
+
+//
+// mode 決定 是 0 Interleaved (TV) mode / 1 Chess pattern (default)
+//
+// NOTE:  In  order  to  limit  the  noise  in  the  final  To  calculation  it  is  advisable
+// to  filter  the  CP  readings  at  this  point  of calculation.
+// A good practice would be to apply a Moving Average Filter with length of 16 or higher.
+//
+    irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
+    irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
+    for( i = 0; i < 2; i++)
+    {
+        if(irDataCP[i] > 32767)
+        {
+            irDataCP[i] = irDataCP[i] - 65536;
+        }
+        irDataCP[i] = irDataCP[i] * gain;
+    }
+    irDataCP[0] = irDataCP[0] - pMLX90640_Para->cpOffset[0] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+
+
+	// The value of the offset for compensating pixel for the subpage 1 depends on
+	// the reading pattern
+
+    if( mode ==  pMLX90640_Para->calibrationModeEE)
+    {
+
+		//DBG_PRINT(" GetImage mode == calibrationModeEE \r\n");
+        irDataCP[1] = irDataCP[1] - pMLX90640_Para->cpOffset[1] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+    }
+    else
+    {
+      irDataCP[1] = irDataCP[1] - (pMLX90640_Para->cpOffset[1] + pMLX90640_Para->ilChessC[0]) * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+    }
+
+    for( pixelNumber = 0; pixelNumber < 768; pixelNumber++)
+    {
+        ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
+        chessPattern = ilPattern ^ (pixelNumber - (pixelNumber/2)*2);
+        conversionPattern = ((pixelNumber + 2) / 4 - (pixelNumber + 3) / 4 + (pixelNumber + 1) / 4 - pixelNumber / 4) * (1 - 2 * ilPattern);
+
+        if(mode == 0)
+        {
+          pattern = ilPattern;
+        }
+        else
+        {
+          pattern = chessPattern; // use -> Chess patter
+        }
+
+        if(pattern == pMLX_TH32x24_Para->frameData[833]) // frameData[833] 定義 subpage 0 or 1
+        {
+            irData = pMLX_TH32x24_Para->frameData[pixelNumber];
+            if(irData > 32767)
+            {
+                irData = irData - 65536;
+            }
+            irData = irData * gain;
+
+            irData = irData - pMLX90640_Para->offset[pixelNumber]*(1 + pMLX90640_Para->kta[pixelNumber]*(ta - 25))*(1 + pMLX90640_Para->kv[pixelNumber]*(vdd - 3.3));
+            if(mode !=  pMLX90640_Para->calibrationModeEE)
+            {
+              irData = irData + pMLX90640_Para->ilChessC[2] * (2 * ilPattern - 1) - pMLX90640_Para->ilChessC[1] * conversionPattern;
+            }
+
+            irData = irData - pMLX90640_Para->tgc * irDataCP[subPage];
+
+            alphaCompensated = (pMLX90640_Para->alpha[pixelNumber] - pMLX90640_Para->tgc * pMLX90640_Para->cpAlpha[subPage])*(1 + pMLX90640_Para->KsTa * (ta - 25));
+
+            image = irData/alphaCompensated;
+
+            pMLX_TH32x24_Para->result_image[pixelNumber] =image;
+           // pMLX_TH32x24_Para->result[pixelNumber] = (INT16S)(image*10); // 放大10倍 
+        }
+    }
+}
+
 
 
 /**
