@@ -858,7 +858,29 @@ static void csi_task_entry(void const *parm)
 	LoopCnt = 0;
 	Cnt_index = 0;
 
+	DBG_PRINT("MLX32x24_Para->KvPTAT=%f, MLX32x24_Para->KtPTAT=%f ,MLX32x24_Para->vPTAT25= %d ,MLX32x24_Para->alphaPTAT=%f \r\n",
+			pMLX90640_Para->KvPTAT,pMLX90640_Para->KtPTAT,pMLX90640_Para->vPTAT25,pMLX90640_Para->alphaPTAT);
 	
+
+	// controlRegister1 設定成 自動 subpage 0/1
+	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
+	DBG_PRINT("read controlRegister1 = 0x%04x \r\n",controlRegister1);
+	
+	DBG_PRINT("initial setting controlRegister1 = 0x%04x \r\n",pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1);
+
+	while(controlRegister1 != pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1 ){
+
+	drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1);
+	osDelay(80);
+	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
+	DBG_PRINT("*Re - write/read controlRegister1 = 0x%04x \r\n",controlRegister1);
+
+	}
+	
+	//controlRegister1 = pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1;
+
+
+
 	
 
     while(1)
@@ -887,7 +909,7 @@ static void csi_task_entry(void const *parm)
 	{
 		do{
 			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
-			DBG_PRINT("read return-1  = %d \r\n",error);	// return data length , if error = -1
+			//DBG_PRINT("read return-1  = %d \r\n",error);	// return data length , if error = -1
 			//	需要 重新讀取 !! 改成 副程式 檢查 
 			if( error == -1){
 				DBG_PRINT("frame0 vdd/ta error !! \r\n");
@@ -981,8 +1003,8 @@ static void csi_task_entry(void const *parm)
 	tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
 	
 	MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
-	//	DBG_PRINT(" frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
-	//pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+		DBG_PRINT(" frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
+	pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
 	
 	//MLX90640_GetImage();
 	//DBG_PRINT(" frame %d MLX90640_GetImage->1 End[t=%d] \r\n",

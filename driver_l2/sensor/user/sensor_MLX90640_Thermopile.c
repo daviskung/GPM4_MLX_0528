@@ -438,11 +438,6 @@ void ExtractPTATParameters(INT16U	*pMLX32x24_READ_INT16U_buf, paramsMLX90640_t *
     mlx90640->KtPTAT = KtPTAT;
     mlx90640->vPTAT25 = vPTAT25;
     mlx90640->alphaPTAT = alphaPTAT;
-
-
-	//DBG_PRINT("MLX32x24_Para->KvPTAT=%f, MLX32x24_Para->KtPTAT=%f ,MLX32x24_Para->vPTAT25= %d ,MLX32x24_Para->alphaPTAT=%f \r\n",
-	//		mlx90640->KvPTAT,mlx90640->KtPTAT,mlx90640->vPTAT25,mlx90640->alphaPTAT);
-	
 	
 }
 
@@ -1403,7 +1398,7 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 				MLX90640_EEAddrRegister1, *(pEEcopy16BIT) ,*(pEEcopy16BIT+1),*(pEEcopy16BIT+2),*(pEEcopy16BIT+3));
 
 	FromEEcontrolRegister1 = *(pEEcopy16BIT);
-
+		
 	EEaddress16 = MLX90640_EEAddrstart;
 	EEaddr[0]=(INT8U)(EEaddress16 >> 8);
 	EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
@@ -1456,6 +1451,9 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	// controlRegister1 設定成 自動 subpage 0/1
 	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
 	DBG_PRINT("read controlRegister1 = 0x%04x \r\n",controlRegister1);
+
+	
+	pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1 = controlRegister1;
 	
 		// 0x0030 :
 		// 1 Data in RAM overwrite is enabled
@@ -1480,8 +1478,8 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 		DBG_PRINT("MLX32x24_Para->kVdd=%d, MLX32x24_Para->vdd25=%d \r\n", pMLX90640_Para->kVdd,pMLX90640_Para->vdd25);
 	#if 1
 		ExtractPTATParameters(pMLX32x24_READ_INT16U_buf, pMLX90640_Para);
-		DBG_PRINT("MLX32x24_Para->KvPTAT=%f, MLX32x24_Para->KtPTAT=%f ,MLX32x24_Para->vPTAT25= %d ,MLX32x24_Para->alphaPTAT=%f \r\n",
-			pMLX90640_Para->KvPTAT,pMLX90640_Para->KtPTAT,pMLX90640_Para->vPTAT25,pMLX90640_Para->alphaPTAT);
+		//DBG_PRINT("MLX32x24_Para->KvPTAT=%f, MLX32x24_Para->KtPTAT=%f ,MLX32x24_Para->vPTAT25= %d ,MLX32x24_Para->alphaPTAT=%f \r\n",
+		//	pMLX90640_Para->KvPTAT,pMLX90640_Para->KtPTAT,pMLX90640_Para->vPTAT25,pMLX90640_Para->alphaPTAT);
 	
 		ExtractGainParameters(pMLX32x24_READ_INT16U_buf, pMLX90640_Para);
 		DBG_PRINT("MLX32x24_Para->gainEE=%d \r\n",pMLX90640_Para->gainEE);

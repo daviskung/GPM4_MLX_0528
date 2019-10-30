@@ -9,13 +9,13 @@
 #define	WRITE_CMD				0x00
 #define	READ_CMD				0x00
 #define	DEBUG_TMP_READ_OUT		0
-#define	DEBUG_TMP_READ_OUT2		0
+#define	DEBUG_TMP_READ_OUT2		1
 
 #define	DEBUG_image_READ_OUT	0
 #define	DEBUG_image_READ_OUT2	0
 
 #define	DEBUG_MLX_MSG_OUT		1
-#define	DEBUG_MLX_CALC_MSG_OUT		1
+#define	DEBUG_MLX_CALC_MSG_OUT		0
 
 
 #define	TWO_FRAME_OUT			1
@@ -183,6 +183,8 @@
 	  INT8U  MLX_TH32x24_GrayOutputFactor;
 	  INT8U  MLX_TH32x24_GRAY_MAX_VAL;
 	  INT8U  MLX_TH32x24_GRAY_START_VAL;
+	  
+	  INT16U  MLX_TH32x24_InitSet_controlRegister1;	  // to check controlRegister1 setting
 	  
   } MLX_TH32x24Para_t;
 
