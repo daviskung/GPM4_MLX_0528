@@ -966,7 +966,7 @@ static void mazeTest_Preview_PScaler(void)
 		 }
 	 }
  }
- void CalulateData(INT16U SETcontrolRegister1)
+ void CalulateData(INT8U format ,INT16U SETcontrolRegister1)
  {
 
 
@@ -1199,22 +1199,36 @@ static void mazeTest_Preview_PScaler(void)
 		 ,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
 #endif
 
+	if(format == TEMPout){
 	 MLX90640_CalculateTo(emissivity_byUser,(pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT));
 	 //DBG_PRINT(" frame %d MLX90640_CalculateTo->2  \r\n", pMLX_TH32x24_Para->frameData[833]);
-
-	 //MLX90640_GetImage();
-	 //DBG_PRINT(" frame %d MLX90640_GetImage->2 End[t=%d] \r\n",
-	 //  pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
-
-
-	#if DEBUG_TMP_READ_OUT2
+#if DEBUG_TMP_READ_OUT2
 	 for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
 
 	 if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
 		 DBG_PRINT("(%d)",pMLX_TH32x24_Para->result[pixelNumber]);
 
 			 }
-	#endif
+#endif
+	}
+	if(format == IMGout){
+
+	 MLX90640_GetImage();
+	 //DBG_PRINT(" frame %d MLX90640_GetImage->2 End[t=%d] \r\n",
+	 //  pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+#if DEBUG_TMP_READ_OUT2
+	 for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+
+	 if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+		 //DBG_PRINT("(%d)",pMLX_TH32x24_Para->result[pixelNumber]);
+	 
+		DBG_PRINT("[%f]",pMLX_TH32x24_Para->result_image[pixelNumber]);
+
+	}
+#endif
+	}
+
+	
 
 
 
@@ -1473,7 +1487,7 @@ static void csi_task_entry(void const *parm)
 
 	// 開始 計算 Tobject
 
-	CalulateData(controlRegister1);
+	CalulateData(CalcFormatSet,controlRegister1);
 	//
 	// Tobject 轉換完成 
 	//

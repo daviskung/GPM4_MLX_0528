@@ -9,12 +9,16 @@
 #define	WRITE_CMD				0x00
 #define	READ_CMD				0x00
 #define	DEBUG_TMP_READ_OUT		0
-#define	DEBUG_TMP_READ_OUT2		0
+#define	DEBUG_TMP_READ_OUT2		1
 
 #define	DEBUG_image_READ_OUT	0
 #define	DEBUG_image_READ_OUT2	0
 
 #define	DEBUG_MLX_MSG_OUT		0
+
+#define	TEMPout					1
+#define	IMGout					2
+#define	CalcFormatSet			IMGout
 
 
 #define	TWO_FRAME_OUT			1
