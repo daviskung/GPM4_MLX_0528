@@ -438,7 +438,7 @@ void ExtractPTATParameters(INT16U	*pMLX32x24_READ_INT16U_buf, paramsMLX90640_t *
     mlx90640->KtPTAT = KtPTAT;
     mlx90640->vPTAT25 = vPTAT25;
     mlx90640->alphaPTAT = alphaPTAT;
-	
+
 }
 
 void ExtractGainParameters(INT16U	*pMLX32x24_READ_INT16U_buf, paramsMLX90640_t *mlx90640)
@@ -1027,263 +1027,6 @@ int ExtractDeviatingPixels(INT16U	*pMLX32x24_READ_INT16U_buf, paramsMLX90640_t *
 
 
 
-//------------------------------------------------------------------------------
-// example1:
-// Calculate  the  object  temperatures  for  all  the  pixels  in  a  frame,
-// object  emissivity  is  0.95  and  the reflected temperature is 23.15°C (measured by the user):
-// example2:
-// Calculate  the  object  temperatures  for  all  the  pixels  in  a  frame,
-// object  emissivity  is  0.95  and  the reflected temperature is the sensor ambient temperature:
-
-void MLX90640_CalculateTo(float emissivity, float tr)
-{
-    float vdd;
-    float ta;
-    float ta4;
-    float tr4;
-    float taTr;
-    float gain;
-    float irDataCP[2];
-    float irData;
-    float alphaCompensated;
-    uint8_t mode;
-    int8_t ilPattern;
-    int8_t chessPattern;
-    int8_t pattern;
-    int8_t conversionPattern;
-    float Sx;
-    float To;
-    float alphaCorrR[4];
-    int8_t range;
-    uint16_t subPage;
-    int i,pixelNumber;
-
-
-	subPage = pMLX_TH32x24_Para->frameData[833];
-    vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
-    ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
-
-    ta4 = pow((ta + 273.15), (double)4);
-    tr4 = pow((tr + 273.15), (double)4);
-    taTr = tr4 - (tr4-ta4)/emissivity;
-
-    alphaCorrR[0] = 1 / (1 + pMLX90640_Para->ksTo[0] * 40);
-    alphaCorrR[1] = 1 ;
-    alphaCorrR[2] = (1 + pMLX90640_Para->ksTo[2] * pMLX90640_Para->ct[2]);
-    alphaCorrR[3] = alphaCorrR[2] * (1 + pMLX90640_Para->ksTo[3] * (pMLX90640_Para->ct[3] - pMLX90640_Para->ct[2]));
-
-//------------------------- Gain calculation -----------------------------------
-    gain = pMLX_TH32x24_Para->frameData[778];
-    if(gain > 32767)
-    {
-        gain = gain - 65536;
-    }
-
-    gain = pMLX90640_Para->gainEE / gain;
-
-//------------------------- To calculation -------------------------------------
-    mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
-
-    irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
-    irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
-    for( i = 0; i < 2; i++)
-    {
-        if(irDataCP[i] > 32767)
-        {
-            irDataCP[i] = irDataCP[i] - 65536;
-        }
-        irDataCP[i] = irDataCP[i] * gain;
-    }
-    irDataCP[0] = irDataCP[0] - pMLX90640_Para->cpOffset[0] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
-    if( mode ==  pMLX90640_Para->calibrationModeEE)
-    {
-        irDataCP[1] = irDataCP[1] - pMLX90640_Para->cpOffset[1] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
-    }
-    else
-    {
-      irDataCP[1] = irDataCP[1] - (pMLX90640_Para->cpOffset[1] + pMLX90640_Para->ilChessC[0]) * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
-    }
-
-    for( pixelNumber = 0; pixelNumber < 768; pixelNumber++)
-    {
-        ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
-        chessPattern = ilPattern ^ (pixelNumber - (pixelNumber/2)*2);
-        conversionPattern = ((pixelNumber + 2) / 4 - (pixelNumber + 3) / 4 + (pixelNumber + 1) / 4 - pixelNumber / 4) * (1 - 2 * ilPattern);
-
-        if(mode == 0)
-        {
-          pattern = ilPattern;
-        }
-        else
-        {
-          pattern = chessPattern;
-        }
-
-        if(pattern == pMLX_TH32x24_Para->frameData[833])
-        {
-            irData = pMLX_TH32x24_Para->frameData[pixelNumber];
-            if(irData > 32767)
-            {
-                irData = irData - 65536;
-            }
-            irData = irData * gain;
-
-            irData = irData - pMLX90640_Para->offset[pixelNumber]*(1 + pMLX90640_Para->kta[pixelNumber]*(ta - 25))*(1 + pMLX90640_Para->kv[pixelNumber]*(vdd - 3.3));
-            if(mode !=  pMLX90640_Para->calibrationModeEE)
-            {
-              irData = irData + pMLX90640_Para->ilChessC[2] * (2 * ilPattern - 1) - pMLX90640_Para->ilChessC[1] * conversionPattern;
-            }
-
-            irData = irData / emissivity;
-
-            irData = irData - pMLX90640_Para->tgc * irDataCP[subPage];
-
-            alphaCompensated = (pMLX90640_Para->alpha[pixelNumber] - pMLX90640_Para->tgc * pMLX90640_Para->cpAlpha[subPage])*(1 + pMLX90640_Para->KsTa * (ta - 25));
-
-            Sx = pow((double)alphaCompensated, (double)3) * (irData + alphaCompensated * taTr);
-            Sx = sqrt(sqrt(Sx)) * pMLX90640_Para->ksTo[1];
-
-            To = sqrt(sqrt(irData/(alphaCompensated * (1 - pMLX90640_Para->ksTo[1] * 273.15) + Sx) + taTr)) - 273.15;
-
-            if(To < pMLX90640_Para->ct[1])
-            {
-                range = 0;
-            }
-            else if(To < pMLX90640_Para->ct[2])
-            {
-                range = 1;
-            }
-            else if(To < pMLX90640_Para->ct[3])
-            {
-                range = 2;
-            }
-            else
-            {
-                range = 3;
-            }
-
-            To = sqrt(sqrt(irData / (alphaCompensated * alphaCorrR[range] * (1 + pMLX90640_Para->ksTo[range] * (To - pMLX90640_Para->ct[range]))) + taTr)) - 273.15;
-
-            pMLX_TH32x24_Para->result[pixelNumber] =(INT16S)(To*10);
-        }
-    }
-}
-
-
-
-
-void MLX90640_GetImage(void)
-{
-    float vdd;
-    float ta;
-    float gain;
-    float irDataCP[2];
-    float irData;
-    float alphaCompensated;
-    uint8_t mode;
-    int8_t ilPattern;
-    int8_t chessPattern;
-    int8_t pattern;
-    int8_t conversionPattern;
-    float image;
-    uint16_t subPage;
-    int i,pixelNumber;
-
-    subPage = pMLX_TH32x24_Para->frameData[833];
-    vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
-    ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
-
-//------------------------- Gain calculation -----------------------------------
-    gain = pMLX_TH32x24_Para->frameData[778];
-    if(gain > 32767)
-    {
-        gain = gain - 65536;
-    }
-
-    gain = pMLX90640_Para->gainEE / gain; // K-gain
-
-//------------------------- Image calculation -------------------------------------
-    mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
-	//DBG_PRINT(" GetImage mode = 0x%04x \r\n",mode);
-
-//
-// mode 決定 是 0 Interleaved (TV) mode / 1 Chess pattern (default)
-//
-// NOTE:  In  order  to  limit  the  noise  in  the  final  To  calculation  it  is  advisable
-// to  filter  the  CP  readings  at  this  point  of calculation.
-// A good practice would be to apply a Moving Average Filter with length of 16 or higher.
-//
-    irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
-    irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
-    for( i = 0; i < 2; i++)
-    {
-        if(irDataCP[i] > 32767)
-        {
-            irDataCP[i] = irDataCP[i] - 65536;
-        }
-        irDataCP[i] = irDataCP[i] * gain;
-    }
-    irDataCP[0] = irDataCP[0] - pMLX90640_Para->cpOffset[0] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
-
-
-	// The value of the offset for compensating pixel for the subpage 1 depends on
-	// the reading pattern
-
-    if( mode ==  pMLX90640_Para->calibrationModeEE)
-    {
-
-		//DBG_PRINT(" GetImage mode == calibrationModeEE \r\n");
-        irDataCP[1] = irDataCP[1] - pMLX90640_Para->cpOffset[1] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
-    }
-    else
-    {
-      irDataCP[1] = irDataCP[1] - (pMLX90640_Para->cpOffset[1] + pMLX90640_Para->ilChessC[0]) * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
-    }
-
-    for( pixelNumber = 0; pixelNumber < 768; pixelNumber++)
-    {
-        ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
-        chessPattern = ilPattern ^ (pixelNumber - (pixelNumber/2)*2);
-        conversionPattern = ((pixelNumber + 2) / 4 - (pixelNumber + 3) / 4 + (pixelNumber + 1) / 4 - pixelNumber / 4) * (1 - 2 * ilPattern);
-
-        if(mode == 0)
-        {
-          pattern = ilPattern;
-        }
-        else
-        {
-          pattern = chessPattern; // use -> Chess patter
-        }
-
-        if(pattern == pMLX_TH32x24_Para->frameData[833]) // frameData[833] 定義 subpage 0 or 1
-        {
-            irData = pMLX_TH32x24_Para->frameData[pixelNumber];
-            if(irData > 32767)
-            {
-                irData = irData - 65536;
-            }
-            irData = irData * gain;
-
-            irData = irData - pMLX90640_Para->offset[pixelNumber]*(1 + pMLX90640_Para->kta[pixelNumber]*(ta - 25))*(1 + pMLX90640_Para->kv[pixelNumber]*(vdd - 3.3));
-            if(mode !=  pMLX90640_Para->calibrationModeEE)
-            {
-              irData = irData + pMLX90640_Para->ilChessC[2] * (2 * ilPattern - 1) - pMLX90640_Para->ilChessC[1] * conversionPattern;
-            }
-
-            irData = irData - pMLX90640_Para->tgc * irDataCP[subPage];
-
-            alphaCompensated = (pMLX90640_Para->alpha[pixelNumber] - pMLX90640_Para->tgc * pMLX90640_Para->cpAlpha[subPage])*(1 + pMLX90640_Para->KsTa * (ta - 25));
-
-            image = irData/alphaCompensated;
-
-            pMLX_TH32x24_Para->result_image[pixelNumber] =image;
-           // pMLX_TH32x24_Para->result[pixelNumber] = (INT16S)(image*10); // 放大10倍 
-        }
-    }
-}
-
-
-
 /**
  * @brief   MXL initialization function
  * @param   sensor format parameters
@@ -1328,18 +1071,18 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 {
 
 	INT32S  nRet;
-	
+
 	INT32U	TimeCnt1,TimeCnt2;
-	
+
 	INT16U 	EEcopy16BIT[8]={0};
 	INT16U	EEaddress16,*pEEcopy16BIT;
 	INT8U 	EEaddr[2],*pEEaddr;
 	INT8U  *pMLX32x24_READ_INT8U_buf;
-	
+
 	INT16U  *pMLX32x24_READ_INT16U_buf,*pMLX32x24_frameData_INT16U_buf;
 	INT16U 	FromEEcontrolRegister1,controlRegister1,i;
 	INT16U	cnt,frameData_cnt;
-	
+
 	int		error;
 
 	DBG_PRINT("%s = %d _davis\r\n", __func__, 0);
@@ -1355,14 +1098,14 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 		while(1);
 	}
 
-	
+
     pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 0;
-	
+
 	//MLX_TH32x24_TEST_HIGH();
 	TimeCnt1=xTaskGetTickCount();
 	DBG_PRINT("StartTime = %d\r\n", xTaskGetTickCount());	// xTaskGetTickCount() timebase=1ms
-	
-	
+
+
 	pEEcopy16BIT = EEcopy16BIT;
 	pEEaddr = EEaddr;
 	pMLX32x24_READ_INT8U_buf = (INT8U*)pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF;
@@ -1370,26 +1113,26 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	DBG_PRINT("************************************************** \r\n");
 	DBG_PRINT("pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF addr=0x%0x \r\n", pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF);
 	DBG_PRINT("pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF addr=0x%0x \r\n", pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF);
-	
+
 	MXL_handle.devNumber = I2C_1;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
 	MXL_handle.clkRate = 1000;
-	
+
 	//
 	//Wait 80ms + delay determined by the refresh rate
 	//
 	osDelay(80);
-	
-	
-	
+
+
+
 	// =====================================================================
-	
+
 	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrDevID,pEEcopy16BIT);
 	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrDevID+1,pEEcopy16BIT+1);
 	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrDevID+2,pEEcopy16BIT+2);
 		DBG_PRINT("EEPROM MLX90640_AdrDevID addr=0x%04X, data=0x%04X - 0x%04X - 0x%04X \r\n",
 			MLX90640_AdrDevID, *(pEEcopy16BIT) ,*(pEEcopy16BIT+1),*(pEEcopy16BIT+2));
-	
+
 	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_EEAddrRegister1,pEEcopy16BIT);
 	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_EEAddrRegister2,pEEcopy16BIT+1);
 	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_EEAddrConfig,pEEcopy16BIT+2);
@@ -1398,7 +1141,7 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 				MLX90640_EEAddrRegister1, *(pEEcopy16BIT) ,*(pEEcopy16BIT+1),*(pEEcopy16BIT+2),*(pEEcopy16BIT+3));
 
 	FromEEcontrolRegister1 = *(pEEcopy16BIT);
-		
+
 	EEaddress16 = MLX90640_EEAddrstart;
 	EEaddr[0]=(INT8U)(EEaddress16 >> 8);
 	EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
@@ -1428,8 +1171,8 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	}
 
 
-	
-	
+
+
 	MLX90640_SetRefreshRate(MLX90640_REFRESH_RATE_32HZ);
 						DBG_PRINT("SetRefreshRate = %d Hz \r\n",
 							MLX_REFRESH_RATE_HZ2[MLX90640_REFRESH_RATE_32HZ]);
@@ -1437,39 +1180,39 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	osDelay(DELAYTIME_at_REFRESH_RATE2[MLX90640_REFRESH_RATE_32HZ]);
 		DBG_PRINT("SetRefreshRate then delay  = %d ms \r\n",
 			DELAYTIME_at_REFRESH_RATE2[MLX90640_REFRESH_RATE_32HZ]);
-	
+
 	// 設定 StepMode & Subpage0
 	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
 	DBG_PRINT("read controlRegister1 = 0x%04x \r\n",controlRegister1);
-	
+
 	controlRegister1 = controlRegister1 & MLX90640_SetModeClear ;
 	controlRegister1 = controlRegister1 | MLX90640_SetStepModeSubpageRep ;
-	
+
 	drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,controlRegister1);
 	DBG_PRINT("(set initial subpage = 0)write controlRegister1 = 0x%04x \r\n",controlRegister1);
-	
+
 	// controlRegister1 設定成 自動 subpage 0/1
 	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
 	DBG_PRINT("read controlRegister1 = 0x%04x \r\n",controlRegister1);
 
-	
+
 	pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1 = controlRegister1;
-	
+
 		// 0x0030 :
 		// 1 Data in RAM overwrite is enabled
 		// 1 In step mode - start of measurement
 		//		(set by the customer and cleared once the measurement is done)
 		//
 	error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
-	
+
 	DBG_PRINT("set MLX_TH32x24 start of measurement \r\n");
-	
+
 	//DBG_PRINT("clear pMLX90640_Para - 1 \r\n");
 	//retVal = gp_memset((INT8S *)pMLX90640_Para,0,sizeof(paramsMLX90640_t));	// clear 值 
 	//DBG_PRINT("clear pMLX90640_Para -2\r\n");
-	
+
 	error = CheckEEPROMValid(pMLX32x24_READ_INT16U_buf);
-	
+
 	DBG_PRINT("CheckEEPROMValid, ERROR=%d \r\n", error);
 #if 1
 	if(error == 0)
@@ -1480,10 +1223,10 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 		ExtractPTATParameters(pMLX32x24_READ_INT16U_buf, pMLX90640_Para);
 		//DBG_PRINT("MLX32x24_Para->KvPTAT=%f, MLX32x24_Para->KtPTAT=%f ,MLX32x24_Para->vPTAT25= %d ,MLX32x24_Para->alphaPTAT=%f \r\n",
 		//	pMLX90640_Para->KvPTAT,pMLX90640_Para->KtPTAT,pMLX90640_Para->vPTAT25,pMLX90640_Para->alphaPTAT);
-	
+
 		ExtractGainParameters(pMLX32x24_READ_INT16U_buf, pMLX90640_Para);
 		DBG_PRINT("MLX32x24_Para->gainEE=%d \r\n",pMLX90640_Para->gainEE);
-	
+
 		ExtractTgcParameters(pMLX32x24_READ_INT16U_buf, pMLX90640_Para);
 		ExtractResolutionParameters(pMLX32x24_READ_INT16U_buf, pMLX90640_Para);
 		ExtractKsTaParameters(pMLX32x24_READ_INT16U_buf, pMLX90640_Para);
@@ -1497,31 +1240,31 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 		error = ExtractDeviatingPixels(pMLX32x24_READ_INT16U_buf, pMLX90640_Para);
 	#endif
 	}
-	
+
 	gp_memset((INT8S *)pMLX_TH32x24_Para->frameData,0x00,MLX90640_frameDataSize*2); // clear 值 
 	DBG_PRINT("clear frameData \r\n");
-	
+
 	gp_memset((INT8S *)pMLX_TH32x24_Para->result,0x00,MLX_Pixel*2); // clear 值 
 				DBG_PRINT("clear result \r\n");
-	
-	
-	DBG_PRINT("CalculateTo(emissivity_byUser->%d,tr_byUser = ta - TA_SHIFT->%d ) \r\n",
+
+
+	DBG_PRINT("CalculateTo(emissivity_byUser->%f,tr_byUser = ta - TA_SHIFT->%d ) \r\n",
 	emissivity_byUser,TA_SHIFT);
 	//DBG_PRINT("tr_byUser = ta - TA_SHIFT->%d ) \r\n",8);
-	
+
 	pMLX32x24_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
 #endif
-	
+
 	// 可以 與 pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF 共用 ??
-	
+
 	TimeCnt2 = xTaskGetTickCount();
 	DBG_PRINT("\r\n EndTime = %d\r\n", xTaskGetTickCount());
 	DBG_PRINT("TotalTime = %d ms\r\n",TimeCnt2 - TimeCnt1);
-	
 
-	
 
-	
+
+
+
     pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
 
 }

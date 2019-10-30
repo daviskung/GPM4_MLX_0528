@@ -117,7 +117,7 @@
 #define MLX_TH32x24_ReadoutBlockBuf_max	1
 #define MLX_TH32x24_SCALERUP_BUFFER_NO	1
 
-#define	emissivity_byUser	1
+#define	emissivity_byUser	0.95
 #define	TA_SHIFT			8
 
 

@@ -17,6 +17,7 @@
 #include "drv_l1_timer.h"
 #include "drv_l2_sccb.h"
 #include "drv_l1_i2c.h"
+#include <math.h>		// for pow()
 
 
 
@@ -111,7 +112,7 @@ static PSCALER_PARAM_STRUCT PScalerParam = {0};
 static INT32U device_h_size, device_v_size;
 
 
-MLX_TH32x24Para_t *pMLX_TH32x24_Para;	
+MLX_TH32x24Para_t *pMLX_TH32x24_Para;
 paramsMLX90640_t *pMLX90640_Para;
 
 const INT16U DELAYTIME_at_REFRESH_RATE3[8]={2000,1000,500,250,125,63,32,15};
@@ -685,6 +686,266 @@ static void mazeTest_Preview_PScaler(void)
 }
 
 
+ 
+ 
+ //------------------------------------------------------------------------------
+ // example1:
+ // Calculate  the	object	temperatures  for  all	the  pixels  in  a	frame,
+ // object	emissivity	is	0.95  and  the reflected temperature is 23.15°C (measured by the user):
+ // example2:
+ // Calculate  the	object	temperatures  for  all	the  pixels  in  a	frame,
+ // object	emissivity	is	0.95  and  the reflected temperature is the sensor ambient temperature:
+ 
+ void MLX90640_CalculateTo(float emissivity, float tr)
+ {
+	 float vdd;
+	 float ta;
+	 float ta4;
+	 float tr4;
+	 float taTr;
+	 float gain;
+	 float irDataCP[2];
+	 float irData;
+	 float alphaCompensated;
+	 uint8_t mode;
+	 int8_t ilPattern;
+	 int8_t chessPattern;
+	 int8_t pattern;
+	 int8_t conversionPattern;
+	 float Sx;
+	 float To;
+	 float alphaCorrR[4];
+	 int8_t range;
+	 uint16_t subPage;
+	 int i,pixelNumber;
+ 
+ 
+	 subPage = pMLX_TH32x24_Para->frameData[833];
+	 vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
+	 ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
+ 
+	 ta4 = pow((ta + 273.15), (double)4);
+	 tr4 = pow((tr + 273.15), (double)4);
+	 taTr = tr4 - (tr4-ta4)/emissivity;
+ 
+	 alphaCorrR[0] = 1 / (1 + pMLX90640_Para->ksTo[0] * 40);
+	 alphaCorrR[1] = 1 ;
+	 alphaCorrR[2] = (1 + pMLX90640_Para->ksTo[2] * pMLX90640_Para->ct[2]);
+	 alphaCorrR[3] = alphaCorrR[2] * (1 + pMLX90640_Para->ksTo[3] * (pMLX90640_Para->ct[3] - pMLX90640_Para->ct[2]));
+ 
+ //------------------------- Gain calculation -----------------------------------
+	 gain = pMLX_TH32x24_Para->frameData[778];
+	 if(gain > 32767)
+	 {
+		 gain = gain - 65536;
+	 }
+ 
+	 gain = pMLX90640_Para->gainEE / gain;
+ 
+ 
+	 DBG_PRINT("subPage = %d,vdd = %f,ta = %f \r\n",subPage,pMLX_TH32x24_Para->MLX_TH32x24_vdd,ta);
+ 
+ //------------------------- To calculation -------------------------------------
+	 mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
+ 
+	 irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
+	 irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
+	 for( i = 0; i < 2; i++)
+	 {
+		 if(irDataCP[i] > 32767)
+		 {
+			 irDataCP[i] = irDataCP[i] - 65536;
+		 }
+		 irDataCP[i] = irDataCP[i] * gain;
+	 }
+	 irDataCP[0] = irDataCP[0] - pMLX90640_Para->cpOffset[0] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+	 if( mode ==  pMLX90640_Para->calibrationModeEE)
+	 {
+		 irDataCP[1] = irDataCP[1] - pMLX90640_Para->cpOffset[1] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+	 }
+	 else
+	 {
+	   irDataCP[1] = irDataCP[1] - (pMLX90640_Para->cpOffset[1] + pMLX90640_Para->ilChessC[0]) * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+	 }
+ 
+	 for( pixelNumber = 0; pixelNumber < 768; pixelNumber++)
+	 {
+		 ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
+		 chessPattern = ilPattern ^ (pixelNumber - (pixelNumber/2)*2);
+		 conversionPattern = ((pixelNumber + 2) / 4 - (pixelNumber + 3) / 4 + (pixelNumber + 1) / 4 - pixelNumber / 4) * (1 - 2 * ilPattern);
+ 
+		 if(mode == 0)
+		 {
+		   pattern = ilPattern;
+		 }
+		 else
+		 {
+		   pattern = chessPattern;
+		 }
+ 
+		 if(pattern == pMLX_TH32x24_Para->frameData[833])
+		 {
+			 irData = pMLX_TH32x24_Para->frameData[pixelNumber];
+			 if(irData > 32767)
+			 {
+				 irData = irData - 65536;
+			 }
+			 irData = irData * gain;
+ 
+			 irData = irData - pMLX90640_Para->offset[pixelNumber]*(1 + pMLX90640_Para->kta[pixelNumber]*(ta - 25))*(1 + pMLX90640_Para->kv[pixelNumber]*(vdd - 3.3));
+			 if(mode !=  pMLX90640_Para->calibrationModeEE)
+			 {
+			   irData = irData + pMLX90640_Para->ilChessC[2] * (2 * ilPattern - 1) - pMLX90640_Para->ilChessC[1] * conversionPattern;
+			 }
+ 
+			 irData = irData / emissivity;
+ 
+			 irData = irData - pMLX90640_Para->tgc * irDataCP[subPage];
+ 
+			 alphaCompensated = (pMLX90640_Para->alpha[pixelNumber] - pMLX90640_Para->tgc * pMLX90640_Para->cpAlpha[subPage])*(1 + pMLX90640_Para->KsTa * (ta - 25));
+ 
+			 Sx = pow((double)alphaCompensated, (double)3) * (irData + alphaCompensated * taTr);
+			 Sx = sqrt(sqrt(Sx)) * pMLX90640_Para->ksTo[1];
+ 
+			 To = sqrt(sqrt(irData/(alphaCompensated * (1 - pMLX90640_Para->ksTo[1] * 273.15) + Sx) + taTr)) - 273.15;
+ 
+			 if(To < pMLX90640_Para->ct[1])
+			 {
+				 range = 0;
+			 }
+			 else if(To < pMLX90640_Para->ct[2])
+			 {
+				 range = 1;
+			 }
+			 else if(To < pMLX90640_Para->ct[3])
+			 {
+				 range = 2;
+			 }
+			 else
+			 {
+				 range = 3;
+			 }
+ 
+			 To = sqrt(sqrt(irData / (alphaCompensated * alphaCorrR[range] * (1 + pMLX90640_Para->ksTo[range] * (To - pMLX90640_Para->ct[range]))) + taTr)) - 273.15;
+ 
+			 pMLX_TH32x24_Para->result[pixelNumber] =(INT16S)(To*10);
+		 }
+	 }
+ }
+
+ void MLX90640_GetImage(void)
+ {
+	 float vdd;
+	 float ta;
+	 float gain;
+	 float irDataCP[2];
+	 float irData;
+	 float alphaCompensated;
+	 uint8_t mode;
+	 int8_t ilPattern;
+	 int8_t chessPattern;
+	 int8_t pattern;
+	 int8_t conversionPattern;
+	 float image;
+	 uint16_t subPage;
+	 int i,pixelNumber;
+ 
+	 subPage = pMLX_TH32x24_Para->frameData[833];
+	 vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
+	 ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
+ 
+ //------------------------- Gain calculation -----------------------------------
+	 gain = pMLX_TH32x24_Para->frameData[778];
+	 if(gain > 32767)
+	 {
+		 gain = gain - 65536;
+	 }
+ 
+	 gain = pMLX90640_Para->gainEE / gain; // K-gain
+ 
+ //------------------------- Image calculation -------------------------------------
+	 mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
+	 //DBG_PRINT(" GetImage mode = 0x%04x \r\n",mode);
+ 
+ //
+ // mode 決定 是 0 Interleaved (TV) mode / 1 Chess pattern (default)
+ //
+ // NOTE:  In  order  to  limit  the  noise  in  the  final  To  calculation  it  is  advisable
+ // to	filter	the  CP  readings  at  this  point	of calculation.
+ // A good practice would be to apply a Moving Average Filter with length of 16 or higher.
+ //
+	 irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
+	 irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
+	 for( i = 0; i < 2; i++)
+	 {
+		 if(irDataCP[i] > 32767)
+		 {
+			 irDataCP[i] = irDataCP[i] - 65536;
+		 }
+		 irDataCP[i] = irDataCP[i] * gain;
+	 }
+	 irDataCP[0] = irDataCP[0] - pMLX90640_Para->cpOffset[0] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+ 
+ 
+	 // The value of the offset for compensating pixel for the subpage 1 depends on
+	 // the reading pattern
+ 
+	 if( mode ==  pMLX90640_Para->calibrationModeEE)
+	 {
+ 
+		 //DBG_PRINT(" GetImage mode == calibrationModeEE \r\n");
+		 irDataCP[1] = irDataCP[1] - pMLX90640_Para->cpOffset[1] * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+	 }
+	 else
+	 {
+	   irDataCP[1] = irDataCP[1] - (pMLX90640_Para->cpOffset[1] + pMLX90640_Para->ilChessC[0]) * (1 + pMLX90640_Para->cpKta * (ta - 25)) * (1 + pMLX90640_Para->cpKv * (vdd - 3.3));
+	 }
+ 
+	 for( pixelNumber = 0; pixelNumber < 768; pixelNumber++)
+	 {
+		 ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2;
+		 chessPattern = ilPattern ^ (pixelNumber - (pixelNumber/2)*2);
+		 conversionPattern = ((pixelNumber + 2) / 4 - (pixelNumber + 3) / 4 + (pixelNumber + 1) / 4 - pixelNumber / 4) * (1 - 2 * ilPattern);
+ 
+		 if(mode == 0)
+		 {
+		   pattern = ilPattern;
+		 }
+		 else
+		 {
+		   pattern = chessPattern; // use -> Chess patter
+		 }
+ 
+		 if(pattern == pMLX_TH32x24_Para->frameData[833]) // frameData[833] 定義 subpage 0 or 1
+		 {
+			 irData = pMLX_TH32x24_Para->frameData[pixelNumber];
+			 if(irData > 32767)
+			 {
+				 irData = irData - 65536;
+			 }
+			 irData = irData * gain;
+ 
+			 irData = irData - pMLX90640_Para->offset[pixelNumber]*(1 + pMLX90640_Para->kta[pixelNumber]*(ta - 25))*(1 + pMLX90640_Para->kv[pixelNumber]*(vdd - 3.3));
+			 if(mode !=  pMLX90640_Para->calibrationModeEE)
+			 {
+			   irData = irData + pMLX90640_Para->ilChessC[2] * (2 * ilPattern - 1) - pMLX90640_Para->ilChessC[1] * conversionPattern;
+			 }
+ 
+			 irData = irData - pMLX90640_Para->tgc * irDataCP[subPage];
+ 
+			 alphaCompensated = (pMLX90640_Para->alpha[pixelNumber] - pMLX90640_Para->tgc * pMLX90640_Para->cpAlpha[subPage])*(1 + pMLX90640_Para->KsTa * (ta - 25));
+ 
+			 image = irData/alphaCompensated;
+ 
+			 pMLX_TH32x24_Para->result_image[pixelNumber] =image;
+			// pMLX_TH32x24_Para->result[pixelNumber] = (INT16S)(image*10); // 放大10倍 
+		 }
+	 }
+ }
+ 
+
+
+
  void MLX_TH32x24_start_timer_isr(void)
 {
 	INT8U err;
@@ -701,9 +962,9 @@ static void mazeTest_Preview_PScaler(void)
 		&&( pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON == 1 )) {	// per 5 sec
 		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
 		//DBG_PRINT("timer->MLX_TH32x24");
-		
+
 		//frame = avi_encode_get_empty(MLX_TH32x24_SCALERUP_buf_q);
-	
+
         frame = free_frame_buffer_get(0);
 		if(frame == 0)	DBG_PRINT("L->MLX_TH32x24");
 		else{
@@ -712,7 +973,7 @@ static void mazeTest_Preview_PScaler(void)
 			//avi_encode_post_empty(MLX_TH32x24_task_q,frame);
             csi_frame_buffer_add((INT32U *)frame, 0);
 		}
-	
+
 	}
 
 
@@ -793,7 +1054,7 @@ static void Thermal_Preview_PScaler(void)
 static void csi_task_entry(void const *parm)
 {
     INT32U msg_id,csi_buf,PscalerBuffer,PscalerBufferSize;
-    INT32U i,event;
+    INT32U event;
     osEvent result;
 
 	ScalerFormat_t scale;
@@ -802,7 +1063,7 @@ static void csi_task_entry(void const *parm)
 	INT16U	LoopCnt;
 	INT8U	Cnt_index;
 
-	
+
 	INT32U	TimeCnt1,TimeCnt2;
 	INT16U 	EEcopy16BIT[8]={0};
 	INT16U	EEaddress16,*pEEcopy16BIT;
@@ -812,14 +1073,18 @@ static void csi_task_entry(void const *parm)
 	INT16U	cnt,frameData_cnt;
 	INT8U  *pMLX32x32_READ_INT8U_buf;
 	INT16U  *pMLX32x32_READ_INT16U_buf,*pMLX32x32_frameData_INT16U_buf;
-	
-	INT16U pixelNumber;
-	
+
+	//INT16U pixelNumber;
+
     float ta,vdd,tr_byUser;
-	
+
 	int		error;
 	
+    int i,pixelNumber;
+
 	drv_l1_i2c_bus_handle_t MXL_handle;
+
+
 
     DBG_PRINT("csi_task_entry start \r\n");
     // csi init
@@ -851,7 +1116,7 @@ static void csi_task_entry(void const *parm)
 	pEEcopy16BIT = EEcopy16BIT;
 	pEEaddr = EEaddr;
 	pMLX32x32_READ_INT8U_buf = (INT8U*)pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF;
-	
+
 	pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
 
 
@@ -860,12 +1125,12 @@ static void csi_task_entry(void const *parm)
 
 	DBG_PRINT("MLX32x24_Para->KvPTAT=%f, MLX32x24_Para->KtPTAT=%f ,MLX32x24_Para->vPTAT25= %d ,MLX32x24_Para->alphaPTAT=%f \r\n",
 			pMLX90640_Para->KvPTAT,pMLX90640_Para->KtPTAT,pMLX90640_Para->vPTAT25,pMLX90640_Para->alphaPTAT);
-	
+
 
 	// controlRegister1 設定成 自動 subpage 0/1
 	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
 	DBG_PRINT("read controlRegister1 = 0x%04x \r\n",controlRegister1);
-	
+
 	DBG_PRINT("initial setting controlRegister1 = 0x%04x \r\n",pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1);
 
 	while(controlRegister1 != pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1 ){
@@ -876,12 +1141,12 @@ static void csi_task_entry(void const *parm)
 	DBG_PRINT("*Re - write/read controlRegister1 = 0x%04x \r\n",controlRegister1);
 
 	}
-	
+
 	//controlRegister1 = pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1;
 
 
 
-	
+
 
     while(1)
     {
@@ -895,13 +1160,13 @@ static void csi_task_entry(void const *parm)
         //DBG_PRINT(".");
 
 #if 1
-	
-		
+
+
 	TimeCnt1 = xTaskGetTickCount();
-	
+
 	// 開始 計算 Tobject
-	
-	
+
+
 	//DBG_PRINT("************ GetFrameData frame 0 ************************************** \r\n");
 	dataReady = 0;
 	frameData_cnt=0;
@@ -916,9 +1181,9 @@ static void csi_task_entry(void const *parm)
 				osDelay(10);
 			}
 		}while(error == -1);
-	
+
 		dataReady = statusRegister & 0x0008; // 1 : A new data is available in RAM ?
-	
+
 		//DBG_PRINT(" 2.statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d \r\n",
 		//	statusRegister,dataReady,frameData_cnt);
 		if(dataReady == 0){
@@ -930,115 +1195,115 @@ static void csi_task_entry(void const *parm)
 			frameData_cnt++;
 		}
 		if(frameData_cnt >4){	// reset MLX
-	
+
 			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
 			//DBG_PRINT("(reset)read controlRegister1 set frame0= 0x%04x \r\n",controlRegister1);
 			controlRegister1 = controlRegister1 & MLX90640_SetModeClear ;
 			controlRegister1 = controlRegister1 | MLX90640_SetStepModeSubpageRep ;
-	
+
 			drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,controlRegister1);
 			//DBG_PRINT("(subpage = 0)write controlRegister1 = 0x%04x \r\n",controlRegister1);
 			//osDelay(DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_32HZ]);
 			//	DBG_PRINT("\r\n frameData_cnt> frame0 delay  = %d ms \r\n",
 			//		DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_32HZ]);
-	
+
 			error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
-	
+
 			frameData_cnt = 0;
 			}
 	}
-	
+
 	 if(dataReady != 0)
 	 {
-	 	
-		//DBG_PRINT("drv_l1_i2c_multi_read MLX90640_RAMAddrstart \r\n");	
+
+		//DBG_PRINT("drv_l1_i2c_multi_read MLX90640_RAMAddrstart \r\n");
 		EEaddress16 = MLX90640_RAMAddrstart;
 		EEaddr[0]=(INT8U)(EEaddress16 >> 8);
 		EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
 		error = drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pMLX32x32_READ_INT8U_buf
 			,MLX90640_RAM_AddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
-	
+
 		//DBG_PRINT("read return-2	= %d \r\n",error);	// return data length , if error = -1
-		
+
 		for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
 		{
 			i = cnt << 1;
 			*(pMLX32x32_frameData_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
 				+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
 		}
-	
+
 		pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
 		//DBG_PRINT(" 3. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
-	
+
 		pMLX_TH32x24_Para->frameData[832] = controlRegister1;
-	
+
 		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
 	}
 
 #if DEBUG_MLX_CALC_MSG_OUT
 	//vdd = pMLX_TH32x24_Para->frameData[810];
-	
+
 	error = (pMLX_TH32x24_Para->frameData[832] & 0x0C00) >> 10;
-	
+
 	tr_byUser = pow(2, (double)pMLX90640_Para->resolutionEE) / pow(2, (double)error);
 
 	DBG_PRINT(" frameData[810] vdd = 0x%x / resolutionRAM = %d / resolutionCorrection = %f\r\n"
 			,pMLX_TH32x24_Para->frameData[810],error,tr_byUser);
 #endif
-	 
-	MLX90640_GetVdd();
-		
+
+	//MLX90640_GetVdd();
+
 #if DEBUG_MLX_MSG_OUT
 	DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd = %f (t=%d) \r\n"
 			,pMLX_TH32x24_Para->MLX_TH32x24_vdd,xTaskGetTickCount());
 #endif
-		
-	MLX90640_GetTa();
-		
+
+	//MLX90640_GetTa();
+
 #if DEBUG_MLX_MSG_OUT
 	DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
 			,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
 #endif
-		
+
 	//tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
-	
+
 	//MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
 	//	DBG_PRINT(" frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
 	//pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
-	
+
 	//MLX90640_GetImage();
 	//DBG_PRINT(" frame %d MLX90640_GetImage->1 End[t=%d] \r\n",
 	//	  pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
-	
+
 		#if DEBUG_TMP_READ_OUT
 			for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
-		
+
 			if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
 			DBG_PRINT("(%d)",pMLX_TH32x24_Para->result[pixelNumber]);
-		
-			}
-		#endif
-		
-		#if DEBUG_image_READ_OUT
-			for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
-		
-			if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
-			DBG_PRINT("%d/",pMLX_TH32x24_Para->result_image[pixelNumber]);
-		
+
 			}
 		#endif
 
-		
+		#if DEBUG_image_READ_OUT
+			for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+
+			if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+			DBG_PRINT("%d/",pMLX_TH32x24_Para->result_image[pixelNumber]);
+
+			}
+		#endif
+
+
 	//DBG_PRINT("************ GetFrameData frame 1 ************************************** \r\n");
-		
+
 
 	dataReady = 0;
 	frameData_cnt=0;
 	while (dataReady == 0)
 	{
-	
+
 		do{
-	
+
 			osDelay(CONVERT_WAIT_TIME);
 			error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
 			//DBG_PRINT("read return  = %d \r\n",error);	// return data length , if error = -1
@@ -1048,12 +1313,12 @@ static void csi_task_entry(void const *parm)
 				osDelay(10);
 				}
 		}while(error == -1);
-	
+
 		dataReady = statusRegister & 0x0008;
-	
+
 		//DBG_PRINT("\r\n 2. statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d [t=%d] \r\n",
 		//	statusRegister,dataReady,frameData_cnt,xTaskGetTickCount());
-	
+
 		if(dataReady == 0){
 				//osDelay(DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_64HZ]);
 				//DBG_PRINT("\r\n frame1 delay	= %d ms \r\n",
@@ -1061,9 +1326,9 @@ static void csi_task_entry(void const *parm)
 				osDelay(CONVERT_WAIT_TIME);
 				//DBG_PRINT("\r\n frame1 delay = %d ms \r\n",CONVERT_WAIT_TIME);
 		}
-	
+
 	}
-	
+
 	if(dataReady != 0)
 	{
 		EEaddress16 = MLX90640_RAMAddrstart;
@@ -1071,21 +1336,21 @@ static void csi_task_entry(void const *parm)
 		EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
 		error = drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pMLX32x32_READ_INT8U_buf
 			,MLX90640_RAM_AddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
-	
+
 		//DBG_PRINT("multi_read return = %d \r\n",error);// return data length , if error = -1
-	
+
 		for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
 		{
 			i = cnt << 1;
 			*(pMLX32x32_frameData_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
 				+ (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
 		}
-	
+
 		pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	// 紀錄 目前是 subpage ?
 		//DBG_PRINT(" 3. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
-	
+
 		pMLX_TH32x24_Para->frameData[832] = controlRegister1;
-	
+
 	//
 	// in Status register - 0x8000
 	// Bit3:
@@ -1097,50 +1362,51 @@ static void csi_task_entry(void const *parm)
 	// 1: In step mode - start of measurement
 	//		(set by the customer and cleared once the measurement is done)
 	//
-	
+
 		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
-	
+
 	}
-	
+
 	MLX90640_GetVdd();
-		
+
 #if DEBUG_MLX_MSG_OUT
 	DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd =  %f (t=%d) \r\n"
 		,pMLX_TH32x24_Para->MLX_TH32x24_vdd,xTaskGetTickCount());
 #endif
-		
+
 	MLX90640_GetTa();
-		
+
 #if DEBUG_MLX_MSG_OUT
 	DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
 		,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
 #endif
-		
+
 	tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
-	
+	DBG_PRINT("emissivity_byUser = %f,tr_byUser = %f \r\n",emissivity_byUser,tr_byUser);
+
 	MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
 	DBG_PRINT(" frame %d MLX90640_CalculateTo->2 End[t=%d] \r\n",
 		pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
-	
+
 	//MLX90640_GetImage();
 	//DBG_PRINT(" frame %d MLX90640_GetImage->2 End[t=%d] \r\n",
 	//	pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
-	
-	
+
+
 	#if DEBUG_TMP_READ_OUT2
 	for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
-		
+
 	if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
 		DBG_PRINT("(%d)",pMLX_TH32x24_Para->result[pixelNumber]);
-		
+
 			}
 	#endif
-	
-	
-	
-	
+
+
+
+
 #endif
-		
+
         PscalerBuffer = pscaler_frame_buffer_get(1);
         //if(PscalerBuffer)
         //    fd_display_set_frame(csi_buf, PscalerBuffer, PRCESS_SRC_WIDTH, PRCESS_SRC_HEIGHT, device_h_size, device_v_size);
@@ -1298,7 +1564,7 @@ static void prcess_task_entry(void const *parm)
     DBG_PRINT("prcess_task_entry start \r\n");
     //**************************************//
     //DBG_PRINT("user init add \r\n");
-    	
+
     //**************************************//
 
     while(1)
@@ -1317,7 +1583,7 @@ static void prcess_task_entry(void const *parm)
             //**************************************//
             free_frame_buffer_add((INT32U *)prcess_buf, 1);
             prcess_state_post(PRCESS_STATE_OK);
-			
+
 			//pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
     }
 }
@@ -1332,7 +1598,7 @@ void GPM4_CSI_DISP_Demo(void)
     osMessageQDef_t disp_q = {DISP_QUEUE_MAX, sizeof(INT32U), 0};
     osSemaphoreDef_t disp_sem = {0};
 
-	
+
 	INT32S  nRet;
 
 #if CSI_SD_EN == 1
@@ -1485,14 +1751,14 @@ void GPM4_CSI_DISP_Demo(void)
     }
 
 
-	
+
 	// start timer_B
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
 	pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
-	
+
 	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
-	
+
 	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d \r\n",nRet) ;
 
 
