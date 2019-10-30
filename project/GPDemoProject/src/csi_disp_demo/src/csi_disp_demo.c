@@ -1000,11 +1000,11 @@ static void csi_task_entry(void const *parm)
 			,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
 #endif
 		
-	tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
+	//tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
 	
-	MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
-		DBG_PRINT(" frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
-	pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+	//MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
+	//	DBG_PRINT(" frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
+	//pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
 	
 	//MLX90640_GetImage();
 	//DBG_PRINT(" frame %d MLX90640_GetImage->1 End[t=%d] \r\n",
