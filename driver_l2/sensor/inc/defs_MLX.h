@@ -9,12 +9,14 @@
 #define	WRITE_CMD				0x00
 #define	READ_CMD				0x00
 #define	DEBUG_TMP_READ_OUT		0
-#define	DEBUG_TMP_READ_OUT2		1
+#define	DEBUG_TMP_READ_OUT2		0
 
 #define	DEBUG_image_READ_OUT	0
 #define	DEBUG_image_READ_OUT2	0
 
 #define	DEBUG_MLX_MSG_OUT		1
+#define	DEBUG_MLX_CALC_MSG_OUT		1
+
 
 #define	TWO_FRAME_OUT			1
 #define	TMP_AVGBUF_ON			0

@@ -952,7 +952,18 @@ static void csi_task_entry(void const *parm)
 	
 		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
 	}
+
+#if DEBUG_MLX_CALC_MSG_OUT
+	//vdd = pMLX_TH32x24_Para->frameData[810];
 	
+	error = (pMLX_TH32x24_Para->frameData[832] & 0x0C00) >> 10;
+	
+	tr_byUser = pow(2, (double)pMLX90640_Para->resolutionEE) / pow(2, (double)error);
+
+	DBG_PRINT(" frameData[810] vdd = 0x%x / resolutionRAM = %d / resolutionCorrection = %f\r\n"
+			,pMLX_TH32x24_Para->frameData[810],error,tr_byUser);
+#endif
+	 
 	MLX90640_GetVdd();
 		
 #if DEBUG_MLX_MSG_OUT
