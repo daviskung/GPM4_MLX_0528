@@ -27,7 +27,6 @@
 #define FRAME_BUF_ALIGN64                   0x3F
 #define FRAME_BUF_ALIGN32                   0x1F
 
-#define COLOR_FRAME_OUT		1
 
 
 #if  GPLIB_PPU_EN

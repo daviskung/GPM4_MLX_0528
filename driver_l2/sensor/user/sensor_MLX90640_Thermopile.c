@@ -180,8 +180,13 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 	INT32S buffer_size, nRet;
 	INT8U  tmpN1,tmpN2;
 
-	pMLX_TH32x24_Para->MLX_TH32x24_width = MLX_LINE;
-    pMLX_TH32x24_Para->MLX_TH32x24_height = MLX_COLUMN;
+
+	//pMLX_TH32x24_Para->MLX_TH32x24_width = bufA;
+    //pMLX_TH32x24_Para->MLX_TH32x24_height = bufB;
+
+	
+	DBG_PRINT("davis --> pMLX_TH32x24_Para->MLX_TH32x24_width = %d pMLX_TH32x24_Para->MLX_TH32x24_height = %d \r\n", 
+		pMLX_TH32x24_Para->MLX_TH32x24_width,pMLX_TH32x24_Para->MLX_TH32x24_height);
 
 //	MLX32x24_EE_READ_8bitBUF
 	buffer_size = MLX90640_EEMemAddrRead * 2;
@@ -1093,6 +1098,9 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	pMLX_TH32x24_Para = &MLX_TH32x24_Para;
     gp_memset((INT8S *)&MLX_TH32x24_Para, 0, sizeof(MLX_TH32x24Para_t));
 
+	pMLX_TH32x24_Para->MLX_TH32x24_width = bufA;
+    pMLX_TH32x24_Para->MLX_TH32x24_height = bufB;
+
 	if(MLX_TH32x24_mem_alloc() < 0) {	// RAM 正常 
 		DBG_PRINT("MLX_TH32x24_mem_alloc err!! \r\n");
 		while(1);
@@ -1385,9 +1393,9 @@ const drv_l2_sensor_ops_t mlx90640_sensor_thermal_ops =
 			V4L2_PIX_FMT_VYUY,			/* output format */
 			0,			/* FPS in sensor */
 			32,					/* target width */
-			32, 				/* target height */
+			24, 				/* target height */
 			32,					/* sensor width */
-			32, 				/* sensor height */
+			24, 				/* sensor height */
 			0,							/* sensor h offset */
 			0,							/* sensor v offset */
 			MODE_CCIR_HREF,				/* input interface */

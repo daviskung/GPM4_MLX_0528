@@ -9,7 +9,7 @@
 #define	WRITE_CMD				0x00
 #define	READ_CMD				0x00
 #define	DEBUG_TMP_READ_OUT		0
-#define	DEBUG_TMP_READ_OUT2		1
+#define	DEBUG_TMP_READ_OUT2		0
 
 #define	DEBUG_image_READ_OUT	0
 #define	DEBUG_image_READ_OUT2	0
@@ -111,7 +111,7 @@
 
   
 #define AVG_buf_len			4
-#define IMG_AVG_buf_len		4
+#define IMG_AVG_buf_len		2
 #define IMG_VAL_buf_len		4
 #define IMG_GRAY_IND_buf_len		10
   
@@ -186,6 +186,10 @@
 	  INT8U  MLX_TH32x24_GrayOutputFactor;
 	  INT8U  MLX_TH32x24_GRAY_MAX_VAL;
 	  INT8U  MLX_TH32x24_GRAY_START_VAL;
+	  
+	  INT8U   TmpTbInd_buf_Enable;
+	  
+	  INT8U   TmpTbInd_buf[IMG_GRAY_IND_buf_len];
 	  
 	  INT16U  MLX_TH32x24_InitSet_controlRegister1;	  // to check controlRegister1 setting
 	  
