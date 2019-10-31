@@ -1021,10 +1021,9 @@ static void mazeTest_Preview_PScaler(void)
 		 //  statusRegister,dataReady,frameData_cnt);
 		 if(dataReady == 0){
 				 osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
-				 //DBG_PRINT("\r\n 1-frame0 delay  = %d ms \r\n",
-				//	 DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
-				 //osDelay(CONVERT_WAIT_TIME);
-				 //DBG_PRINT("\r\n frame0 delay = %d ms \r\n",CONVERT_WAIT_TIME);
+				 //DBG_PRINT("\r\n 1-frame0 delay  = %d ms > %d\r\n",
+				//	 DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ],frameData_cnt);
+				 
 			 frameData_cnt++;
 		 }
 		 if(frameData_cnt >4){	 // reset MLX
@@ -1066,7 +1065,7 @@ static void mazeTest_Preview_PScaler(void)
 		 }
 
 		 pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	 // 紀錄 目前是 subpage ?
-		 DBG_PRINT(" 3. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
+		 //DBG_PRINT(" 3a. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
 
 		 pMLX_TH32x24_Para->frameData[832] = SETcontrolRegister1;
 
@@ -1144,10 +1143,10 @@ static void mazeTest_Preview_PScaler(void)
 		 //  statusRegister,dataReady,frameData_cnt,xTaskGetTickCount());
 
 		 if(dataReady == 0){
-				 //osDelay(DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_64HZ]);
-				 //DBG_PRINT("\r\n frame1 delay  = %d ms \r\n",
-				 //  DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_64HZ]);
-				 osDelay(CONVERT_WAIT_TIME);
+				 osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
+				 DBG_PRINT("\r\n 2-frame1 delay  = %d ms \r\n",
+				   DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
+				 //osDelay(CONVERT_WAIT_TIME);
 				 //DBG_PRINT("\r\n frame1 delay = %d ms \r\n",CONVERT_WAIT_TIME);
 		 }
 
@@ -1171,13 +1170,13 @@ static void mazeTest_Preview_PScaler(void)
 		 }
 
 		 pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	 // 紀錄 目前是 subpage ?
-		 //DBG_PRINT(" 3. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
+		 //DBG_PRINT(" 3b. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
 
 		 pMLX_TH32x24_Para->frameData[832] = SETcontrolRegister1;
 
 	 //
 	 // in Status register - 0x8000
-	 // Bit3:
+	 // Bit3:b
 	 //  0:No new data is available in RAM (must be reset be the customer)
 	 // 0x0030 :
 	 // Bit4:
@@ -1498,16 +1497,16 @@ void FindMax_ColorAssign(INT8U firstRun){
 	INT8U err;
 	INT32U frame;
 
-
+if( pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON == 1 )
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt ++;
 
 	//if ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 10 ){	// per sec
 	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 5 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 500ms
 	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 2 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 200ms
 
-	if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 10 )
-		&&( pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON == 1 )) {	// per 5 sec
-		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
+	if ( ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 2 )
+		&& ( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) ) {	// per 30 msec
+		
 		//DBG_PRINT("timer->MLX_TH32x24");
 
 		//frame = avi_encode_get_empty(MLX_TH32x24_SCALERUP_buf_q);
@@ -1520,29 +1519,9 @@ void FindMax_ColorAssign(INT8U firstRun){
 			//avi_encode_post_empty(MLX_TH32x24_task_q,frame);
             csi_frame_buffer_add((INT32U *)frame, 0);
 		}
-
+		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
+		pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 1;
 	}
-
-
-
-#if 0
-	if(( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) && // per 20 ms
-		(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt %2 == 0 )) {
-
-
-		frame = avi_encode_get_empty(MLX_TH32x24_SCALERUP_buf_q);
-		if(frame == 0)
-				DEBUG_MSG("L->MLX_TH32x24");
-		else{
-
-			//DEBUG_MSG("davis -->frame = 0x%x in csi_eof_isr \r\n",frame );
-			avi_encode_post_empty(MLX_TH32x24_task_q,frame);
-
-			pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 1;
-		}
-
-	}
-#endif
 }
 
 static void Thermal_Preview_PScaler(void)
@@ -1749,6 +1728,7 @@ static void csi_task_entry(void const *parm)
 	// 開始 計算 Tobject
 
 	CalulateData(CalcFormatSet,controlRegister1);
+	pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0 ;
 	//
 	// Tobject 轉換完成 
 	//
@@ -2157,7 +2137,7 @@ void GPM4_CSI_DISP_Demo(void)
 
 	// start timer_B
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
-	pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
+	//pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
 
 	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
