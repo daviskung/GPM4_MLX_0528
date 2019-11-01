@@ -100,7 +100,7 @@ static INT32S MXL_sccb_open(void)
 	MXL_handle.devNumber = I2C_1;
     MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
 
-    MXL_handle.clkRate = 400;
+    MXL_handle.clkRate = 950;
     drv_l1_i2c_init(MXL_handle.devNumber);
 
 	DBG_PRINT(" MLX90640_SLAVE_ADDR Sccb open in HW_I2C.\r\n");
@@ -1124,7 +1124,7 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 
 	MXL_handle.devNumber = I2C_1;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
-	MXL_handle.clkRate = 1000;
+	MXL_handle.clkRate = 900;
 
 	//
 	//Wait 80ms + delay determined by the refresh rate
@@ -1255,9 +1255,6 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	gp_memset((INT8S *)pMLX_TH32x24_Para->result,0x00,MLX_Pixel*2); // clear 值 
 				DBG_PRINT("clear result \r\n");
 
-
-	DBG_PRINT("CalculateTo(emissivity_byUser->%f,tr_byUser = ta - TA_SHIFT->%d ) \r\n",
-	emissivity_byUser,TA_SHIFT);
 	//DBG_PRINT("tr_byUser = ta - TA_SHIFT->%d ) \r\n",8);
 
 	pMLX32x24_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
