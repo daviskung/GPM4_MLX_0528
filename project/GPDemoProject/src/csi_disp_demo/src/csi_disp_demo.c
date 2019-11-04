@@ -1640,7 +1640,7 @@ static void csi_task_entry(void const *parm)
 	INT8U	Cnt_index,tmp_i,firstRun;
 
 
-	INT32U	TimeCnt1,TimeCnt2;
+	INT32U	TimeCnt1,TimeCnt2,TimeCnt3;
 
 	INT32U	TimeCnt1a,TimeCnt2a;
 
@@ -1839,12 +1839,7 @@ static void csi_task_entry(void const *parm)
 		firstRun = 1;
 
 		TimeCnt2 = xTaskGetTickCount();
-		if (sampleCnt++ % 30 == 0){
-			
-			DBG_PRINT("[ csi_task_entry run=%d ms ] \r\n",TimeCnt2-TimeCnt1);
-			//DBG_PRINT("[ FindMax_ColorAssign run = %d , IMG_AVGBUF run %d ms ,CalulateData %d ms] \r\n"
-			//,TimeCnt2a-TimeCnt1a,TimeCnt1b-TimeCnt1a,TimeCnt1-TimeCnt1b);
-			}
+		
 
 #endif
 
@@ -1965,6 +1960,18 @@ static void csi_task_entry(void const *parm)
             //DBG_PRINT("@");
         if(event != PRCESS_STATE_OK)
             free_frame_buffer_add((INT32U *)csi_buf, 1);
+
+		
+		TimeCnt3 = xTaskGetTickCount();
+
+		if (sampleCnt++ % 30 == 0){
+			
+			DBG_PRINT("[ csi_task_entry run=%d ms ] \r\n",TimeCnt3-TimeCnt1);
+			//DBG_PRINT("[ FindMax_ColorAssign run = %d , IMG_AVGBUF run %d ms ,CalulateData %d ms] \r\n"
+			//,TimeCnt2a-TimeCnt1a,TimeCnt1b-TimeCnt1a,TimeCnt1-TimeCnt1b);
+			}
+
+		
     }
 }
 
