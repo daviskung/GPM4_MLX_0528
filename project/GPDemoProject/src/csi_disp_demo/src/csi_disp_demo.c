@@ -1321,6 +1321,13 @@ void FindMax_ColorAssign(INT8U firstRun){
 	pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 =
 					(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr;
 
+	
+	Tpoint3 = pMLX_TH32x24_Para->MLX_TH32x24_GRAY_Tpoint3;
+	
+	TmaxUnderZeroTable = pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmaxUnderZeroTable;
+	
+	//DBG_PRINT("cp Tpoint3=[%f] ",Tpoint3);
+
 	for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
 			 ImgObject = *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum);
 
@@ -1387,6 +1394,7 @@ void FindMax_ColorAssign(INT8U firstRun){
 	else{
 	 if(ImgObject >= 0)  GrayTmpValue =0xff;
 	 else{
+	 	
 		 if (ImgObject <= Tpoint3)
 			 {
 			 GrayTmpValue =pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL;
@@ -1429,7 +1437,7 @@ void FindMax_ColorAssign(INT8U firstRun){
 	TmaxOverZeroTable=TmaxOverZero; OverZ_TmaxTable_number=OverZ_Tmax_number;
 	TminUnderZeroTable = TminUnderZero; UnderZ_TminTable_number=UnderZ_Tmin_number;
 	TmaxUnderZeroTable = TmaxUnderZero; UnderZ_TmaxTable_number=UnderZ_Tmax_number;
-
+	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmaxUnderZeroTable = TmaxUnderZeroTable;
 
 		UnderZeroDiff_value = (INT32U)((TmaxUnderZeroTable-TminUnderZeroTable)/1000000);
 		if( UnderZeroDiff_value < 0 ) UnderZeroDiff_value = 0; // too small & too large ?
@@ -1437,10 +1445,10 @@ void FindMax_ColorAssign(INT8U firstRun){
 		OverZeroDiff_value = (INT32U)((TmaxOverZeroTable-TminOverZeroTable)/1000000);
 		if( OverZeroDiff_value < 0 ) OverZeroDiff_value = 0;
 
-	if(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%20 == 0)
-		DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 \r\n",
-				(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
-				(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
+	//if(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%20 == 0)
+	//	DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 \r\n",
+	//			(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
+	//			(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
 
 
 
@@ -1453,10 +1461,23 @@ void FindMax_ColorAssign(INT8U firstRun){
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = 255; //MLX_Gray_MAX_val_Ary[19];
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[19];
 			pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 0;
+			
+			//DBG_PRINT("OverZeroDiff_value > 0  \r\n");
 		}
 		else if (OverZeroDiff_value <= 0)
 		{
+	
 			TmpTbInd =(INT8U)(UnderZeroDiff_value/50);
+			if (TmpTbInd > 19){
+				TmpTbInd = 19;
+				//DBG_PRINT("TmpTbInd = %d \r\n",TmpTbInd);
+				}
+			pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[TmpTbInd];
+			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
+			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
+			
+			//DBG_PRINT("OverZeroDiff_value < 0 , TmpTbInd = %d \r\n",TmpTbInd);
+#if 0
 
 			if (pMLX_TH32x24_Para->TmpTbInd_buf_Enable == 0)
 			{
@@ -1484,17 +1505,29 @@ void FindMax_ColorAssign(INT8U firstRun){
 			pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[TmpTbInd];
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
+#endif
 
 		}
+	
+		if(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%20 == 0){
+			DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 \r\n",
+					(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
+					(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
 
-
+			DBG_PRINT("TmpTbInd = %d , UnderZeroDiff_value/50 = %d , GrayOutputFactor=%d , GRAY_MAX_VAL=%d ,  GRAY_START_VAL=%d \r\n",
+					TmpTbInd,(INT8U)(UnderZeroDiff_value/50),
+					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL,
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL);
+			}
 
 		#endif
 
-
-		Tpoint3 = ((pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor * TmaxUnderZeroTable )
+		
+		pMLX_TH32x24_Para->MLX_TH32x24_GRAY_Tpoint3 =
+			((pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor * TmaxUnderZeroTable )
 						+ (10-pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor) * TminUnderZeroTable)/10; // 30% 以下 0值 
-
+		//DBG_PRINT("Tpoint3=[%f] ",pMLX_TH32x24_Para->MLX_TH32x24_GRAY_Tpoint3);
 		pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[0] = UnderZ_TminTable_number;
 		pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[1] = UnderZ_TmaxTable_number;
 		pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[2] = OverZ_TminTable_number;
@@ -1804,7 +1837,7 @@ static void csi_task_entry(void const *parm)
 	// image avg Tobject
 	//
 	if(avg_buf_Enable ==0){ 	// [0] ~ [3] <- new data
-		for(tmp_i=0;tmp_i<AVG_buf_len;tmp_i++){
+		for(tmp_i=0;tmp_i<IMG_AVG_buf_len;tmp_i++){
 			gp_memcpy((INT8S *)(pMLX_TH32x24_ImgOutput_INT32S_avg_buf[tmp_i]),
 			(INT8S *)pMLX_TH32x24_ImgOutput_INT32S_buf0,MLX_Pixel*IMAGE_DATA_INT32S_SIZE);
 		}
@@ -1814,7 +1847,7 @@ static void csi_task_entry(void const *parm)
 		}
 	else{
 			// move new data to avg buf
-			for(tmp_i=0;tmp_i<(AVG_buf_len-1);tmp_i++){ 	// [0]<-[1] ,[1]<-[2] ,[2]<-[3]
+			for(tmp_i=0;tmp_i<(IMG_AVG_buf_len-1);tmp_i++){ 	// [0]<-[1] ,[1]<-[2] ,[2]<-[3]
 				gp_memcpy((INT8S *)(pMLX_TH32x24_ImgOutput_INT32S_avg_buf[tmp_i]),
 				(INT8S *)(pMLX_TH32x24_ImgOutput_INT32S_avg_buf[tmp_i+1]),MLX_Pixel*IMAGE_DATA_INT32S_SIZE);
 			}

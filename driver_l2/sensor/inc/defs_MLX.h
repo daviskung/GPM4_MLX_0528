@@ -111,7 +111,7 @@
 
   
 #define AVG_buf_len			4
-#define IMG_AVG_buf_len		1
+#define IMG_AVG_buf_len		4
 #define IMG_VAL_buf_len		4
 #define IMG_GRAY_IND_buf_len		10
   
@@ -186,6 +186,8 @@
 	  INT8U  MLX_TH32x24_GrayOutputFactor;
 	  INT8U  MLX_TH32x24_GRAY_MAX_VAL;
 	  INT8U  MLX_TH32x24_GRAY_START_VAL;
+	  float  MLX_TH32x24_GRAY_Tpoint3;
+	  float	 MLX_TH32x24_GRAY_TmaxUnderZeroTable;
 	  
 	  INT8U   TmpTbInd_buf_Enable;
 	  
