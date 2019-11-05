@@ -1138,10 +1138,12 @@ static void mazeTest_Preview_PScaler(void)
 			 }
 		#endif
 
+		
+	 TimeCnt1b = xTaskGetTickCount();
+#if 0
 
 	 //DBG_PRINT("************ GetFrameData frame 1 ************************************** \r\n");
 	
-	 TimeCnt1b = xTaskGetTickCount();
 
 	 dataReady = 0;
 	 frameData_cnt=0;
@@ -1263,17 +1265,20 @@ static void mazeTest_Preview_PScaler(void)
 #endif
 	}
 
+#endif
 
 	TimeCnt3 = xTaskGetTickCount();
 
-	if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 30 == 0){
+#if 0
+	//if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 30 == 0){
 			
-		DBG_PRINT("[ frame0 W = %d ms , frame0 R = %d ms , frame0 C = %d ms ] \r\n"
-			,TimeCnt2b-TimeCnt2a,TimeCnt1a-TimeCnt2b,TimeCnt1b-TimeCnt1a);
-		DBG_PRINT("[ frame1 W = %d ms , frame1 R = %d ms , frame1 C = %d ms ] \r\n"
-			,TimeCnt1-TimeCnt1b,TimeCnt2-TimeCnt1,TimeCnt3-TimeCnt2);
-	}
+		DBG_PRINT("[ frame%d W = %d ms , frame0 R = %d ms , frame0 C = %d ms ] \r\n"
+			,pMLX_TH32x24_Para->frameData[833],TimeCnt2b-TimeCnt2a,TimeCnt1a-TimeCnt2b,TimeCnt1b-TimeCnt1a);
+		//DBG_PRINT("[ frame1 W = %d ms , frame1 R = %d ms , frame1 C = %d ms ] \r\n"
+		//	,TimeCnt1-TimeCnt1b,TimeCnt2-TimeCnt1,TimeCnt3-TimeCnt2);
+	//}
 
+#endif
 
  }
 
@@ -1432,10 +1437,10 @@ void FindMax_ColorAssign(INT8U firstRun){
 		OverZeroDiff_value = (INT32U)((TmaxOverZeroTable-TminOverZeroTable)/1000000);
 		if( OverZeroDiff_value < 0 ) OverZeroDiff_value = 0;
 
-	//if(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%100 == 0)
-	//	DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 \r\n",
-	//			(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
-	//			(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
+	if(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%20 == 0)
+		DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 \r\n",
+				(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
+				(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
 
 
 
@@ -1943,6 +1948,8 @@ static void csi_task_entry(void const *parm)
 
             //**************************************//
             prcess_frame_buffer_add((INT32U *)csi_buf, 1);
+			
+			//DBG_PRINT("prcess_frame_buffer_add = 0x%x\r\n", csi_buf);
         }
 
         if(PscalerBuffer)
@@ -1963,15 +1970,15 @@ static void csi_task_entry(void const *parm)
 
 		
 		TimeCnt3 = xTaskGetTickCount();
-
-		if (sampleCnt++ % 30 == 0){
+#if 1
+		if (sampleCnt++ % 100 == 0){
 			
 			DBG_PRINT("[ csi_task_entry run=%d ms ] \r\n",TimeCnt3-TimeCnt1);
 			//DBG_PRINT("[ FindMax_ColorAssign run = %d , IMG_AVGBUF run %d ms ,CalulateData %d ms] \r\n"
 			//,TimeCnt2a-TimeCnt1a,TimeCnt1b-TimeCnt1a,TimeCnt1-TimeCnt1b);
 			}
 
-		
+#endif		
     }
 }
 
