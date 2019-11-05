@@ -11,7 +11,7 @@
 #define	DEBUG_TMP_READ_OUT		0
 #define	DEBUG_TMP_READ_OUT2		0
 
-#define	DEBUG_image_READ_OUT	0
+#define	DEBUG_image_READ_OUT	1
 #define	DEBUG_image_READ_OUT2	0
 
 #define	DEBUG_MLX_MSG_OUT		0

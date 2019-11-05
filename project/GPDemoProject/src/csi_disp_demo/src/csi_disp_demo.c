@@ -1132,10 +1132,13 @@ static void mazeTest_Preview_PScaler(void)
 		#if DEBUG_image_READ_OUT
 			 for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
 
-			 if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
-			 DBG_PRINT("%d/",pMLX_TH32x24_Para->result_image[pixelNumber]);
+			 //if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+			 if(pMLX_TH32x24_Para->result_image[pixelNumber] >0)
+			 	DBG_PRINT("[%f]",pMLX_TH32x24_Para->result_image[pixelNumber]);
 
 			 }
+			 DBG_PRINT("\r\n");
+			 
 		#endif
 
 		
