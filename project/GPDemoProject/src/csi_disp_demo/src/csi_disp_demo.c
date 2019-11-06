@@ -148,6 +148,9 @@ paramsMLX90640_t *pMLX90640_Para;
 const INT16U DELAYTIME_at_REFRESH_RATE3[8]={2000,1000,500,250,125,63,32,15};
 const INT8U MLX_REFRESH_RATE_HZ3[8]={0,1,2,4,8,16,32,64};
 
+INT32U UnderZeroDiff_value,OverZeroDiff_value;
+INT8U	firstRun;
+
 
 static void drv_disp_lock(void)
 {
@@ -1017,7 +1020,7 @@ static void mazeTest_Preview_PScaler(void)
 			 //DBG_PRINT("read return-1  = %d \r\n",error);  // return data length , if error = -1
 			 //  需要 重新讀取 !! 改成 副程式 檢查 
 			 if( error == -1){
-				 DBG_PRINT("frame0 vdd/ta error !! \r\n");
+				 DBG_PRINT("frame0 read status error !! \r\n");
 				 osDelay(10);
 			 }
 		 }while(error == -1);
@@ -1027,7 +1030,8 @@ static void mazeTest_Preview_PScaler(void)
 		 //DBG_PRINT(" 2.statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d \r\n",
 		 //  statusRegister,dataReady,frameData_cnt);
 		 if(dataReady == 0){
-				 osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
+				 //osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
+				 osDelay(CONVERT_WAIT_TIME/5);
 				 //DBG_PRINT("\r\n 1-frame0 delay  = %d ms > %d\r\n",
 				//	 DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ],frameData_cnt);
 
@@ -1272,10 +1276,10 @@ static void mazeTest_Preview_PScaler(void)
 
 	TimeCnt3 = xTaskGetTickCount();
 
-#if 0
-	//if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 30 == 0){
+#if 1
+	//if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 10 == 0){
 			
-		DBG_PRINT("[ frame%d W = %d ms , frame0 R = %d ms , frame0 C = %d ms ] \r\n"
+		DBG_PRINT("[CalulateData-> frame%d W = %d ms , frame0 R = %d ms , frame0 C = %d ms ] \r\n"
 			,pMLX_TH32x24_Para->frameData[833],TimeCnt2b-TimeCnt2a,TimeCnt1a-TimeCnt2b,TimeCnt1b-TimeCnt1a);
 		//DBG_PRINT("[ frame1 W = %d ms , frame1 R = %d ms , frame1 C = %d ms ] \r\n"
 		//	,TimeCnt1-TimeCnt1b,TimeCnt2-TimeCnt1,TimeCnt3-TimeCnt2);
@@ -1285,7 +1289,7 @@ static void mazeTest_Preview_PScaler(void)
 
  }
 
-void FindMax_ColorAssign(INT8U firstRun){
+void FindMax_ColorAssign(void){
 
 	INT16U  cellNum;
 	float	 ImgObject;
@@ -1313,7 +1317,7 @@ void FindMax_ColorAssign(INT8U firstRun){
 
 	INT16U OverZ_TmaxTable_number,UnderZ_TmaxTable_number;
 
-	INT32U UnderZeroDiff_value,OverZeroDiff_value;
+	//INT32U UnderZeroDiff_value,OverZeroDiff_value;
 
 
 
@@ -1392,6 +1396,8 @@ void FindMax_ColorAssign(INT8U firstRun){
 			 GrayTmpValue =0x1f;
 		 else
 			 GrayTmpValue = 0x00;	 // TRANSPARENT_COLOR;
+		
+		//DBG_PRINT("firstRun == 0\r\n");
 	}
 
 	else{
@@ -1456,7 +1462,7 @@ void FindMax_ColorAssign(INT8U firstRun){
 
 
 
-		#if 1 // MLX_GrayOutputFactor_Ary[10]={8,8,7,7,6,5,4,3,3,3,3};
+	 // MLX_GrayOutputFactor_Ary[10]={8,8,7,7,6,5,4,3,3,3,3};
 
 		if (OverZeroDiff_value > 0)
 		{
@@ -1482,9 +1488,9 @@ void FindMax_ColorAssign(INT8U firstRun){
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
 			
 			DBG_PRINT("No buff OverZeroDiff_value < 0 , TmpTbInd = %d \r\n",TmpTbInd);
-#endif
+
 			
-#if !TmpTbInd_NO_BUF
+#else 
 
 			if (pMLX_TH32x24_Para->TmpTbInd_buf_Enable == 0)
 			{
@@ -1515,20 +1521,21 @@ void FindMax_ColorAssign(INT8U firstRun){
 #endif
 
 		}
-	
-		if(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%20 == 0){
-			DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 \r\n",
+		
+#if 0	
+		if(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%100 == 0){
+			DBG_PRINT("OverZeroDiff=[%f]/%d *10^6 , UnderZeroDiff=[%f]/%d *10^6 , Ta = %f , Vdd = %f \r\n",
 					(TmaxOverZeroTable-TminOverZeroTable),OverZeroDiff_value,
-					(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value);
+					(TmaxUnderZeroTable-TminUnderZeroTable),UnderZeroDiff_value,
+					pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_vdd );
 
-			DBG_PRINT("TmpTbInd = %d , UnderZeroDiff_value/50 = %d , GrayOutputFactor=%d , GRAY_MAX_VAL=%d ,  GRAY_START_VAL=%d \r\n",
-					TmpTbInd,(INT8U)(UnderZeroDiff_value/50),
+			DBG_PRINT("GrayOutputFactor=%d , GRAY_MAX_VAL=%d ,  GRAY_START_VAL=%d \r\n",
 					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL,
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL);
 			}
+#endif
 
-		#endif
 
 		
 		pMLX_TH32x24_Para->MLX_TH32x24_GRAY_Tpoint3 =
@@ -1682,7 +1689,7 @@ static void csi_task_entry(void const *parm)
 	ScalerPara_t para;
 	INT32S  nRet;
 	INT16U	LoopCnt;
-	INT8U	Cnt_index,tmp_i,firstRun;
+	INT8U	Cnt_index,tmp_i;
 
 
 	INT32U	TimeCnt1,TimeCnt2,TimeCnt3;
@@ -1822,8 +1829,6 @@ static void csi_task_entry(void const *parm)
         //DBG_PRINT("csi_buffer = 0x%x\r\n", csi_buf);
         //DBG_PRINT(".");
 
-#if 1
-
 
 	TimeCnt1 = xTaskGetTickCount();
 
@@ -1911,15 +1916,11 @@ static void csi_task_entry(void const *parm)
 	
 #endif
 		TimeCnt1a = xTaskGetTickCount();
-		FindMax_ColorAssign(firstRun);
-		TimeCnt2a = xTaskGetTickCount();
+		FindMax_ColorAssign();
+		TimeCnt2 = xTaskGetTickCount();
 
 		firstRun = 1;
 
-		TimeCnt2 = xTaskGetTickCount();
-		
-
-#endif
 
         PscalerBuffer = pscaler_frame_buffer_get(1);
         //if(PscalerBuffer)
@@ -2044,12 +2045,16 @@ static void csi_task_entry(void const *parm)
 		
 		TimeCnt3 = xTaskGetTickCount();
 #if 1
-		if (sampleCnt++ % 100 == 0){
+		//if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 10 == 0){
+						
+			DBG_PRINT("[ CalulateData %d ms , IMG_AVGBUF run %d ms , FindMax_ColorAssign run = %d , rest = %d ] \r\n"
+			,TimeCnt1b-TimeCnt1,TimeCnt1a-TimeCnt1b,TimeCnt2-TimeCnt1a,TimeCnt3-TimeCnt2);
 			
 			DBG_PRINT("[ csi_task_entry run=%d ms ] \r\n",TimeCnt3-TimeCnt1);
-			//DBG_PRINT("[ FindMax_ColorAssign run = %d , IMG_AVGBUF run %d ms ,CalulateData %d ms] \r\n"
-			//,TimeCnt2a-TimeCnt1a,TimeCnt1b-TimeCnt1a,TimeCnt1-TimeCnt1b);
-			}
+
+			DBG_PRINT("----- \r\n");
+
+		//}
 
 #endif		
     }
@@ -2077,6 +2082,19 @@ static void disp_task_entry(void const *parm)
 
 			//gp_memcpy((INT8S *)(display_buf),
 			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);
+			
+			cpu_draw_advalue_osd(UnderZeroDiff_value,display_buf,320,16,0,16);
+			cpu_draw_advalue_osd(OverZeroDiff_value,display_buf,320,60,0,17);
+			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,display_buf,
+						320,110,0,10);
+
+			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL,display_buf,
+						320,160,0,11);
+
+			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL,display_buf,
+						320,210,0,0);
+
+			
 
             drv_l2_display_update(DISPLAY_DEVICE,display_buf);
             pscaler_frame_buffer_add((INT32U *)display_buf, 1);
