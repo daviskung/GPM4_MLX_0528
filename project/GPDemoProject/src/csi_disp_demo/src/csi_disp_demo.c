@@ -1464,13 +1464,15 @@ void FindMax_ColorAssign(INT8U firstRun){
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = 255; //MLX_Gray_MAX_val_Ary[19];
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[19];
 			pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 0;
-			
+
+			TmpTbInd = 0;
 			//DBG_PRINT("OverZeroDiff_value > 0  \r\n");
 		}
 		else if (OverZeroDiff_value <= 0)
 		{
 	
 			TmpTbInd =(INT8U)(UnderZeroDiff_value/50);
+#if TmpTbInd_NO_BUF
 			if (TmpTbInd > 19){
 				TmpTbInd = 19;
 				//DBG_PRINT("TmpTbInd = %d \r\n",TmpTbInd);
@@ -1479,8 +1481,10 @@ void FindMax_ColorAssign(INT8U firstRun){
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
 			
-			//DBG_PRINT("OverZeroDiff_value < 0 , TmpTbInd = %d \r\n",TmpTbInd);
-#if 0
+			DBG_PRINT("No buff OverZeroDiff_value < 0 , TmpTbInd = %d \r\n",TmpTbInd);
+#endif
+			
+#if !TmpTbInd_NO_BUF
 
 			if (pMLX_TH32x24_Para->TmpTbInd_buf_Enable == 0)
 			{
@@ -1836,6 +1840,23 @@ static void csi_task_entry(void const *parm)
 	pMLX_TH32x24_ImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_image; // image format ?
 
 #if IMG_AVGBUF_ON
+
+	#if DEBUG_image_READ_OUT2
+	
+		//DBG_PRINT("\r\n pMLX_TH32x24_ImgOutput_INT32S_buf0 \r\n");
+		for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+
+		//if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+		if (*(pMLX_TH32x24_ImgOutput_INT32S_buf0 + pixelNumber ) > 0)
+			{
+			DBG_PRINT("(%f)-%d",*(pMLX_TH32x24_ImgOutput_INT32S_buf0 + pixelNumber ),pixelNumber);
+			}
+
+		}
+		DBG_PRINT("\r\n -- \r\n");
+	#endif
+
+
 	//
 	// image avg Tobject
 	//
@@ -1872,6 +1893,22 @@ static void csi_task_entry(void const *parm)
 			}
 
 	}
+
+	#if DEBUG_image_READ_OUT2
+	
+		//DBG_PRINT("\r\n pMLX_TH32x24_ImgOutput_INT32S_buf0 \r\n");
+		for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+
+		//if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+		if (*(pMLX_TH32x24_ImgOutput_INT32S_buf0 + pixelNumber ) > 0)
+			{
+			DBG_PRINT("(%f)*%d",*(pMLX_TH32x24_ImgOutput_INT32S_buf0 + pixelNumber ),pixelNumber);
+			}
+
+		}
+		DBG_PRINT("\r\n -- \r\n");
+	#endif
+	
 #endif
 		TimeCnt1a = xTaskGetTickCount();
 		FindMax_ColorAssign(firstRun);

@@ -11,7 +11,7 @@
 #define	DEBUG_TMP_READ_OUT		0
 #define	DEBUG_TMP_READ_OUT2		0
 
-#define	DEBUG_image_READ_OUT	1
+#define	DEBUG_image_READ_OUT	0
 #define	DEBUG_image_READ_OUT2	0
 
 #define	DEBUG_MLX_MSG_OUT		0
@@ -23,8 +23,9 @@
 
 #define	TWO_FRAME_OUT			1
 #define	TMP_AVGBUF_ON			0
-#define	IMG_AVGBUF_ON			0	// avg ON is good
+#define	IMG_AVGBUF_ON			1	// avg ON is good
 
+#define	TmpTbInd_NO_BUF			0
 
 
 #define	READ_STATUS_DELAY_TIME		5
