@@ -1276,7 +1276,7 @@ static void mazeTest_Preview_PScaler(void)
 
 	TimeCnt3 = xTaskGetTickCount();
 
-#if 1
+#if 0
 	//if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 10 == 0){
 			
 		DBG_PRINT("[CalulateData-> frame%d W = %d ms , frame0 R = %d ms , frame0 C = %d ms ] \r\n"
@@ -1782,10 +1782,12 @@ static void csi_task_entry(void const *parm)
 
 	while(controlRegister1 != pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1 ){
 
-	drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1);
-	osDelay(80);
-	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
-	DBG_PRINT("*Re - write/read controlRegister1 = 0x%04x \r\n",controlRegister1);
+	do{
+		drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1);
+		osDelay(80);
+		error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
+		DBG_PRINT("*Re - write/read controlRegister1 = 0x%04x \r\n",controlRegister1);
+		}while(controlRegister1 != pMLX_TH32x24_Para->MLX_TH32x24_InitSet_controlRegister1 );
 
 	}
 
@@ -2045,7 +2047,7 @@ static void csi_task_entry(void const *parm)
 		
 		TimeCnt3 = xTaskGetTickCount();
 #if 1
-		//if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 10 == 0){
+		if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 50 == 0){
 						
 			DBG_PRINT("[ CalulateData %d ms , IMG_AVGBUF run %d ms , FindMax_ColorAssign run = %d , rest = %d ] \r\n"
 			,TimeCnt1b-TimeCnt1,TimeCnt1a-TimeCnt1b,TimeCnt2-TimeCnt1a,TimeCnt3-TimeCnt2);
@@ -2054,7 +2056,7 @@ static void csi_task_entry(void const *parm)
 
 			DBG_PRINT("----- \r\n");
 
-		//}
+		}
 
 #endif		
     }
