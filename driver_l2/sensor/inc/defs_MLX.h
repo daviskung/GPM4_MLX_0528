@@ -33,7 +33,7 @@
 
 
 
-#define CONVERT_WAIT_TIME		25
+#define CONVERT_WAIT_TIME		5
 #define IMAGE_DATA_INT32S_SIZE		4
 
 //mode[in]:i2c restart without stop or not:
@@ -59,6 +59,8 @@
 #define ScaleUp_10	 10
 #define ScaleUp_3	 3
 
+#define FrameData_Subpage_NO			833
+#define FrameData_ControlRegister1_NO	832
 
 
 #define MLX90640_AdrDevID 				0x2407

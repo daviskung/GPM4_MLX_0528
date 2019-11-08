@@ -1084,7 +1084,7 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	INT8U 	EEaddr[2],*pEEaddr;
 	INT8U  *pMLX32x24_READ_INT8U_buf;
 
-	INT16U  *pMLX32x24_READ_INT16U_buf,*pMLX32x24_frameData_INT16U_buf;
+	INT16U  *pMLX32x24_READ_INT16U_buf;
 	INT16U 	FromEEcontrolRegister1,controlRegister1,i;
 	INT16U	cnt,frameData_cnt;
 
@@ -1249,15 +1249,11 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	#endif
 	}
 
-	gp_memset((INT8S *)pMLX_TH32x24_Para->frameData,0x00,MLX90640_frameDataSize*2); // clear 值 
-	DBG_PRINT("clear frameData \r\n");
+	
 
 	gp_memset((INT8S *)pMLX_TH32x24_Para->result,0x00,MLX_Pixel*2); // clear 值 
 				DBG_PRINT("clear result \r\n");
 
-	//DBG_PRINT("tr_byUser = ta - TA_SHIFT->%d ) \r\n",8);
-
-	pMLX32x24_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
 #endif
 
 	// 可以 與 pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF 共用 ??
@@ -1300,21 +1296,24 @@ void MXL_TEST_HIGH(void)
 }
 
 //float MLX90640_GetVdd(uint16_t *frameData, paramsMLX90640_t *params)
-void MLX90640_GetVdd(void)
+void MLX90640_GetVdd(INT16U frameData_vdd,INT16U frameData_resolutionRAM)
 {
     float vdd;
     float resolutionCorrection;
 
     int resolutionRAM;
 
-	vdd = pMLX_TH32x24_Para->frameData[810];
+	//vdd = pMLX_TH32x24_Para->frameData[810];
+	vdd = frameData_vdd;
 
     if(vdd > 32767)
     {
         vdd = vdd - 65536;
     }
 
-	resolutionRAM = (pMLX_TH32x24_Para->frameData[832] & 0x0C00) >> 10;
+	//resolutionRAM = (pMLX_TH32x24_Para->frameData[832] & 0x0C00) >> 10;
+	
+	resolutionRAM = (frameData_resolutionRAM & 0x0C00) >> 10;
 
 	resolutionCorrection = pow(2, (double)pMLX90640_Para->resolutionEE) / pow(2, (double)resolutionRAM);
 
@@ -1326,7 +1325,7 @@ void MLX90640_GetVdd(void)
 //------------------------------------------------------------------------------
 
 //float MLX90640_GetTa(uint16_t *frameData, paramsMLX90640_t *params)
-void MLX90640_GetTa(void)
+void MLX90640_GetTa(INT16U frameData_ptat,INT16U frameData_ptatArt)
 {
     float ptat;
     float ptatArt;
@@ -1336,13 +1335,15 @@ void MLX90640_GetTa(void)
     //MLX90640_GetVdd();
 	vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
 
-	ptat = pMLX_TH32x24_Para->frameData[800];
+	//ptat = pMLX_TH32x24_Para->frameData[800];
+	ptat = frameData_ptat;
 	if(ptat > 32767)
 	{
 	  ptat = ptat - 65536;
 	}
 
-	ptatArt = pMLX_TH32x24_Para->frameData[768];
+	//ptatArt = pMLX_TH32x24_Para->frameData[768];
+	ptatArt = frameData_ptatArt;
 	if(ptatArt > 32767)
 	{
 	    ptatArt = ptatArt - 65536;

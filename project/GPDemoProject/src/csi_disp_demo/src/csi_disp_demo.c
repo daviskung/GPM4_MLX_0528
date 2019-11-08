@@ -150,6 +150,11 @@ const INT8U MLX_REFRESH_RATE_HZ3[8]={0,1,2,4,8,16,32,64};
 
 INT32U UnderZeroDiff_value,OverZeroDiff_value;
 INT8U	firstRun;
+INT16U	*pMLX_TH32x24_INT16U_avg_buf[AVG_buf_len];
+INT8U	avg_buf_Enable;
+INT32U	Gcnt_lp,GlobalTimeCnt1,GlobalTimeCnt2;
+
+
 
 
 static void drv_disp_lock(void)
@@ -866,7 +871,7 @@ static void mazeTest_Preview_PScaler(void)
 	 }
  }
 
- void MLX90640_GetImage(void)
+ void MLX90640_GetImage(INT16U* pMLX32x32_frameData_prcess_INT16U_buf)
  {
 	 float vdd;
 	 float ta;
@@ -883,12 +888,16 @@ static void mazeTest_Preview_PScaler(void)
 	 uint16_t subPage;
 	 int i,pixelNumber;
 
-	 subPage = pMLX_TH32x24_Para->frameData[833];
+	 //subPage = pMLX_TH32x24_Para->frameData[833];
+	 subPage =*(pMLX32x32_frameData_prcess_INT16U_buf+833);
+	 
 	 vdd = pMLX_TH32x24_Para->MLX_TH32x24_vdd;
 	 ta = pMLX_TH32x24_Para->MLX_TH32x24_ta;
 
  //------------------------- Gain calculation -----------------------------------
-	 gain = pMLX_TH32x24_Para->frameData[778];
+	 //gain = pMLX_TH32x24_Para->frameData[778];
+	 gain =*(pMLX32x32_frameData_prcess_INT16U_buf+778);
+ 
 	 if(gain > 32767)
 	 {
 		 gain = gain - 65536;
@@ -897,7 +906,9 @@ static void mazeTest_Preview_PScaler(void)
 	 gain = pMLX90640_Para->gainEE / gain; // K-gain
 
  //------------------------- Image calculation -------------------------------------
-	 mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
+	// mode = (pMLX_TH32x24_Para->frameData[832] & 0x1000) >> 5;
+	 mode = (*(pMLX32x32_frameData_prcess_INT16U_buf+832) & 0x1000) >> 5;
+ 
 	 //DBG_PRINT(" GetImage mode = 0x%04x \r\n",mode);
 
  //
@@ -907,8 +918,12 @@ static void mazeTest_Preview_PScaler(void)
  // to	filter	the  CP  readings  at  this  point	of calculation.
  // A good practice would be to apply a Moving Average Filter with length of 16 or higher.
  //
-	 irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
-	 irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
+	 //irDataCP[0] = pMLX_TH32x24_Para->frameData[776];
+	 //irDataCP[1] = pMLX_TH32x24_Para->frameData[808];
+
+	 irDataCP[0] = *(pMLX32x32_frameData_prcess_INT16U_buf+776);
+	 irDataCP[1] = *(pMLX32x32_frameData_prcess_INT16U_buf+808);
+	 
 	 for( i = 0; i < 2; i++)
 	 {
 		 if(irDataCP[i] > 32767)
@@ -949,9 +964,10 @@ static void mazeTest_Preview_PScaler(void)
 		   pattern = chessPattern; // use -> Chess patter
 		 }
 
-		 if(pattern == pMLX_TH32x24_Para->frameData[833]) // frameData[833] 定義 subpage 0 or 1
+		 if(pattern == *(pMLX32x32_frameData_prcess_INT16U_buf+833)) // frameData[833] 定義 subpage 0 or 1
 		 {
-			 irData = pMLX_TH32x24_Para->frameData[pixelNumber];
+			// irData = pMLX_TH32x24_Para->frameData[pixelNumber];
+			 irData =*(pMLX32x32_frameData_prcess_INT16U_buf+pixelNumber);
 			 if(irData > 32767)
 			 {
 				 irData = irData - 65536;
@@ -976,7 +992,9 @@ static void mazeTest_Preview_PScaler(void)
 		 }
 	 }
  }
- void CalulateData(INT8U format ,INT16U SETcontrolRegister1)
+
+ #if 0
+ void CalulateData(INT8U format ,INT16U SETcontrolRegister1,INT32U csi_buf)
  {
 
 
@@ -986,6 +1004,7 @@ static void mazeTest_Preview_PScaler(void)
 	INT8U 	EEaddr[2],*pEEaddr;
 	INT8U  *pMLX32x32_READ_INT8U_buf;
 	INT16U  *pMLX32x32_frameData_INT16U_buf;
+	INT16U  *pMLX32x32_frameData_csi_INT16U_buf;
 
 	 drv_l1_i2c_bus_handle_t MXL_handle;
 
@@ -1006,7 +1025,8 @@ static void mazeTest_Preview_PScaler(void)
 		 pEEaddr = EEaddr;
 		 pMLX32x32_READ_INT8U_buf = (INT8U*)pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF;
 
-		 pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
+		pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
+		pMLX32x32_frameData_csi_INT16U_buf = (INT16U*)csi_buf;
 	
 	 TimeCnt2a = xTaskGetTickCount();
 
@@ -1090,6 +1110,16 @@ static void mazeTest_Preview_PScaler(void)
 				 + (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
 		 }
 
+		  for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
+		 {
+			 i = cnt << 1;
+			 *(pMLX32x32_frameData_csi_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
+				 + (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
+		 }
+
+		
+		 
+
 		 pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	 // 紀錄 目前是 subpage ?
 		 //DBG_PRINT(" 3a. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
 
@@ -1101,52 +1131,7 @@ static void mazeTest_Preview_PScaler(void)
 	
 	 TimeCnt1a = xTaskGetTickCount();
 
-	 MLX90640_GetVdd();
-
-#if DEBUG_MLX_MSG_OUT
-	 DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd = %f (t=%d) \r\n"
-			 ,pMLX_TH32x24_Para->MLX_TH32x24_vdd,xTaskGetTickCount());
-#endif
-
-	 MLX90640_GetTa();
-
-#if DEBUG_MLX_MSG_OUT
-	 DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
-			 ,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
-#endif
-
-	 //tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
-
-	 //MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
-	 //  DBG_PRINT(" frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
-	 //pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
-	 MLX90640_GetImage();
-	 //DBG_PRINT(" frame %d MLX90640_GetImage->1 End[t=%d] \r\n",
-	 //    pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
-
-		#if DEBUG_TMP_READ_OUT
-			 for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
-
-			 if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
-			 DBG_PRINT("(%d)",pMLX_TH32x24_Para->result[pixelNumber]);
-
-			 }
-		#endif
-
-		#if DEBUG_image_READ_OUT
-			 for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
-
-			 //if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
-			 if(pMLX_TH32x24_Para->result_image[pixelNumber] >0)
-			 	DBG_PRINT("[%f]",pMLX_TH32x24_Para->result_image[pixelNumber]);
-
-			 }
-			 DBG_PRINT("\r\n");
-			 
-		#endif
-
-		
-	 TimeCnt1b = xTaskGetTickCount();
+	
 #if 0
 
 	 //DBG_PRINT("************ GetFrameData frame 1 ************************************** \r\n");
@@ -1288,6 +1273,8 @@ static void mazeTest_Preview_PScaler(void)
 #endif
 
  }
+
+#endif
 
 void FindMax_ColorAssign(void){
 
@@ -1597,18 +1584,14 @@ void FindMax_ColorAssign(void){
 	if( pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON == 1 )
 		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt ++;
 
-	//if ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 500 ){	// per 5 sec
-			//pMLX_TH32x24_Para->MLX_TH32x24_ReadElecOffset_TA_startON = 1;
-	//		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
-	//	}
-
-
 	//if ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 10 ){	// per sec
 	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 5 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 500ms
 	//if (( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt > 2 )&&(pMLX_TH32x24_Para->MLX_TH32x24_sample_startON == 0)) {	// per 200ms
 
-	if ( ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%2 == 0 )
-		&& ( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) ) {	// per 30 msec
+	//if ( ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%2 == 0 )
+	//	&& ( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) ) {	// per 20 msec
+
+	if ( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) {	// per 10 msec
 
 		//DBG_PRINT("timer->MLX_TH32x24");
 
@@ -1635,7 +1618,8 @@ static void Thermal_Preview_PScaler(void)
 	//drv_l2_thermal_sensor_ops_s *pSencor;
 	drv_l2_sensor_info_t *pInfo;
 
-	csiBufferSize = PRCESS_SRC_WIDTH*PRCESS_SRC_HEIGHT*2;
+	//csiBufferSize = PRCESS_SRC_WIDTH*PRCESS_SRC_HEIGHT*2;
+	csiBufferSize = MLX90640_frameDataSize*2;
     csiBuffer = DUMMY_BUFFER_ADDRESS; // dummy addr ro thermal
 
 	PrcessBuffer = (INT32U) gp_malloc_align(((csiBufferSize*DISP_QUEUE_MAX)+64), 32);
@@ -1649,7 +1633,7 @@ static void Thermal_Preview_PScaler(void)
 	{
 		temp = (PrcessBuffer+i*csiBufferSize);
 		free_frame_buffer_add((INT32U *)temp,1);
-		DBG_PRINT("CSIBuffer:0x%X ->width = %d / high = %d \r\n",temp,PRCESS_SRC_WIDTH,PRCESS_SRC_HEIGHT);
+		DBG_PRINT("CSIBuffer:0x%X ->MLX90640_frameDataSize = %d \r\n",temp,MLX90640_frameDataSize);
 	}
 
     // sensor init
@@ -1681,22 +1665,17 @@ static void Thermal_Preview_PScaler(void)
 
 static void csi_task_entry(void const *parm)
 {
-    INT32U msg_id,csi_buf,PscalerBuffer,PscalerBufferSize;
+    INT32U csi_buf,PscalerBuffer,PscalerBufferSize;
     INT32U event;
     osEvent result;
 
-	ScalerFormat_t scale;
-	ScalerPara_t para;
+	
 	INT32S  nRet;
-	INT16U	LoopCnt;
-	INT8U	Cnt_index,tmp_i;
+	INT8U	tmp_i;
 
 
-	INT32U	TimeCnt1,TimeCnt2,TimeCnt3;
+	INT32U	TimeCnt1,TimeCnt2,TimeCnt3,TimeCnt4;
 
-	INT32U	TimeCnt1a,TimeCnt2a;
-
-	INT32U	TimeCnt1b,TimeCnt2b;
 	INT16U	EEaddress16;
 	INT8U 	EEaddr[2],*pEEaddr;
 
@@ -1704,10 +1683,11 @@ static void csi_task_entry(void const *parm)
 	INT16U	cnt,frameData_cnt;
 	INT8U  *pMLX32x32_READ_INT8U_buf;
 	INT16U  *pMLX32x32_READ_INT16U_buf,*pMLX32x32_frameData_INT16U_buf;
+	
+	INT16U  *pMLX32x32_frameData_csi_INT16U_buf;
 
 	INT16U  *pMLX_TH32x24_INT16U_avg_buf[AVG_buf_len];
 
-	float  *pMLX_TH32x24_ImgOutput_INT32S_avg_buf[IMG_AVG_buf_len];
 
 	float  *pMLX_TH32x24_ImgOutput_INT32S_buf0;
 
@@ -1717,14 +1697,11 @@ static void csi_task_entry(void const *parm)
 
 	int		error;
 
-    int i,pixelNumber;
+    int i;
 
 	drv_l1_i2c_bus_handle_t MXL_handle;
 
-	INT16U	cellNum,rowNum,Th_cellNum,Vdd_cellNum; //,EOff_cellNum;
-
-	float	ImgObject;
-	INT8U	avg_buf_Enable;
+	
 
 	INT8U	sampleCnt;
 
@@ -1759,10 +1736,6 @@ static void csi_task_entry(void const *parm)
 	pMLX32x32_READ_INT8U_buf = (INT8U*)pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF;
 
 	pMLX32x32_frameData_INT16U_buf = (INT16U*)pMLX_TH32x24_Para->frameData;
-
-
-	LoopCnt = 0;
-	Cnt_index = 0;
 
 	avg_buf_Enable=0;
 	firstRun = 0;
@@ -1814,17 +1787,15 @@ static void csi_task_entry(void const *parm)
 			pMLX_TH32x24_INT16U_avg_buf[tmp_i]= (INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmp_i];
 		}
 
-		for(tmp_i=0;tmp_i<IMG_AVG_buf_len;tmp_i++){
-			pMLX_TH32x24_ImgOutput_INT32S_avg_buf[tmp_i]= (float*)pMLX_TH32x24_Para->MLX_TH32x24_ImgAvg_buf_addr[tmp_i];
-		}
-
-
+		
+	Gcnt_lp = 0;
+	
+	GlobalTimeCnt1 = xTaskGetTickCount();
 
     while(1)
     {
         result = osMessageGet(csi_frame_buffer_queue, osWaitForever);
         csi_buf = result.value.v;
-        //msg_id = result.value.v;
         if((result.status != osEventMessage) || !csi_buf) {
             continue;
         }
@@ -1833,17 +1804,310 @@ static void csi_task_entry(void const *parm)
 
 
 	TimeCnt1 = xTaskGetTickCount();
+	TimeCnt4 = xTaskGetTickCount()- GlobalTimeCnt1 ;	
+	GlobalTimeCnt1 = xTaskGetTickCount();
+		
+	//DBG_PRINT("c %d- 0x%x\r\n",xTaskGetTickCount(), csi_buf);
 
-	// 開始 計算 Tobject
+	
+	pMLX32x32_frameData_csi_INT16U_buf = (INT16U*)csi_buf;
 
-	CalulateData(CalcFormatSet,controlRegister1);
-	pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0 ;
+	// 接收資料
+
+	//DBG_PRINT("************ GetFrameData frame 0 ************************************** \r\n");
+	 dataReady = 0;
+	 frameData_cnt=0;
+	 while(dataReady == 0)
+	 {
+		 do{
+			 error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
+			 //DBG_PRINT("read return-1  = %d \r\n",error);  // return data length , if error = -1
+			 //  需要 重新讀取 !! 改成 副程式 檢查 
+			 if( error == -1){
+				 DBG_PRINT("frame0 read status error !! \r\n");
+				 osDelay(10);
+			 }
+		 }while(error == -1);
+
+		 dataReady = statusRegister & 0x0008; // 1 : A new data is available in RAM ?
+
+		 //DBG_PRINT(" 2.statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d \r\n",
+		 //  statusRegister,dataReady,frameData_cnt);
+		 if(dataReady == 0){
+		 	
+			 //osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
+			 osDelay(CONVERT_WAIT_TIME);
+			 //DBG_PRINT("\r\n 1-frame0 delay  = %d ms > %d\r\n",
+		     //DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ],frameData_cnt);
+
+			 frameData_cnt++;
+		 }
+		 if(frameData_cnt >8){	 // reset MLX
+
+			
+			 DBG_PRINT("****wait over %d,re-send start of measurement  \r\n",frameData_cnt*CONVERT_WAIT_TIME);
+			/*
+			 error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
+			 controlRegister1 = controlRegister1 & MLX90640_SetModeClear ;
+			 controlRegister1 = controlRegister1 | MLX90640_SetStepModeSubpageRep ;
+
+			 drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,controlRegister1);
+			 */
+			 //DBG_PRINT("(subpage = 0)write controlRegister1 = 0x%04x \r\n",controlRegister1);
+			 //osDelay(DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_32HZ]);
+			 //  DBG_PRINT("\r\n frameData_cnt> frame0 delay  = %d ms \r\n",
+			 // 	 DELAYTIME_at_REFRESH_RATE[MLX90640_REFRESH_RATE_32HZ]);
+
+			 error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
+
+			 frameData_cnt = 0;
+			 }
+	 }
+	
+	 
+	  if(dataReady != 0)
+	  {
+
+		 //DBG_PRINT("drv_l1_i2c_multi_read MLX90640_RAMAddrstart \r\n");
+		 EEaddress16 = MLX90640_RAMAddrstart;
+		 EEaddr[0]=(INT8U)(EEaddress16 >> 8);
+		 EEaddr[1]=(INT8U)(EEaddress16 & 0xff);
+		 error = drv_l1_i2c_multi_read(&MXL_handle,pEEaddr,2,pMLX32x32_READ_INT8U_buf
+			 ,MLX90640_RAM_AddrRead*2,MXL_I2C_RESTART_MODE); // 多筆讀取 RAM
+
+		 //DBG_PRINT("read return-2  = %d \r\n",error);  // return data length , if error = -1
+
+     //
+	 // in Status register - 0x8000
+	 // Bit3:b
+	 //  0:No new data is available in RAM (must be reset be the customer)
+	 // 0x0030 :
+	 // Bit4:
+	 // 1: Data in RAM overwrite is enabled
+	 // Bit5:
+	 // 1: In step mode - start of measurement
+	 // 	 (set by the customer and cleared once the measurement is done)
+	 //
+		 error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
+
+		  for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
+		 {
+			 i = cnt << 1;
+			 *(pMLX32x32_frameData_csi_INT16U_buf+cnt) = (INT16U)*(pMLX32x32_READ_INT8U_buf+i) *256
+				 + (INT16U)*(pMLX32x32_READ_INT8U_buf+i+1);
+		 }
+
+		 //pMLX_TH32x24_Para->frameData[833] = statusRegister & 0x0001;	 // 紀錄 目前是 subpage ?
+		 //DBG_PRINT(" 3a. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
+		 
+		  *(pMLX32x32_frameData_csi_INT16U_buf+FrameData_Subpage_NO)= statusRegister & 0x0001;	 // 紀錄 目前是 subpage ?
+		 //DBG_PRINT(" 3a. [subpage = %d] \r\n",pMLX_TH32x24_Para->frameData[833]);
+
+		 //pMLX_TH32x24_Para->frameData[832] = controlRegister1;
+		  *(pMLX32x32_frameData_csi_INT16U_buf+FrameData_ControlRegister1_NO)=controlRegister1;
+
+		// error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
+	 }
+
+	
+	 pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
+	
+	 //TimeCnt2 = xTaskGetTickCount();
+
+ 	 event = prcess_state_get();
+     if(event == PRCESS_STATE_OK)
+     {
+            //**************************************//
+                //DBG_PRINT("user result get \r\n");
+
+            //**************************************//
+            prcess_frame_buffer_add((INT32U *)csi_buf, 1);
+			
+			//DBG_PRINT("prcess_frame_buffer_add = 0x%x\r\n", csi_buf);
+     }
+
+
+     if(event != PRCESS_STATE_OK)
+            free_frame_buffer_add((INT32U *)csi_buf, 1);
+
+
+	 
+		// pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
+	 
+		TimeCnt2 = xTaskGetTickCount();
+#if 1
+		if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 50 == 0){
+						
+			DBG_PRINT("[csi_task_entry run = %d ms , startInterval = %d ] \r\n",
+				TimeCnt2-TimeCnt1,TimeCnt4);
+
+			DBG_PRINT("----- \r\n");
+
+		}
+
+#endif		
+    }
+}
+
+static void disp_task_entry(void const *parm)
+{
+    INT32U display_buf;
+    osEvent result;
+
+    DBG_PRINT("disp_task_entry start \r\n");
+    // Initialize display device
+    drv_l2_display_init();
+    drv_l2_display_start(DISPLAY_DEVICE,DISP_FMT_YUYV);
+
+    while(1)
+    {
+            result = osMessageGet(disp_frame_buffer_queue, osWaitForever);
+            display_buf = result.value.v;
+            if((result.status != osEventMessage) || !display_buf) {
+                continue;
+            }
+            //DBG_PRINT("display_buf = 0x%x\r\n", display_buf);
+            //DBG_PRINT("D");
+
+			//gp_memcpy((INT8S *)(display_buf),
+			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);
+			
+			cpu_draw_advalue_osd(UnderZeroDiff_value,display_buf,320,16,0,16);
+			cpu_draw_advalue_osd(OverZeroDiff_value,display_buf,320,60,0,17);
+			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,display_buf,
+						320,110,0,10);
+
+			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL,display_buf,
+						320,160,0,11);
+
+			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL,display_buf,
+						320,210,0,0);
+
+			
+
+            drv_l2_display_update(DISPLAY_DEVICE,display_buf);
+            pscaler_frame_buffer_add((INT32U *)display_buf, 1);
+    }
+}
+
+static void prcess_task_entry(void const *parm)
+{
+    INT32U prcess_buf;
+    osEvent result;
+	int pixelNumber;
+
+	INT32U	TimeCnt1,TimeCnt2,TimeCnt3;
+
+	INT32U	TimeCnt1a,TimeCnt2a;
+
+	INT32U	TimeCnt1b,TimeCnt2b;
+	
+	INT8U	tmp_i;
+
+	
+	INT16U  *pMLX32x32_frameData_prcess_INT16U_buf;
+	
+	float  *pMLX_TH32x24_ImgOutput_INT32S_buf0;
+	
+	float  *pMLX_TH32x24_ImgOutput_INT32S_avg_buf[IMG_AVG_buf_len];
+	INT16U	cellNum; //,EOff_cellNum;
+
+	float	ImgObject;
+
+	
+    INT32U PscalerBuffer;
+		
+	INT32S  nRet;
+	
+	ScalerFormat_t scale;
+	ScalerPara_t para;
+
+    DBG_PRINT("prcess_task_entry start \r\n");
+    //**************************************//
+    //DBG_PRINT("user init add \r\n");
+    for(tmp_i=0;tmp_i<IMG_AVG_buf_len;tmp_i++){
+			pMLX_TH32x24_ImgOutput_INT32S_avg_buf[tmp_i]= (float*)pMLX_TH32x24_Para->MLX_TH32x24_ImgAvg_buf_addr[tmp_i];
+		}
+
+    //**************************************//
+
+    while(1)
+    {
+	    result = osMessageGet(prcess_frame_buffer_queue, osWaitForever);
+        prcess_buf = result.value.v;
+        if((result.status != osEventMessage) || !prcess_buf) {
+                continue;
+        }
+        //DBG_PRINT("prcess_buf = 0x%x\r\n", prcess_buf);
+        
+		//DBG_PRINT("p %d- 0x%x\r\n",xTaskGetTickCount(), prcess_buf);
+        //DBG_PRINT("P");
+
+        //**************************************//
+           //DBG_PRINT("user code add \r\n");
+
+		
+		TimeCnt1 = xTaskGetTickCount();
+		pMLX32x32_frameData_prcess_INT16U_buf = (INT16U*)prcess_buf;
+
+		// 開始 計算 Tobject
+
+		//CalulateData(CalcFormatSet,controlRegister1,csi_buf);
+
+		 MLX90640_GetVdd(*(pMLX32x32_frameData_prcess_INT16U_buf+810),*(pMLX32x32_frameData_prcess_INT16U_buf+832));
+
+#if DEBUG_MLX_MSG_OUT
+		 DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_vdd = %f (t=%d) \r\n"
+			 ,pMLX_TH32x24_Para->MLX_TH32x24_vdd,xTaskGetTickCount());
+#endif
+
+		 MLX90640_GetTa(*(pMLX32x32_frameData_prcess_INT16U_buf+800),*(pMLX32x32_frameData_prcess_INT16U_buf+768));
+		 
+#if DEBUG_MLX_MSG_OUT
+	 DBG_PRINT(" pMLX_TH32x24_Para->MLX_TH32x24_ta = 0x%04x (%f) \r\n"
+			 ,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
+#endif
+
+	 	//tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
+
+		 //MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
+		 //  DBG_PRINT(" frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
+		 //pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+		 MLX90640_GetImage(pMLX32x32_frameData_prcess_INT16U_buf);
+		 //DBG_PRINT(" frame %d MLX90640_GetImage->1 End[t=%d] \r\n",
+		 //    pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+
+#if DEBUG_TMP_READ_OUT
+		 for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+
+			 if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+			 DBG_PRINT("(%d)",pMLX_TH32x24_Para->result[pixelNumber]);
+
+		 }
+#endif
+
+#if DEBUG_image_READ_OUT
+		for(pixelNumber=0 ; pixelNumber<MLX_Pixel ; pixelNumber++){
+
+			 //if((pixelNumber%32 == 0) && (pixelNumber != 0)) DBG_PRINT("\r\n");
+			 if(pMLX_TH32x24_Para->result_image[pixelNumber] >0)
+			 	DBG_PRINT("[%f]",pMLX_TH32x24_Para->result_image[pixelNumber]);
+
+		}
+		DBG_PRINT("\r\n");
+			 
+#endif
+
+	
+	
+		
+	 TimeCnt1a = xTaskGetTickCount();
+			
+	
 	//
 	// Tobject 轉換完成 
 	//
 
-
-	TimeCnt1b = xTaskGetTickCount();
 	pMLX_TH32x24_ImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_image; // image format ?
 
 #if IMG_AVGBUF_ON
@@ -1917,7 +2181,7 @@ static void csi_task_entry(void const *parm)
 	#endif
 	
 #endif
-		TimeCnt1a = xTaskGetTickCount();
+		TimeCnt1b = xTaskGetTickCount();
 		FindMax_ColorAssign();
 		TimeCnt2 = xTaskGetTickCount();
 
@@ -1956,11 +2220,6 @@ static void csi_task_entry(void const *parm)
 			//scale.input_y_addr = sensor_frame;
 			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
 
-		//LoopCnt++;
-		//if (LoopCnt % 2 == 0) Cnt_index++;
-		//DBG_PRINT("Cnt_index %d \r\n",Cnt_index);
-
-		//if (Cnt_index%2) scale.input_y_addr = &(sensor32X32_RGB565);
 
 		#if COLOR_FRAME_OUT
 			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
@@ -2016,121 +2275,32 @@ static void csi_task_entry(void const *parm)
 
 		}
 
-        event = prcess_state_get();
-        if(event == PRCESS_STATE_OK)
-        {
-            //**************************************//
-                //DBG_PRINT("user result get \r\n");
+        //================================================================
 
-            //**************************************//
-            prcess_frame_buffer_add((INT32U *)csi_buf, 1);
-			
-			//DBG_PRINT("prcess_frame_buffer_add = 0x%x\r\n", csi_buf);
-        }
+        
+        //**************************************//
+        //DBG_PRINT("user draw image \r\n");
 
-        if(PscalerBuffer)
-        {
-            if(event == PRCESS_STATE_OK)
-            {
-                //**************************************//
-                //DBG_PRINT("user draw image \r\n");
-
-                //**************************************//
-            }
+        //**************************************//
+          
             disp_frame_buffer_add((INT32U *)PscalerBuffer, 1);
-        }
-        //else
-            //DBG_PRINT("@");
-        if(event != PRCESS_STATE_OK)
-            free_frame_buffer_add((INT32U *)csi_buf, 1);
-
-		
-		TimeCnt3 = xTaskGetTickCount();
-#if 1
-		if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 50 == 0){
-						
-			DBG_PRINT("[ CalulateData %d ms , IMG_AVGBUF run %d ms , FindMax_ColorAssign run = %d , rest = %d ] \r\n"
-			,TimeCnt1b-TimeCnt1,TimeCnt1a-TimeCnt1b,TimeCnt2-TimeCnt1a,TimeCnt3-TimeCnt2);
-			
-			DBG_PRINT("[ csi_task_entry run=%d ms ] \r\n",TimeCnt3-TimeCnt1);
-
-			DBG_PRINT("----- \r\n");
-
-		}
-
-#endif		
-    }
-}
-
-static void disp_task_entry(void const *parm)
-{
-    INT32U display_buf;
-    osEvent result;
-
-    DBG_PRINT("disp_task_entry start \r\n");
-    // Initialize display device
-    drv_l2_display_init();
-    drv_l2_display_start(DISPLAY_DEVICE,DISP_FMT_YUYV);
-
-    while(1)
-    {
-            result = osMessageGet(disp_frame_buffer_queue, osWaitForever);
-            display_buf = result.value.v;
-            if((result.status != osEventMessage) || !display_buf) {
-                continue;
-            }
-            //DBG_PRINT("display_buf = 0x%x\r\n", display_buf);
-            //DBG_PRINT("D");
-
-			//gp_memcpy((INT8S *)(display_buf),
-			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);
-			
-			cpu_draw_advalue_osd(UnderZeroDiff_value,display_buf,320,16,0,16);
-			cpu_draw_advalue_osd(OverZeroDiff_value,display_buf,320,60,0,17);
-			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,display_buf,
-						320,110,0,10);
-
-			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL,display_buf,
-						320,160,0,11);
-
-			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL,display_buf,
-						320,210,0,0);
-
+        
 			
 
-            drv_l2_display_update(DISPLAY_DEVICE,display_buf);
-            pscaler_frame_buffer_add((INT32U *)display_buf, 1);
-    }
-}
-
-static void prcess_task_entry(void const *parm)
-{
-    INT32U prcess_buf;
-    osEvent result;
-
-    DBG_PRINT("prcess_task_entry start \r\n");
-    //**************************************//
-    //DBG_PRINT("user init add \r\n");
-
-    //**************************************//
-
-    while(1)
-    {
-            result = osMessageGet(prcess_frame_buffer_queue, osWaitForever);
-            prcess_buf = result.value.v;
-            if((result.status != osEventMessage) || !prcess_buf) {
-                continue;
-            }
-            //DBG_PRINT("prcess_buf = 0x%x\r\n", prcess_buf);
-            //DBG_PRINT("P");
-
-            //**************************************//
-                //DBG_PRINT("user code add \r\n");
-
-            //**************************************//
-            free_frame_buffer_add((INT32U *)prcess_buf, 1);
+       //**************************************//
+       
+        free_frame_buffer_add((INT32U *)prcess_buf, 1);
+	
+	// pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
+	 
             prcess_state_post(PRCESS_STATE_OK);
-
+		
+			TimeCnt3 = xTaskGetTickCount();
+			
+			if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 50 == 0){
+			DBG_PRINT("[ CalulateData %d ms ,IMG_AVGBUF run %d ms , FindMax_ColorAssign run = %d , rest = %d ] \r\n"
+			,TimeCnt1a-TimeCnt1,TimeCnt1b-TimeCnt1a,TimeCnt2-TimeCnt1b,TimeCnt3-TimeCnt2);
+				}
 			//pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
     }
 }
@@ -2302,7 +2472,8 @@ void GPM4_CSI_DISP_Demo(void)
 	// start timer_B
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
 	//pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
-	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
+	//pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
+	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 500; // 5.7~ 732 (100ms),20(50ms),100(10 ms),200(5ms),500(2 ms)
 
 	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
 
