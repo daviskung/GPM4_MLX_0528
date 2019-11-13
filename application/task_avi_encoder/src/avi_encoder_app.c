@@ -1937,6 +1937,11 @@ void cpu_draw_advalue_osd(INT32S value, INT32U target_buffer,
 		line = target_buffer + 220*resolution*2;//QVGA
 		offset = st_val*2 + shift_val;
 	} 
+
+	if(resolution == 480){
+		line = target_buffer + 480*resolution*2;//QVGA
+		offset = st_val*2 + shift_val;
+	} 
 	
 	space = 16;
 	//Arial 17

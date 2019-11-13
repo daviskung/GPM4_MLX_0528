@@ -66,6 +66,11 @@
 #define SENSOR_AREA_HIGH	24
 
 
+#define TH_STATUS_PAD     	IO_A15
+#define TH_DISP_MODE_PAD    IO_A14	
+
+
+
 
 #if  (FOV_BAB_55 == 1) && (FOV_BAA_110 == 0)
 const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
@@ -1972,16 +1977,16 @@ static void disp_task_entry(void const *parm)
 			//gp_memcpy((INT8S *)(display_buf),
 			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);
 			
-			cpu_draw_advalue_osd(UnderZeroDiff_value,display_buf,320,16,0,16);
-			cpu_draw_advalue_osd(OverZeroDiff_value,display_buf,320,60,0,17);
+			cpu_draw_advalue_osd(UnderZeroDiff_value,display_buf,device_h_size,16,0,16);
+			cpu_draw_advalue_osd(OverZeroDiff_value,display_buf,device_h_size,60,0,17);
 			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,display_buf,
-						320,110,0,10);
+						device_h_size,110,0,10);
 
 			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL,display_buf,
-						320,160,0,11);
+						device_h_size,160,0,11);
 
 			cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL,display_buf,
-						320,210,0,0);
+						device_h_size,210,0,0);
 
 			
 
@@ -2002,7 +2007,7 @@ static void prcess_task_entry(void const *parm)
 
 	INT32U	TimeCnt1b,TimeCnt2b;
 	
-	INT8U	tmp_i;
+	INT8U	tmp_i,lp_cnt;
 
 	
 	INT16U  *pMLX32x32_frameData_prcess_INT16U_buf;
@@ -2025,9 +2030,14 @@ static void prcess_task_entry(void const *parm)
     DBG_PRINT("prcess_task_entry start \r\n");
     //**************************************//
     //DBG_PRINT("user init add \r\n");
+    
     for(tmp_i=0;tmp_i<IMG_AVG_buf_len;tmp_i++){
 			pMLX_TH32x24_ImgOutput_INT32S_avg_buf[tmp_i]= (float*)pMLX_TH32x24_Para->MLX_TH32x24_ImgAvg_buf_addr[tmp_i];
 		}
+
+	gpio_init_io(TH_STATUS_PAD, GPIO_OUTPUT);
+	gpio_set_port_attribute(TH_STATUS_PAD, ATTRIBUTE_HIGH);
+	gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
 
     //**************************************//
 
@@ -2300,6 +2310,12 @@ static void prcess_task_entry(void const *parm)
 			if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 50 == 0){
 			DBG_PRINT("[ CalulateData %d ms ,IMG_AVGBUF run %d ms , FindMax_ColorAssign run = %d , rest = %d ] \r\n"
 			,TimeCnt1a-TimeCnt1,TimeCnt1b-TimeCnt1a,TimeCnt2-TimeCnt1b,TimeCnt3-TimeCnt2);
+			lp_cnt++;
+			if (lp_cnt%2 == 0 )
+				gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
+			else 
+				gpio_write_io(TH_STATUS_PAD, DATA_LOW);
+				
 				}
 			//pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
     }

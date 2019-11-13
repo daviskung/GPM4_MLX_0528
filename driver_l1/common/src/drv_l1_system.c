@@ -36,4 +36,5 @@ void drv_l1_system_arbiter_init(void)
     R_BUS_ARB_PPUPPU      = 0x80;
     //R_BUS_ARB_USB20       = 0x01;
     R_SYSTEM_MISC_CTRL5  &= 0xFFFFF0DF; //bit 5 & bit 8~11 h264 encode lock
+	R_BUS_ARB_HDMI = 0x2;	// 2019.11.12 ming said
 }

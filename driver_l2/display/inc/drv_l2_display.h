@@ -23,10 +23,10 @@
 #define __drv_l2_DISPLAY_H__
 #include "drv_l1.h"
 
-#define _DRV_L2_DISP             _DRV_L1_TFT
+#define _DRV_L2_DISP             _DRV_L1_TFT		//2019.11.12 for HDMI out
 
 // Selection DISDEV_TFT / DISDEV_HDMI_720P / DISDEV_HDMI_480P for display device
-#define DISPLAY_DEVICE          DISDEV_TFT
+#define DISPLAY_DEVICE          DISDEV_TFT	//2019.11.12 for HDMI out
 
 // TFT Device, only one tft can be enable
 #define TPO_TD025THD1		     0
