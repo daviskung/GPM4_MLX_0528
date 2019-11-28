@@ -1586,6 +1586,12 @@ void FindMax_ColorAssign(void){
 	INT8U err;
 	INT32U frame;
 
+	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt++;
+	
+	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt % 750 == 0)
+		pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 1;
+	
+
 	if( pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON == 1 )
 		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt ++;
 
@@ -1596,7 +1602,7 @@ void FindMax_ColorAssign(void){
 	//if ( ( pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%2 == 0 )
 	//	&& ( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) ) {	// per 20 msec
 
-	if ( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) {	// per 10 msec
+	if ( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 0 ) {	// per 2 msec
 
 		//DBG_PRINT("timer->MLX_TH32x24");
 
@@ -1698,7 +1704,7 @@ static void csi_task_entry(void const *parm)
 
 	//INT16U pixelNumber;
 
-    float ta,vdd,tr_byUser;
+    float ta,vdd;
 
 	int		error;
 
@@ -2026,6 +2032,7 @@ static void prcess_task_entry(void const *parm)
 	
 	ScalerFormat_t scale;
 	ScalerPara_t para;
+	float	tr_byUser;
 
     DBG_PRINT("prcess_task_entry start \r\n");
     //**************************************//
@@ -2078,11 +2085,26 @@ static void prcess_task_entry(void const *parm)
 			 ,pMLX_TH32x24_Para->MLX_TH32x24_ta,pMLX_TH32x24_Para->MLX_TH32x24_ta);
 #endif
 
-	 	//tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
+		
+		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1){
+	 		tr_byUser = pMLX_TH32x24_Para->MLX_TH32x24_ta - TA_SHIFT;
 
-		 //MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
-		 //  DBG_PRINT(" frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
-		 //pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
+			 MLX90640_CalculateTo(emissivity_byUser,tr_byUser);
+		   		DBG_PRINT(" ***frame %d MLX90640_CalculateTo->1 End[t=%d] \r\n",
+		 		pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount());
+			pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 0;
+
+			lp_cnt++;
+			
+			
+			if (lp_cnt%2 == 0 )
+				gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
+			else 
+				gpio_write_io(TH_STATUS_PAD, DATA_LOW);
+
+			
+		}
+		
 		 MLX90640_GetImage(pMLX32x32_frameData_prcess_INT16U_buf);
 		 //DBG_PRINT(" frame %d MLX90640_GetImage->1 End[t=%d] \r\n",
 		 //    pMLX_TH32x24_Para->frameData[833],xTaskGetTickCount()-TimeCnt1);
@@ -2310,12 +2332,7 @@ static void prcess_task_entry(void const *parm)
 			if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 50 == 0){
 			DBG_PRINT("[ CalulateData %d ms ,IMG_AVGBUF run %d ms , FindMax_ColorAssign run = %d , rest = %d ] \r\n"
 			,TimeCnt1a-TimeCnt1,TimeCnt1b-TimeCnt1a,TimeCnt2-TimeCnt1b,TimeCnt3-TimeCnt2);
-			lp_cnt++;
-			if (lp_cnt%2 == 0 )
-				gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
-			else 
-				gpio_write_io(TH_STATUS_PAD, DATA_LOW);
-				
+			
 				}
 			//pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
     }
@@ -2487,13 +2504,15 @@ void GPM4_CSI_DISP_Demo(void)
 
 	// start timer_B
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
+	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt = 0;
 	//pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
 	//pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 500; // 5.7~ 732 (100ms),20(50ms),100(10 ms),200(5ms),500(2 ms)
 
 	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
 
-	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d \r\n",nRet) ;
+	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d, set -%d- ms \r\n",nRet,
+		1000/pMLX_TH32x24_Para->MLX_TH32x24_sampleHz) ;
 
 
     // ad key init

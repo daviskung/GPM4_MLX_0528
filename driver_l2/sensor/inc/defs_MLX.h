@@ -197,6 +197,11 @@
 	  INT8U   TmpTbInd_buf[IMG_GRAY_IND_buf_len];
 	  
 	  INT16U  MLX_TH32x24_InitSet_controlRegister1;	  // to check controlRegister1 setting
+
+	  INT16U  MLX_TH32x24_Time_cnt;	
+
+	  
+	  INT8U  MLX_TH32x24_Time_Flag; 
 	  
   } MLX_TH32x24Para_t;
 
