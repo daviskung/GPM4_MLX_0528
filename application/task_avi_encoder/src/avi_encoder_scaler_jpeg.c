@@ -818,7 +818,7 @@ static void MLX_TH32x24_SCALERUP_task_entry(void const *parm)
 			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
 
 		#if COLOR_FRAME_OUT
-			scale.input_y_addr = pMLX_TH32x24_Para->MLX_TH32x24_ScaleUpFrame_addr;
+			scale.input_y_addr = pMLX_TH32x24_Para->MLX_TH32x24_ColorScaleUpFrame_addr;
 		#else
 			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
 		#endif
@@ -1413,7 +1413,7 @@ static void MLX_TH32x24_task_entry(void const *parm)
 	unsigned long	PixC;		// INT32U
 	INT16U  *pMLX_TH32x24_frame_INT16U_buf0;
 
-	INT16U  *pMLX_TH32x24_ScaleUpframe_INT16U_buf0;
+	INT16U  *pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0;
 
 	INT8U  *pMLX_TH32x24_Grayframe_INT8U_buf0,*pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0;
 	float	tmpPixC;
@@ -1721,8 +1721,8 @@ static void MLX_TH32x24_task_entry(void const *parm)
 			pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 =
 				(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr;
 
-			pMLX_TH32x24_ScaleUpframe_INT16U_buf0 =
-				(INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_ScaleUpFrame_addr;
+			pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 =
+				(INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_ColorScaleUpFrame_addr;
 
 			firstRun = 0;
 			SampleTempCnt = 0;

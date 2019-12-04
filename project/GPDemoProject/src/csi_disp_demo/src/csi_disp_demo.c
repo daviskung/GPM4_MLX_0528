@@ -1312,6 +1312,8 @@ void FindMax_ColorAssign(void){
 
 	INT8U  *pMLX_TH32x24_Grayframe_INT8U_buf0,*pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0;
 
+	INT16U  *pMLX_TH32x24_Colorframe_INT16U_buf0,*pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0;
+
 	INT16U	TminTable,TmaxTable;
 
 	float	TmaxOverZero,TminOverZero,TmaxUnderZero,TminUnderZero;
@@ -1349,9 +1351,15 @@ void FindMax_ColorAssign(void){
 	
 	pMLX_TH32x24_Grayframe_INT8U_buf0 =
 				(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr;
-
+		
 	pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 =
 					(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr;
+
+	pMLX_TH32x24_Colorframe_INT16U_buf0 =
+				(INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr;
+
+	pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 =
+					(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_ColorScaleUpFrame_addr;
 
 	
 	Tpoint3 = pMLX_TH32x24_Para->MLX_TH32x24_GRAY_Tpoint3;
@@ -1450,7 +1458,7 @@ void FindMax_ColorAssign(void){
 	}
 
 	else{
-	 if(ImgObject >= 0)  GrayTmpValue =0xff;
+	 if(ImgObject >= 0)  GrayTmpValue =0xff; // 最熱 全亮
 	 else{
 	 	
 		 if (ImgObject <= Tpoint3)
@@ -2012,7 +2020,7 @@ static void csi_task_entry(void const *parm)
 		// pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
 	 
 		TimeCnt2 = xTaskGetTickCount();
-#if 1
+#if 0
 		if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 50 == 0){
 						
 			DBG_PRINT("[csi_task_entry run = %d ms , startInterval = %d ] \r\n",
@@ -2356,7 +2364,7 @@ static void prcess_task_entry(void const *parm)
 
 
 		#if COLOR_FRAME_OUT
-			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
+			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorScaleUpFrame_addr ;
 		#else
 			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr ;
 			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
@@ -2431,11 +2439,13 @@ static void prcess_task_entry(void const *parm)
 		
 			TimeCnt3 = xTaskGetTickCount();
 			
+		#if 0
 			if (pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt % 50 == 0){
 			DBG_PRINT("[ CalulateData %d ms ,IMG_AVGBUF run %d ms , FindMax_ColorAssign run = %d , rest = %d ] \r\n"
 			,TimeCnt1a-TimeCnt1,TimeCnt1b-TimeCnt1a,TimeCnt2-TimeCnt1b,TimeCnt3-TimeCnt2);
-			
 				}
+		#endif
+		
 			//pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
     }
 }

@@ -184,7 +184,7 @@
 	  INT32U  MLX_TH32x24_ImgAvg_buf_addr[IMG_AVG_buf_len];   // MLX_TH32x24 image buffer addr
 	  INT32U  MLX_TH32x24_GrayOutputFrame_addr;
 	  INT32U  MLX_TH32x24_GrayScaleUpFrame_addr;
-	  INT32U  MLX_TH32x24_ScaleUpFrame_addr;
+	  INT32U  MLX_TH32x24_ColorScaleUpFrame_addr;
 	  
 	  INT8U  MLX_TH32x24_GrayOutputFactor;
 	  INT8U  MLX_TH32x24_GRAY_MAX_VAL;
