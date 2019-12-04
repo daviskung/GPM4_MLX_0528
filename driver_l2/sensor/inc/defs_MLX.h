@@ -202,6 +202,8 @@
 
 	  
 	  INT8U  MLX_TH32x24_Time_Flag; 
+	  INT16S MLX_TH32x24_TmpMin;
+	  INT16S MLX_TH32x24_TmpMax;
 	  
   } MLX_TH32x24Para_t;
 
