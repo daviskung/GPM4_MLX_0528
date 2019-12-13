@@ -70,14 +70,14 @@
 #define TH_DISP_MODE_PAD    IO_A14
 
 
-#define COLOR_SET_1		0
-#define COLOR_SET_2		1
-#define COLOR_SET_3		2
-#define COLOR_SET_4		3
-#define COLOR_SET_4A	4
-#define COLOR_SET_5		5
+#define COLOR_SET_0		0
+#define COLOR_SET_1		1
+#define COLOR_SET_2		2
+#define COLOR_SET_2A	3
+#define COLOR_SET_3		4
+//#define COLOR_SET_4		5
 
-#define COLOR_SET_MAX		COLOR_SET_5
+#define COLOR_SET_MAX		COLOR_SET_3
 
 
 
@@ -1507,7 +1507,7 @@ void FindMax_ColorAssign(void){
 
 		switch(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode)
 			{
-			case COLOR_SET_1:
+			case COLOR_SET_0:
 				// gray value => 0xff 最熱,最亮 ... 00 最紅 / 1f 粉紅 
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 31 + 0xfcc0; // 粉色 
 
@@ -1525,7 +1525,7 @@ void FindMax_ColorAssign(void){
 				}
 				break;
 
-			case COLOR_SET_2:
+			case COLOR_SET_1:
 				// gray value => 0xff 最熱,最亮 ... 00 最紅 / 1f 粉紅 
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
@@ -1544,28 +1544,11 @@ void FindMax_ColorAssign(void){
 				else if(GrayTmpValue > 192) {
 					SingleColorTmpValue = (31 * (GrayTmpValue-192)/64) + 0xf800 ; //0xfcc0 ; // 紅色 
 				}
-				
+
 				break;
-			case COLOR_SET_3:
-				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
-				else if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){ // 黑色 
-					SingleColorTmpValue = 0x0000 ;
-				}
 
-				else if(GrayTmpValue <= 128){
-					SingleColorTmpValue = 0x001f; // 藍色 
-				}
-
-				else if((GrayTmpValue > 128) && (GrayTmpValue <= 192) ) {
-					SingleColorTmpValue =0x07e0; // 綠色 
-				}
-
-				else if(GrayTmpValue > 192) {
-					SingleColorTmpValue = 0xf800 ;  // 紅色 
-				}
-				break;
-			case COLOR_SET_4: // 紫紅色系 ================================================
+			case COLOR_SET_2: // 紫紅色系 ================================================
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
 				else if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){
@@ -1587,12 +1570,12 @@ void FindMax_ColorAssign(void){
 				else if(GrayTmpValue >= 192) {
 					SingleColorShiftValue = (GrayTmpValue -192)/63;
 					SingleColorShiftValue = SingleColorShiftValue << 5;
-					SingleColorTmpValue = SingleColorShiftValue + 0x0F81F ;  
+					SingleColorTmpValue = SingleColorShiftValue + 0x0F81F ;
 				}
 				break;
 
 
-			case COLOR_SET_4A:	// 紫紅色系  比例微調    ================================================
+			case COLOR_SET_2A:	// 紫紅色系  比例微調    ================================================
 
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
@@ -1615,45 +1598,45 @@ void FindMax_ColorAssign(void){
 				else if(GrayTmpValue > 152) {
 					SingleColorShiftValue = (GrayTmpValue -152)/98;
 					SingleColorShiftValue = SingleColorShiftValue << 5;
-					SingleColorTmpValue = SingleColorShiftValue + 0x0F81F ;  
+					SingleColorTmpValue = SingleColorShiftValue + 0x0F81F ;
 				}
 			break;
 
-			case COLOR_SET_5:	// 黃色系  比例     ================================================
+			case COLOR_SET_3:	// 黃色系  比例     ================================================
 
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
 				else if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){
-					SingleColorTmpValue = 0x6320   ; // 
+					SingleColorTmpValue = 0x6320   ; //
 				}
 
 				else if(GrayTmpValue <= 50){
-				
+
 					SingleColorTmpValue = (12 * (50-GrayTmpValue))/50 + 0x6320 ;
 				}
 
 				else if((GrayTmpValue > 50) && (GrayTmpValue <= 78) ) {
-				
+
 					SingleColorTmpValue = 6 * (GrayTmpValue -50)/28 + 0x9cc0;
 				}
 
 				else if((GrayTmpValue > 78) && (GrayTmpValue <= 128)) {
-				
+
 					SingleColorTmpValue = 12 * (GrayTmpValue -78)/50 + 0xce60 ;
-				
-				
+
+
 				}
 
 				else if((GrayTmpValue > 128) && (GrayTmpValue <= 255)) {
 					SingleColorTmpValue = 31 * (GrayTmpValue -128)/127 + 0xffe0  ;
-				
+
 				}
 
-	
+
 			default:
 				break;
 			}
-	
+
 
 		*(pMLX_TH32x24_Colorframe_INT16U_buf0+ tmp_i2)
 			= SingleColorTmpValue ;
@@ -2821,7 +2804,7 @@ void GPM4_CSI_DISP_Demo(void)
 		1000/pMLX_TH32x24_Para->MLX_TH32x24_sampleHz) ;
 
 	pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = 1;
-		
+
     // ad key init
 	adc_key_scan_init();
 
@@ -2834,7 +2817,7 @@ void GPM4_CSI_DISP_Demo(void)
 			pMLX_TH32x24_Para->MLX_TH32x24_ColorMode ++;
 			if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode > COLOR_SET_MAX )
 				pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = 0;
-			
+
 			DBG_PRINT("ad_key-1 selection -ColorMode = %d\r\n",
 				pMLX_TH32x24_Para->MLX_TH32x24_ColorMode);
 		}
