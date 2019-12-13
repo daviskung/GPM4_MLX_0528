@@ -1991,6 +1991,74 @@ void cpu_draw_advalue_osd(INT32S value, INT32U target_buffer,
 #endif
 	
 }
+
+
+void cpu_draw_line_osd(INT32S value, INT32U target_buffer, INT8U setline,
+		INT16U resolution,INT8U st_val, INT8U shift_val , INT8U spec_val )
+{
+	INT8U  data;
+	INT16U offset, space, wtemp;
+	INT32U line;
+	if(resolution == 320){
+		line = target_buffer + setline*resolution*2;//QVGA
+		offset = st_val*2 + shift_val;
+	} 
+
+	if(resolution == 720){
+		line = target_buffer + 460*resolution*2;// DISDEV_HDMI_480P 
+		offset = st_val*2 + shift_val;
+		space = 26;
+	} 
+
+#if DISDEV_HDMI_480P
+	//space = 16;
+	
+	
+	//Arial 17
+	//year
+	wtemp = value;
+	//data = wtemp/10000;	// 減少 至 4位輸出 
+	//wtemp -= data*10000;
+	//cpu_draw_osd(number[data], line, offset, resolution);
+	data = wtemp/1000;
+	wtemp -= data*1000;
+	cpu_draw_osd(number[data],line,offset,resolution);
+	data = wtemp/100;
+	wtemp -= data*100;
+	cpu_draw_osd(number[data],line,offset+space*1,resolution);
+	data = wtemp/10;
+	wtemp -= data*10;
+	cpu_draw_osd(number[data],line,offset+space*2,resolution);
+	data = wtemp;
+	cpu_draw_osd(number[data],line,offset+space*3,resolution);
+	// slash dot comma *17 , slash dot comma *14 , H L M
+	cpu_draw_osd(specMark[spec_val],line,offset-space,resolution); 
+#else
+	space = 16;
+	//Arial 17
+	//year
+	wtemp = value;
+	//data = wtemp/10000;	// 減少 至 4位輸出 
+	//wtemp -= data*10000;
+	//cpu_draw_osd(number[data], line, offset, resolution);
+	data = wtemp/1000;
+	wtemp -= data*1000;
+	cpu_draw_osd(number[data],line,offset,resolution);
+	data = wtemp/100;
+	wtemp -= data*100;
+	cpu_draw_osd(number[data],line,offset+space*1,resolution);
+	data = wtemp/10;
+	wtemp -= data*10;
+	cpu_draw_osd(number[data],line,offset+space*2,resolution);
+	data = wtemp;
+	cpu_draw_osd(number[data],line,offset+space*3,resolution);
+	// slash dot comma *17 , slash dot comma *14 , H L M
+	cpu_draw_osd(specMark[spec_val],line,offset-space,resolution); 
+#endif
+	
+}
+
+		
 #endif
 #endif
 #endif//#if (defined APP_VIDEO_ENCODER_EN) && (APP_VIDEO_ENCDOER_EN == 1)
