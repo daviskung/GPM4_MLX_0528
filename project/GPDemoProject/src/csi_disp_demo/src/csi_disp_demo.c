@@ -56,7 +56,7 @@
 
 
 #define TRANSPARENT_COLOR 	0x00	// 無色 
-#define COLOR_FRAME_OUT		1
+//#define COLOR_FRAME_OUT		1
 #define DBG_COLOR_TABLE		0
 #define GRAY_GRAYMAX_COLOR 	0xff	// 無色 
 #define GRAY_START_COLOR 	125		// 全亮 255 , 全暗 0
@@ -70,14 +70,14 @@
 #define TH_DISP_MODE_PAD    IO_A14
 
 
-#define COLOR_SET_0		0
+#define COLOR_SET_0		0	// gray out
 #define COLOR_SET_1		1
 #define COLOR_SET_2		2
-#define COLOR_SET_2A	3
-#define COLOR_SET_3		4
-//#define COLOR_SET_4		5
+#define COLOR_SET_3		3
+#define COLOR_SET_4		4
+#define COLOR_SET_5		5
 
-#define COLOR_SET_MAX		COLOR_SET_3
+#define COLOR_SET_MAX		COLOR_SET_5
 
 
 
@@ -1502,12 +1502,11 @@ void FindMax_ColorAssign(void){
 		tmp_i = cellNum/rowNumEnd_32;
 		tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 
-
-	#if COLOR_FRAME_OUT
-
+		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0){
+			
 		switch(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode)
-			{
-			case COLOR_SET_0:
+			{			
+			case COLOR_SET_1:
 				// gray value => 0xff 最熱,最亮 ... 00 最紅 / 1f 粉紅 
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 31 + 0xfcc0; // 粉色 
 
@@ -1525,7 +1524,7 @@ void FindMax_ColorAssign(void){
 				}
 				break;
 
-			case COLOR_SET_1:
+			case COLOR_SET_2:
 				// gray value => 0xff 最熱,最亮 ... 00 最紅 / 1f 粉紅 
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
@@ -1548,7 +1547,7 @@ void FindMax_ColorAssign(void){
 				break;
 
 
-			case COLOR_SET_2: // 紫紅色系 ================================================
+			case COLOR_SET_3: // 紫紅色系 ================================================
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
 				else if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){
@@ -1575,7 +1574,7 @@ void FindMax_ColorAssign(void){
 				break;
 
 
-			case COLOR_SET_2A:	// 紫紅色系  比例微調    ================================================
+			case COLOR_SET_4:	// 紫紅色系  比例微調    ================================================
 
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
@@ -1602,7 +1601,7 @@ void FindMax_ColorAssign(void){
 				}
 			break;
 
-			case COLOR_SET_3:	// 黃色系  比例     ================================================
+			case COLOR_SET_5:	// 黃色系  比例     ================================================
 
 				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
@@ -1640,10 +1639,11 @@ void FindMax_ColorAssign(void){
 
 		*(pMLX_TH32x24_Colorframe_INT16U_buf0+ tmp_i2)
 			= SingleColorTmpValue ;
-	#else
-		*(pMLX_TH32x24_Grayframe_INT8U_buf0+ tmp_i2)
+			}
+		else
+			*(pMLX_TH32x24_Grayframe_INT8U_buf0+ tmp_i2)
 			= GrayTmpValue;
-	#endif
+	
 
 	}
 
@@ -1773,11 +1773,11 @@ void FindMax_ColorAssign(void){
 		tmp_start =0;
 		for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
 
-		#if COLOR_FRAME_OUT
+		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
 				SingleColorTmpValue = *(pMLX_TH32x24_Colorframe_INT16U_buf0 + cellNum);
-		#else
+		else
 				GrayTmpValue = *(pMLX_TH32x24_Grayframe_INT8U_buf0 + cellNum);
-		#endif
+		
 				tmp_i2 = cellNum % 32;
 
 			if((( cellNum % 32) == 0 ) && ( cellNum != 0 ))
@@ -1790,33 +1790,33 @@ void FindMax_ColorAssign(void){
 				{
 
 
-		#if COLOR_FRAME_OUT
+		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
 				*(pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 + tmp_i )
 						= SingleColorTmpValue;
-		#else
+		else
 				*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
 						=GrayTmpValue;
-		#endif
+		
 				}
 			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
 				{
-		#if COLOR_FRAME_OUT
+		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
 				*(pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 + tmp_i )
 						= SingleColorTmpValue;
-		#else
+		else
 				*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
 						=GrayTmpValue;
-		#endif
+		
 				}
 			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32*2)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32*2)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
 				{
-		#if COLOR_FRAME_OUT
+		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
 				*(pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 + tmp_i )
 						= SingleColorTmpValue;
-		#else
+		else
 				*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
 						=GrayTmpValue;
-		#endif
+		
 				}
 
 		}
@@ -2523,11 +2523,12 @@ static void prcess_task_entry(void const *parm)
 		gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
 			//drv_l2_scaler_init();
 			//scale.input_format = pAviEncVidPara->sensor_output_format;
-		#if COLOR_FRAME_OUT
+			
+		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
 			scale.input_format = C_SCALER_CTRL_IN_RGB565;
-		#else
+		else
 			scale.input_format = C_SCALER_CTRL_IN_Y_ONLY; 	// gray value
-		#endif
+		
 			scale.input_width = rowNumEnd_32*ScaleUp_3;
 			scale.input_height = colNumEnd_24*ScaleUp_3;
 			scale.input_visible_width = rowNumEnd_32*ScaleUp_3;
@@ -2539,12 +2540,12 @@ static void prcess_task_entry(void const *parm)
 			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
 
 
-		#if COLOR_FRAME_OUT
+		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
 			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorScaleUpFrame_addr ;
-		#else
+		else
 			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr ;
 			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
-		#endif
+		
 
 			scale.input_u_addr = 0;
 			scale.input_v_addr = 0;
