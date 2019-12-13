@@ -26,7 +26,7 @@
 #define _DRV_L2_DISP             _DRV_L1_HDMI	//_DRV_L1_HDMI // _DRV_L1_TFT		//2019.11.12 for HDMI out
 
 // Selection DISDEV_TFT / DISDEV_HDMI_720P / DISDEV_HDMI_480P for display device
-#define DISPLAY_DEVICE          DISDEV_HDMI_480P	//DISDEV_HDMI_720P	//DISDEV_HDMI_480P	//DISDEV_TFT	//2019.11.12 for HDMI out
+#define DISPLAY_DEVICE          DISDEV_HDMI_720P	//DISDEV_HDMI_720P	//DISDEV_HDMI_480P	//DISDEV_TFT	//2019.11.12 for HDMI out
 
 // TFT Device, only one tft can be enable
 #define TPO_TD025THD1		     0

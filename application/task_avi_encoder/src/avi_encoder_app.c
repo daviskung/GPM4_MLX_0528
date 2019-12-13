@@ -2015,8 +2015,13 @@ void cpu_draw_line_osd(INT32S value, INT32U target_buffer, INT8U setline,
 		offset = st_val*2 + shift_val;
 		space = 26;
 	} 
+	if(resolution == 1280){
+		line = target_buffer + setline*resolution*2;// DISDEV_HDMI_720P 
+		offset = st_val*2 + shift_val;
+		space = 26;
+	} 
 
-#if DISDEV_HDMI_480P
+#if (DISDEV_HDMI_480P == 1) || (DISDEV_HDMI_720P == 1)
 	//space = 16;
 	
 	
