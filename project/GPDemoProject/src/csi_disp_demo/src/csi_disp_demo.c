@@ -2155,7 +2155,7 @@ static void csi_task_entry(void const *parm)
 			 //DBG_PRINT("read return-1  = %d \r\n",error);  // return data length , if error = -1
 			 //  需要 重新讀取 !! 改成 副程式 檢查 
 			 if( error == -1){
-				 DBG_PRINT("frame0 read status error !! \r\n");
+				 DBG_PRINT("frame0 read status error !! delay %d ms - %d\r\n",CONVERT_WAIT_TIME,frameData_cnt);
 				 osDelay(10);
 			 }
 		 }while(error == -1);
@@ -2195,7 +2195,7 @@ static void csi_task_entry(void const *parm)
 			 }
 	 }
 
-
+			 
 	  if(dataReady != 0)
 	  {
 
@@ -2240,8 +2240,9 @@ static void csi_task_entry(void const *parm)
 		// error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
 	 }
 
-
-	 pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
+	
+	 if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 ) 
+	 	pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
 
 	 //TimeCnt2 = xTaskGetTickCount();
 
