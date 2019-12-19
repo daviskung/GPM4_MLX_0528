@@ -79,6 +79,11 @@
 
 #define COLOR_SET_MAX		COLOR_SET_5
 
+#define GRAY_AMP_START	20
+#define GRAY_AMP_SCALE	2
+
+
+
 
 
 
@@ -1339,6 +1344,7 @@ void FindMax_ColorAssign(void){
 
 
 	INT8U	GrayTmpValue; // 	INT16U	TminTable,TmaxTable;
+	INT16S	GrayValueAmp; 
 
 	INT8U	TmpTbInd;
 
@@ -1478,17 +1484,17 @@ void FindMax_ColorAssign(void){
 			 GrayTmpValue =pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL;
 			 }
 		 else {
-		 // auto Autoscale
-		 //TmpTbInd =(INT8U)(((ImgObject - TminUnderZeroTable)*255)/(TmaxUnderZeroTable - TminUnderZeroTable)) ;
-		 TmpTbInd =(INT8U)(  ((ImgObject - Tpoint3)*(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL -pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL))/
-				 (TmaxUnderZeroTable - Tpoint3));
-		 TmpTbInd = TmpTbInd + pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL ;
+		 	// auto Autoscale
+			 //TmpTbInd =(INT8U)(((ImgObject - TminUnderZeroTable)*255)/(TmaxUnderZeroTable - TminUnderZeroTable)) ;
+			 TmpTbInd =(INT8U)(  ((ImgObject - Tpoint3)*(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL -pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL))/
+					 (TmaxUnderZeroTable - Tpoint3));
+			 TmpTbInd = TmpTbInd + pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL ;
 
-		 if(TmpTbInd> 250 )  TmpTbInd=255;
+			 if(TmpTbInd> 250 )  TmpTbInd=255;
 
-		 else if(TmpTbInd <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL)
+			 else if(TmpTbInd <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL)
 					 TmpTbInd = pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL;
-		 else
+		 
 			 GrayTmpValue = TmpTbInd ;
 		 }
 		 }
@@ -1603,9 +1609,10 @@ void FindMax_ColorAssign(void){
 
 			case COLOR_SET_5:	// 黃色系  比例     ================================================
 
-				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
+				//if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
 
-				else if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){
+				//else 
+				if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){
 					SingleColorTmpValue = 0x6320   ; //
 				}
 
@@ -1627,7 +1634,7 @@ void FindMax_ColorAssign(void){
 				}
 
 				else if((GrayTmpValue > 128) && (GrayTmpValue <= 255)) {
-					SingleColorTmpValue = 31 * (GrayTmpValue -128)/127 + 0xffe0  ;
+					SingleColorTmpValue = 15 * (GrayTmpValue -128)/127 + 0xffe0  ; // 31 改成 15
 
 				}
 
@@ -1640,10 +1647,28 @@ void FindMax_ColorAssign(void){
 		*(pMLX_TH32x24_Colorframe_INT16U_buf0+ tmp_i2)
 			= SingleColorTmpValue ;
 			}
-		else
+		else{
+			//
+			//	gray sacle modify ?
+			//
+
+			if ((GrayTmpValue > pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START ) 
+				&& (pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE != 0))
+			{
+				GrayValueAmp = GrayTmpValue;
+				
+				//DBG_PRINT("[Gray=%d",GrayTmpValue);
+				GrayValueAmp = (GrayValueAmp - pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START)*
+				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE +	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START ;
+				//DBG_PRINT("-Amp=%d]",GrayValueAmp);
+				if(GrayValueAmp > 255) GrayTmpValue = 255;
+				else GrayTmpValue =(INT8U)GrayValueAmp;
+				
+				//DBG_PRINT("Gray=%d  ",GrayTmpValue);
+			}
 			*(pMLX_TH32x24_Grayframe_INT8U_buf0+ tmp_i2)
 			= GrayTmpValue;
-	
+			}
 
 	}
 
@@ -1680,64 +1705,114 @@ void FindMax_ColorAssign(void){
 
 
 	 // MLX_GrayOutputFactor_Ary[10]={8,8,7,7,6,5,4,3,3,3,3};
+		switch(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode)
+		{			
+			case COLOR_SET_1:
+			case COLOR_SET_2:
+			case COLOR_SET_3:
+			case COLOR_SET_4:
+			case COLOR_SET_5:
+				if (OverZeroDiff_value > 0)
+				{
+					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[19];
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = 255; //MLX_Gray_MAX_val_Ary[19];
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[19];
+					pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 0;
+		
+					TmpTbInd = 0;
+					//DBG_PRINT("OverZeroDiff_value > 0  \r\n");
+				}
+				else if (OverZeroDiff_value <= 0)
+				{
+		
+					TmpTbInd =(INT8U)(UnderZeroDiff_value/50);
+					if (TmpTbInd > 19){
+						TmpTbInd = 19;
+						//DBG_PRINT("TmpTbInd = %d \r\n",TmpTbInd);
+						}
+		#if TmpTbInd_NO_BUF
+			
+					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[TmpTbInd];
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
+		
+					DBG_PRINT("No buff OverZeroDiff_value < 0 , TmpTbInd = %d \r\n",TmpTbInd);
+		
 
-		if (OverZeroDiff_value > 0)
-		{
-			pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[19];
-			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = 255; //MLX_Gray_MAX_val_Ary[19];
-			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[19];
-			pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 0;
+		#else
 
-			TmpTbInd = 0;
-			//DBG_PRINT("OverZeroDiff_value > 0  \r\n");
+					if (pMLX_TH32x24_Para->TmpTbInd_buf_Enable == 0)
+					{
+						for (tmp_i = 0; tmp_i < IMG_GRAY_IND_buf_len; ++tmp_i)
+						{
+							pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i] = TmpTbInd;
+						}
+						pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 1;
+					}
+					else
+					{
+						for (tmp_i = 0; tmp_i < (IMG_GRAY_IND_buf_len - 1); ++tmp_i)
+						{
+							pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i] = pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i + 1];
+						}
+						pMLX_TH32x24_Para->TmpTbInd_buf[IMG_GRAY_IND_buf_len - 1] = TmpTbInd;
+						for (tmp_i= 0; tmp_i < (IMG_GRAY_IND_buf_len - 1); ++tmp_i)
+						{
+							TmpTbInd = TmpTbInd + pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i];
+						}
+						TmpTbInd = TmpTbInd / IMG_GRAY_IND_buf_len;
+					}
+		
+					if (TmpTbInd > 19) TmpTbInd = 19;
+					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[TmpTbInd];
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
+#endif		
+		
+				}
+				break;
+			default:	// for Gray output  only
+
+					TmpTbInd =(INT8U)(UnderZeroDiff_value/50);
+					if (TmpTbInd > 19){
+						TmpTbInd = 19;
+						//DBG_PRINT("TmpTbInd = %d \r\n",TmpTbInd);
+					}	
+					
+					if (OverZeroDiff_value > 0) TmpTbInd = 19;
+				
+					if (pMLX_TH32x24_Para->TmpTbInd_buf_Enable == 0)
+					{
+						for (tmp_i = 0; tmp_i < IMG_GRAY_IND_buf_len; ++tmp_i)
+						{
+							pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i] = TmpTbInd;
+						}
+						pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 1;
+					}
+					else
+					{
+						for (tmp_i = 0; tmp_i < (IMG_GRAY_IND_buf_len - 1); ++tmp_i)
+						{
+							pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i] = pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i + 1];
+						}
+						pMLX_TH32x24_Para->TmpTbInd_buf[IMG_GRAY_IND_buf_len - 1] = TmpTbInd;
+						for (tmp_i= 0; tmp_i < (IMG_GRAY_IND_buf_len - 1); ++tmp_i)
+						{
+							TmpTbInd = TmpTbInd + pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i];
+						}
+						TmpTbInd = TmpTbInd / IMG_GRAY_IND_buf_len;
+					}
+
+					
+					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[TmpTbInd];
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
+					
+				break;
 		}
-		else if (OverZeroDiff_value <= 0)
-		{
+	
 
-			TmpTbInd =(INT8U)(UnderZeroDiff_value/50);
-#if TmpTbInd_NO_BUF
-			if (TmpTbInd > 19){
-				TmpTbInd = 19;
-				//DBG_PRINT("TmpTbInd = %d \r\n",TmpTbInd);
-				}
-			pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[TmpTbInd];
-			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
-			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
-
-			DBG_PRINT("No buff OverZeroDiff_value < 0 , TmpTbInd = %d \r\n",TmpTbInd);
-
-
-#else
-
-			if (pMLX_TH32x24_Para->TmpTbInd_buf_Enable == 0)
-			{
-				for (tmp_i = 0; tmp_i < IMG_GRAY_IND_buf_len; ++tmp_i)
-				{
-					pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i] = TmpTbInd;
-				}
-				pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 1;
-			}
-			else
-			{
-				for (tmp_i = 0; tmp_i < (IMG_GRAY_IND_buf_len - 1); ++tmp_i)
-				{
-					pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i] = pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i + 1];
-				}
-				pMLX_TH32x24_Para->TmpTbInd_buf[IMG_GRAY_IND_buf_len - 1] = TmpTbInd;
-				for (tmp_i= 0; tmp_i < (IMG_GRAY_IND_buf_len - 1); ++tmp_i)
-				{
-					TmpTbInd = TmpTbInd + pMLX_TH32x24_Para->TmpTbInd_buf[tmp_i];
-				}
-				TmpTbInd = TmpTbInd / IMG_GRAY_IND_buf_len;
-			}
-
-			if (TmpTbInd > 19) TmpTbInd = 19;
-			pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[TmpTbInd];
-			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
-			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
-#endif
-
-		}
+		
 
 #if 0
 		if(pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt%100 == 0){
@@ -2249,6 +2324,13 @@ static void disp_task_entry(void const *parm)
 
 			cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode,display_buf,0,
 						device_h_size,8,0,8);
+			if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0 )
+				{
+				cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START,display_buf,0,
+						device_h_size,52,0,12);
+				cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE,display_buf,0,
+						device_h_size,96,0,0);
+				}
 
             drv_l2_display_update(DISPLAY_DEVICE,display_buf);
             pscaler_frame_buffer_add((INT32U *)display_buf, 1);
@@ -2805,6 +2887,8 @@ void GPM4_CSI_DISP_Demo(void)
 		1000/pMLX_TH32x24_Para->MLX_TH32x24_sampleHz) ;
 
 	pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = 1;
+	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = GRAY_AMP_START;
+	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE = GRAY_AMP_SCALE;
 
     // ad key init
 	adc_key_scan_init();
@@ -2830,6 +2914,31 @@ void GPM4_CSI_DISP_Demo(void)
 			DBG_PRINT("ad_key-2 selection -ColorMode = %d\r\n",
 				pMLX_TH32x24_Para->MLX_TH32x24_ColorMode);
 		}
+
+		if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0 ){
+
+			if(ADKEY_IO3)
+			{
+			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = 
+				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START + 10;
+			if( pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START > 240 )
+				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = GRAY_AMP_START;
+
+			DBG_PRINT("ad_key-3 selection -AMP_START = %d\r\n",
+				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START);
+			}
+			else if(ADKEY_IO4)
+			{
+			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE ++;
+			if( pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE > 10 )
+				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE = 0;
+			DBG_PRINT("ad_key-4 selection -AMP_SCALE = %d\r\n",
+				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE);
+			}
+		
+		}
+	
+		
 	}
 }
 
