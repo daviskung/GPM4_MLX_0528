@@ -91,11 +91,11 @@
 const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
 //const INT8U MLX_Gray_MAX_val_Ary[20]   = {40,40,40,50, 60, 60, 70, 80,100,110,135,170,195,210,210,210,210,210,220,220};
 //const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5};
-  const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,255,255};
-  const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5};
+const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20, 20, 20,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
+const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5};
 #else  // if FOV_BAA_110
 const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
-  const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20,240,240,240,240,240,240,240,240,240,255,255};
+  const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20,220,220,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
   const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5};
 //const INT8U MLX_Gray_MAX_val_Ary[20]   = {40,40,40,50, 60, 60, 70, 80,100,110,135,170,195,210,210,210,210,210,220,220};
 //const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5};
@@ -1715,7 +1715,7 @@ void FindMax_ColorAssign(void){
 				if (OverZeroDiff_value > 0)
 				{
 					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[19];
-					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = 255; //MLX_Gray_MAX_val_Ary[19];
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[19]; // 255 會有計算 error
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[19];
 					pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 0;
 		
@@ -2307,7 +2307,7 @@ static void disp_task_entry(void const *parm)
 
 			//gp_memcpy((INT8S *)(display_buf),
 			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);
-		#if 0
+		
 			cpu_draw_advalue_osd(UnderZeroDiff_value,display_buf,
 						device_h_size,16,0,16);
 			cpu_draw_advalue_osd(OverZeroDiff_value,display_buf,
@@ -2330,9 +2330,9 @@ static void disp_task_entry(void const *parm)
 			cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode,display_buf,0,
 						device_h_size,8,0,8);
 			
-			 DBG_PRINT("display_buf-2 = 0x%x\r\n", display_buf);
 			 
-		//#if 0
+			 
+		
 			if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0 )
 				{
 				cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START,display_buf,0,
@@ -2340,7 +2340,7 @@ static void disp_task_entry(void const *parm)
 				cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE,display_buf,0,
 						device_h_size,96,0,0);
 				}
-		#endif
+
 		
            nRet = drv_l2_display_update(DISPLAY_DEVICE,display_buf);
 		 //DBG_PRINT("ret-1 = 0x%x\r\n", nRet);
