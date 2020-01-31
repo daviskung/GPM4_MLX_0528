@@ -278,7 +278,7 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 	}
 
 		//	1 pixel takes 2 bytes => 32*24 pixel requires 32*24*3*3 放大3倍 
-		buffer_size = (pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height << 1)*ScaleUp_3*ScaleUp_3;
+		buffer_size = (pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height << 1)*ScaleUp_2*ScaleUp_2;
 
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
@@ -289,7 +289,7 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 		DBG_PRINT("davis --> MLX_TH32x24_ColorScaleUpFrame_addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_ColorScaleUpFrame_addr);
 
 		//	1 pixel takes 1 bytes (Gray out) => 32*24 pixel requires 32*24*3*3 放大3倍 
-		buffer_size = (pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height )*ScaleUp_3*ScaleUp_3;
+		buffer_size = (pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height )*ScaleUp_2*ScaleUp_2;
 
 		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
 		//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?

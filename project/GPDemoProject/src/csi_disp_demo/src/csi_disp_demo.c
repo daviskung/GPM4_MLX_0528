@@ -1842,18 +1842,18 @@ void FindMax_ColorAssign(void){
 
 		// set Tmax/Tmin marker
 		//
-		// scale function (x 3) / ScaleUp_3
+		// scale function (x 2) / ScaleUp_2
 		//
 		tmp_i2 = 0;
 		tmp_start =0;
 		for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
 
-		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
+			if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
 				SingleColorTmpValue = *(pMLX_TH32x24_Colorframe_INT16U_buf0 + cellNum);
-		else
+			else
 				GrayTmpValue = *(pMLX_TH32x24_Grayframe_INT8U_buf0 + cellNum);
 		
-				tmp_i2 = cellNum % 32;
+			tmp_i2 = cellNum % 32;
 
 			if((( cellNum % 32) == 0 ) && ( cellNum != 0 ))
 				{
@@ -1861,38 +1861,41 @@ void FindMax_ColorAssign(void){
 					//DBG_PRINT("tmp_start = %d,tmp_i2 = %d , cellNum = %d  \r\n",tmp_start,tmp_i2,cellNum);
 				}
 
-			for (tmp_i = tmp_start + tmp_i2 *ScaleUp_3 ; tmp_i < tmp_start + (tmp_i2 *ScaleUp_3)+ ScaleUp_3; ++tmp_i)
+			for (tmp_i = tmp_start + tmp_i2 *ScaleUp_2 ; tmp_i < tmp_start + (tmp_i2 *ScaleUp_2)+ ScaleUp_2; ++tmp_i)
 				{
 
 
-		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
-				*(pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 + tmp_i )
+					if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
+					*(pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 + tmp_i )
 						= SingleColorTmpValue;
-		else
-				*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
+					else
+					*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
 						=GrayTmpValue;
 		
 				}
-			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
+			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32)*ScaleUp_2) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32)*ScaleUp_2)+ScaleUp_2 ; tmp_i++ )
 				{
-		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
-				*(pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 + tmp_i )
+					if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
+					*(pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 + tmp_i )
 						= SingleColorTmpValue;
-		else
-				*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
+					else
+					*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
 						=GrayTmpValue;
 		
 				}
-			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32*2)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32*2)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
+		
+		#if 0
+			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32*2)*ScaleUp_2) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32*2)*ScaleUp_2)+ScaleUp_2 ; tmp_i++ )
 				{
-		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
-				*(pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 + tmp_i )
+					if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
+					*(pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 + tmp_i )
 						= SingleColorTmpValue;
-		else
-				*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
+					else
+					*(pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 + tmp_i )
 						=GrayTmpValue;
 		
 				}
+		#endif
 
 		}
 
@@ -2285,6 +2288,7 @@ static void disp_task_entry(void const *parm)
 {
     INT32U display_buf;
     osEvent result;
+	INT32S  nRet;
 
     DBG_PRINT("disp_task_entry start \r\n");
     // Initialize display device
@@ -2298,12 +2302,12 @@ static void disp_task_entry(void const *parm)
             if((result.status != osEventMessage) || !display_buf) {
                 continue;
             }
-            //DBG_PRINT("display_buf = 0x%x\r\n", display_buf);
+            //DBG_PRINT("display_buf-1 = 0x%x\r\n", display_buf);
             //DBG_PRINT("D");
 
 			//gp_memcpy((INT8S *)(display_buf),
 			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);
-
+		#if 0
 			cpu_draw_advalue_osd(UnderZeroDiff_value,display_buf,
 						device_h_size,16,0,16);
 			cpu_draw_advalue_osd(OverZeroDiff_value,display_buf,
@@ -2325,6 +2329,10 @@ static void disp_task_entry(void const *parm)
 
 			cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode,display_buf,0,
 						device_h_size,8,0,8);
+			
+			 DBG_PRINT("display_buf-2 = 0x%x\r\n", display_buf);
+			 
+		//#if 0
 			if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0 )
 				{
 				cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START,display_buf,0,
@@ -2332,9 +2340,12 @@ static void disp_task_entry(void const *parm)
 				cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE,display_buf,0,
 						device_h_size,96,0,0);
 				}
-
-            drv_l2_display_update(DISPLAY_DEVICE,display_buf);
+		#endif
+		
+           nRet = drv_l2_display_update(DISPLAY_DEVICE,display_buf);
+		 //DBG_PRINT("ret-1 = 0x%x\r\n", nRet);
             pscaler_frame_buffer_add((INT32U *)display_buf, 1);
+		//DBG_PRINT("ret-2 = 0x%x\r\n", nRet);
     }
 }
 
@@ -2612,10 +2623,10 @@ static void prcess_task_entry(void const *parm)
 		else
 			scale.input_format = C_SCALER_CTRL_IN_Y_ONLY; 	// gray value
 		
-			scale.input_width = rowNumEnd_32*ScaleUp_3;
-			scale.input_height = colNumEnd_24*ScaleUp_3;
-			scale.input_visible_width = rowNumEnd_32*ScaleUp_3;
-			scale.input_visible_height = colNumEnd_24*ScaleUp_3;
+			scale.input_width = rowNumEnd_32*ScaleUp_2;
+			scale.input_height = colNumEnd_24*ScaleUp_2;
+			scale.input_visible_width = rowNumEnd_32*ScaleUp_2;
+			scale.input_visible_height = colNumEnd_24*ScaleUp_2;
 			scale.input_x_offset = 0;
 			scale.input_y_offset = 0;
 
@@ -2626,9 +2637,12 @@ static void prcess_task_entry(void const *parm)
 		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != 0)
 			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorScaleUpFrame_addr ;
 		else
+			{
 			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr ;
 			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
-		
+			
+			//DBG_PRINT("GrayScaleUpFrame_addr\r\n");
+			}
 
 			scale.input_u_addr = 0;
 			scale.input_v_addr = 0;
