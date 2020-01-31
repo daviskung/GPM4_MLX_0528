@@ -1771,7 +1771,7 @@ void FindMax_ColorAssign(void){
 		
 				}
 				break;
-			default:	// for Gray output  only
+			default:	// for Gray output  only (可以與 COLOR_SET_1 ~ COLOR_SET_5 合併)
 
 					TmpTbInd =(INT8U)(UnderZeroDiff_value/50);
 					if (TmpTbInd > 19){
