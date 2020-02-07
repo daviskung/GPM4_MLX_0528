@@ -1716,7 +1716,7 @@ void FindMax_ColorAssign(void){
 				if (OverZeroDiff_value > 0)
 				{
 					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[19];
-					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = 220; //MLX_Gray_MAX_val_Ary[19]; // 255 會有計算 error
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[19]; // 255 會有計算 error
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[19];
 					pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 0;
 
@@ -1950,6 +1950,7 @@ static void csi_task_entry(void const *parm)
 
 
 	INT8U	sampleCnt;
+	DISP_DEV MLX_disp_dev;
 
     DBG_PRINT("csi_task_entry start \r\n");
     // csi init
@@ -1958,6 +1959,15 @@ static void csi_task_entry(void const *parm)
 
     // disp size
     drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
+	
+	MLX_disp_dev = DISPLAY_DEVICE;
+	if (MLX_disp_dev == DISDEV_TFT)
+		{
+		DBG_PRINT("\r\n***MLX_disp_dev IS DISDEV_TFT***\r\n");
+		}
+	else
+		DBG_PRINT("\r\n*** MLX_disp_dev IS DISDEV_HDMI ***\r\n");
+	
 	PscalerBufferSize = (device_h_size * device_v_size * 2);
 	PscalerBuffer = (INT32U) gp_malloc_align(((PscalerBufferSize*C_DEVICE_FRAME_NUM)+64), 32);
     if(PscalerBuffer == 0)
@@ -1970,6 +1980,7 @@ static void csi_task_entry(void const *parm)
 	{
 		csi_buf = (PscalerBuffer+i*PscalerBufferSize);
 		pscaler_frame_buffer_add((INT32U *)csi_buf,1);
+		
 		DBG_PRINT("PscalerBuffer:0x%X ->width = %d / high = %d\r\n",csi_buf,device_h_size,device_v_size);
 	}
     prcess_state_post(PRCESS_STATE_OK);
