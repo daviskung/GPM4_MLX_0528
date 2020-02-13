@@ -95,6 +95,8 @@
   	{1,1,1}
   	};
 #define LowPassFiliter_ON	1
+#define NO_SIGNAL_FACTOR	4	// for LP filiter
+
 
 #if(LowPassFiliter_ON == 1)
 
@@ -907,7 +909,7 @@ static void mazeTest_Preview_PScaler(void)
 
 			 pMLX_TH32x24_Para->result_image[pixelNumber] =image;
 
-		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)
+		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)	// 開始計算溫度
 			{
 			 Sx = pow((double)alphaCompensated, (double)3) * (irData + alphaCompensated * taTr);
 			 Sx = sqrt(sqrt(Sx)) * pMLX90640_Para->ksTo[1];
@@ -2032,9 +2034,10 @@ void FindMax_ColorAssign(void){
 
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt++;
 
+	/*
 	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt % 1750 == 0)
-		pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 1;
-
+		pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 1;	// 開始計算溫度
+	*/
 
 	if( pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON == 1 )
 		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt ++;
@@ -2281,6 +2284,8 @@ static void csi_task_entry(void const *parm)
 	// 接收資料 
 
 	//DBG_PRINT("************ GetFrameData frame 0 ************************************** \r\n");
+	
+	 gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
 	 dataReady = 0;
 	 frameData_cnt=0;
 	 while(dataReady == 0)
@@ -2379,6 +2384,9 @@ static void csi_task_entry(void const *parm)
 	 if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 )
 	 	pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
 
+	
+	gpio_write_io(TH_STATUS_PAD, DATA_LOW);
+
 	 //TimeCnt2 = xTaskGetTickCount();
 
  	 event = prcess_state_get();
@@ -2440,7 +2448,7 @@ static void disp_task_entry(void const *parm)
 			//gp_memcpy((INT8S *)(display_buf),
 			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);
 
-			if(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > 3)	// no signal ONE color
+			if(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > NO_SIGNAL_FACTOR)	// no signal ONE color
 				{
 					cpu_draw_line_osd(UnderZeroDiff_value,display_buf,40,
 						device_h_size,110,0,16);
@@ -2498,7 +2506,8 @@ static void disp_task_entry(void const *parm)
 
 
 			
-
+		
+		   gpio_write_io(TH_DISP_MODE_PAD, DATA_LOW);
 
            nRet = drv_l2_display_update(DISPLAY_DEVICE,display_buf);
 		 //DBG_PRINT("ret-1 = 0x%x\r\n", nRet);
@@ -2555,6 +2564,10 @@ static void prcess_task_entry(void const *parm)
 	gpio_set_port_attribute(TH_STATUS_PAD, ATTRIBUTE_HIGH);
 	gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
 
+	gpio_init_io(TH_DISP_MODE_PAD, GPIO_OUTPUT);
+	gpio_set_port_attribute(TH_DISP_MODE_PAD, ATTRIBUTE_HIGH);
+	gpio_write_io(TH_DISP_MODE_PAD, DATA_HIGH);
+
 
 	pMLX_TH32x24_TmpOutput_INT16U_buf0 = (pMLX_TH32x24_Para->result);
 
@@ -2578,6 +2591,9 @@ static void prcess_task_entry(void const *parm)
 
 		TimeCnt1 = xTaskGetTickCount();
 		pMLX32x32_frameData_prcess_INT16U_buf = (INT16U*)prcess_buf;
+
+		
+		gpio_write_io(TH_DISP_MODE_PAD, DATA_HIGH);
 
 		// 開始 計算 Tobject
 
@@ -2724,6 +2740,9 @@ static void prcess_task_entry(void const *parm)
 		TimeCnt1b = xTaskGetTickCount();
 		FindMax_ColorAssign();
 
+		
+		//gpio_write_io(TH_DISP_MODE_PAD, DATA_LOW);
+
 		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)
 			{
 		#if DEBUG_TMP_READ_OUT2
@@ -2738,6 +2757,7 @@ static void prcess_task_entry(void const *parm)
 				}
 		#endif
 
+		/*
 			lp_cnt++;
 
 
@@ -2745,7 +2765,7 @@ static void prcess_task_entry(void const *parm)
 				gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
 			else
 				gpio_write_io(TH_STATUS_PAD, DATA_LOW);
-
+		*/
 			DBG_PRINT(" CalculateTo [t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
 
 			pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 0;
@@ -2778,7 +2798,7 @@ static void prcess_task_entry(void const *parm)
 
 		if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0)
 			{
-				if (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > 3)
+				if (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > NO_SIGNAL_FACTOR)
 				{
 					scale.input_format = C_SCALER_CTRL_IN_RGB565;	// gray out but No value
 				}
@@ -2806,7 +2826,7 @@ static void prcess_task_entry(void const *parm)
 		else
 			{
 
-			if (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > 3)
+			if (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > NO_SIGNAL_FACTOR)
 				scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
 			else
 				scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr ;

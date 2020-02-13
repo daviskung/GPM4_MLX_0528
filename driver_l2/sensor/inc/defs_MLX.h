@@ -33,7 +33,7 @@
 
 
 
-#define CONVERT_WAIT_TIME		15
+#define CONVERT_WAIT_TIME		5
 #define IMAGE_DATA_INT32S_SIZE		4
 
 //mode[in]:i2c restart without stop or not:
