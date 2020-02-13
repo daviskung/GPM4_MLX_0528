@@ -87,7 +87,7 @@
 #define FRAME_BUF_ALIGN4            0x3
 
 
-
+/*
 //const INT8U MLX_Gray_MAX_val_Ary[10]  = {140,140,140,140,140,140,140,176,176,176};
 //const INT8U MLX_Gray_START_val_Ary[10]= {130,130,100,70 ,60 ,60 ,40 ,25  ,5  ,5};
 #if  (FOV_BAB_55 == 1) && (FOV_BAA_110 == 0)
@@ -104,6 +104,7 @@ const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  
 //const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5};
 
 #endif
+*/
 
 #define TRANSPARENT_COLOR 	0x00	// 無色 
 #define COLOR_FRAME_OUT		0

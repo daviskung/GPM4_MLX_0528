@@ -115,7 +115,7 @@
 
   
 #define AVG_buf_len			4
-#define IMG_AVG_buf_len		3
+#define IMG_AVG_buf_len		3	// 信號穩定 5 次以上 
 #define IMG_VAL_buf_len		4
 #define IMG_GRAY_IND_buf_len		10
   
@@ -181,6 +181,7 @@
   
 	  INT16S  result[MLX_Pixel];
 	  float   result_image[MLX_Pixel];
+  	  float   result_LOWPASS_image[MLX_Pixel];
   
 	  INT32U  MLX_TH32x24_ImgAvg_buf_addr[IMG_AVG_buf_len];   // MLX_TH32x24 image buffer addr
 	  INT32U  MLX_TH32x24_GrayOutputFrame_addr;
@@ -210,6 +211,8 @@
 	  INT8S  MLX_TH32x24_ColorMode;
 	  INT8U  MLX_TH32x24_GRAY_AMP_START;
 	  INT8S  MLX_TH32x24_GRAY_AMP_SCALE;
+
+  	  INT8U  MLX_TH32x24_LowPass_SET;
 	  
   } MLX_TH32x24Para_t;
 

@@ -85,14 +85,33 @@
 
 
 
+//  |1 1 1|
+//  |1 1 1| Low Pass filiter 3*3
+//  |1 1 1|
 
+  const INT16S _LowPassFiliter_Factor[3][3]={
+  	{1,1,1},
+  	{1,1,1},
+  	{1,1,1}
+  	};
+#define LowPassFiliter_ON	1
+
+#if(LowPassFiliter_ON == 1)
+
+const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
+const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20,220,220,220,220,220,220,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
+const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5};
+
+#endif
+
+#if(LowPassFiliter_ON == 0)
 
 #if  (FOV_BAB_55 == 1) && (FOV_BAA_110 == 0)
 const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
 //const INT8U MLX_Gray_MAX_val_Ary[20]   = {40,40,40,50, 60, 60, 70, 80,100,110,135,170,195,210,210,210,210,210,220,220};
 //const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5};
-const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20, 20, 20,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
-const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5};
+  const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20, 20, 20,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
+  const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5};
 #else  // if FOV_BAA_110
 const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
   const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 20, 20, 20, 20,220,220,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
@@ -101,6 +120,12 @@ const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  7,  4,  4,  4,  4,  
 //const INT8U MLX_Gray_START_val_Ary[20] = {30,30,20,10, 10,10 ,10 , 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5};
 
 #endif
+
+#endif
+
+
+
+
 
 
 
@@ -1325,6 +1350,8 @@ void FindMax_ColorAssign(void){
 	float	 ImgObject;
  	float	*pMLX_TH32x24_ImgOutput_INT32S_buf0;
 
+ 	float	*pMLX_TH32x24_LowPassImgOutput_INT32S_buf0;
+
 	INT8U  *pMLX_TH32x24_Grayframe_INT8U_buf0,*pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0;
 
 	INT16U  *pMLX_TH32x24_Colorframe_INT16U_buf0,*pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0;
@@ -1364,6 +1391,7 @@ void FindMax_ColorAssign(void){
 
 
 	pMLX_TH32x24_ImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_image; // image format ?
+		pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_LOWPASS_image;
 
 	pMLX_TH32x24_TmpOutput_INT16U_buf0 = pMLX_TH32x24_Para->result;
 
@@ -1385,6 +1413,187 @@ void FindMax_ColorAssign(void){
 	TmaxUnderZeroTable = pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmaxUnderZeroTable;
 
 	//DBG_PRINT("cp Tpoint3=[%f] ",Tpoint3);
+
+	#if LowPassFiliter_ON
+
+	if (pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET == 1)
+		{
+		
+		
+	//	|1 1 1|
+	//	|1 1 1|	Low Pass filiter 3*3
+	//	|1 1 1|
+
+	gp_memcpy((INT8S *)(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0),		// 先 copy 原來資料 
+			(INT8S *)pMLX_TH32x24_ImgOutput_INT32S_buf0,MLX_Pixel*IMAGE_DATA_INT32S_SIZE);
+	//
+	//	cellNum (33 -> 734) [main body] 
+	//
+
+	for(cellNum=33;cellNum<735;cellNum++){
+
+		if( (*(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0) &&
+			( cellNum%rowNumEnd_32 != 0 ) &&
+			( cellNum%rowNumEnd_32 != 31 )	)// >0 強信號不被平均, 邊緣不處理 
+			{
+				*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
+				 (
+				 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32 -1) * _LowPassFiliter_Factor[0][0] +
+				 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32   ) * _LowPassFiliter_Factor[0][1] +
+				 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32 +1) * _LowPassFiliter_Factor[0][2] +
+				 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -1) * _LowPassFiliter_Factor[1][0] +
+				 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum   ) * _LowPassFiliter_Factor[1][1] +
+				 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +1) * _LowPassFiliter_Factor[1][2] +
+				 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32 -1) * _LowPassFiliter_Factor[2][0] +
+				 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32   ) * _LowPassFiliter_Factor[2][1] +
+				 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32 +1) * _LowPassFiliter_Factor[2][2]
+				 )/9;
+
+			}
+
+		}
+
+	//
+	//	(colum=0) [LP filiter at edge]
+	//
+	cellNum = 0;
+	if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)
+		{
+			*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
+		 	(
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32   ) * _LowPassFiliter_Factor[0][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32 +1) * _LowPassFiliter_Factor[0][2] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum   ) * _LowPassFiliter_Factor[1][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +1) * _LowPassFiliter_Factor[1][2]
+			 )/4;
+		}
+
+	cellNum = 736;
+	if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)
+		{
+			*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
+		 	(
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32   ) * _LowPassFiliter_Factor[0][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32 +1) * _LowPassFiliter_Factor[0][2] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum   ) * _LowPassFiliter_Factor[1][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +1) * _LowPassFiliter_Factor[1][2]
+			 )/4;
+		}
+
+	for(cellNum = 32;cellNum < 705;cellNum = cellNum + rowNumEnd_32){
+
+		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0) 	// >0 disable high energy 
+			{
+			*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
+			(
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32   ) * _LowPassFiliter_Factor[0][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32 +1) * _LowPassFiliter_Factor[0][2] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum   ) * _LowPassFiliter_Factor[1][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +1) * _LowPassFiliter_Factor[1][2] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32   ) * _LowPassFiliter_Factor[0][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32 +1) * _LowPassFiliter_Factor[0][2]
+			 )/6;
+			}
+
+		}
+
+
+	//
+	//	(colum=31) [LP filiter at edge]
+	//
+
+	cellNum = 31;
+	if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy 
+		{
+		*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
+		(
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32   ) * _LowPassFiliter_Factor[0][1] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32 -1) * _LowPassFiliter_Factor[0][2] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum   ) * _LowPassFiliter_Factor[1][1] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -1) * _LowPassFiliter_Factor[1][2]
+		)/4;
+		}
+
+	cellNum = 767;
+	if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy 
+		{
+		*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
+	 	(
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32   ) * _LowPassFiliter_Factor[0][1] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32 -1) * _LowPassFiliter_Factor[0][2] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum   ) * _LowPassFiliter_Factor[1][1] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -1) * _LowPassFiliter_Factor[1][2]
+		 )/4;
+		}
+
+	for(cellNum = 63;cellNum < 736;cellNum = cellNum + rowNumEnd_32){
+
+		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0) 	// >0 disable high energy 
+			{
+
+			*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
+		 	(
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32   ) * _LowPassFiliter_Factor[0][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32 -1) * _LowPassFiliter_Factor[0][2] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum   ) * _LowPassFiliter_Factor[1][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -1) * _LowPassFiliter_Factor[1][2] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32   ) * _LowPassFiliter_Factor[0][1] +
+			 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32 -1) * _LowPassFiliter_Factor[0][2]
+			 )/6;
+
+			}
+
+		}
+
+
+
+	//
+	//	(row=0) [LP filiter at edge]
+	//
+	for(cellNum = 1;cellNum < 31;cellNum = cellNum + 1)
+	{
+		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy 
+		{
+		*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
+		(
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -1) * _LowPassFiliter_Factor[1][2] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum   ) * _LowPassFiliter_Factor[1][1] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +1) * _LowPassFiliter_Factor[1][2] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32	) * _LowPassFiliter_Factor[0][1] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32 +1) * _LowPassFiliter_Factor[0][2] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +rowNumEnd_32 -1) * _LowPassFiliter_Factor[0][2]
+		 )/6;
+		}
+	}
+
+	//
+	//	(row=23) [LP filiter at edge]
+	//
+	for(cellNum = 737;cellNum < 767;cellNum = cellNum + 1)
+	{
+		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy 
+		{
+		*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
+		(
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -1) * _LowPassFiliter_Factor[1][2] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum   ) * _LowPassFiliter_Factor[1][1] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum +1) * _LowPassFiliter_Factor[1][2] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32	) * _LowPassFiliter_Factor[0][1] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32 +1) * _LowPassFiliter_Factor[0][2] +
+		 *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum -rowNumEnd_32 -1) * _LowPassFiliter_Factor[0][2]
+		 )/6;
+		}
+	}
+
+	gp_memcpy((INT8S *)(pMLX_TH32x24_ImgOutput_INT32S_buf0),		//  copy LowPassFiliter to ImgOutput 
+			(INT8S *)pMLX_TH32x24_LowPassImgOutput_INT32S_buf0,MLX_Pixel*IMAGE_DATA_INT32S_SIZE);
+	
+		}
+	#endif
+
+
+
+	
 
 	for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
 			 ImgObject = *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum);
@@ -2866,6 +3075,7 @@ void GPM4_CSI_DISP_Demo(void)
 	pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = COLOR_SET_0;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = GRAY_AMP_START;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE = GRAY_AMP_SCALE;
+	pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 1;
 
     // ad key init
 	adc_key_scan_init();
@@ -2891,6 +3101,14 @@ void GPM4_CSI_DISP_Demo(void)
 			DBG_PRINT("ad_key-2 selection -ColorMode = %d\r\n",
 				pMLX_TH32x24_Para->MLX_TH32x24_ColorMode);
 		}
+		else if(ADKEY_IO6)
+			{
+				pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET ++;
+				if( pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET > 1 )
+					pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 0;
+			DBG_PRINT("ad_key-6 selection LowPass_SET = %d\r\n",
+				pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET);
+			}
 
 		if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0 ){
 
