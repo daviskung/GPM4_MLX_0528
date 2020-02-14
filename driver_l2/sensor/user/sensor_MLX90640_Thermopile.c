@@ -369,7 +369,7 @@ INT32S MLX90640_SetRefreshRate(INT8U refreshRate)
 			DBG_PRINT("GetRefreshRate value = 0x%04X \r\n",refreshRateRAM);
 
 		value = (EEcopy16BIT[0] & 0xFC7F ) | value;
-		//DBG_PRINT("value = 0x%04X \r\n",value);
+		DBG_PRINT("ControlRegister1 write value = 0x%04X \r\n",value);
 
 		error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,value);
 	}
@@ -1181,13 +1181,13 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 
 
 
-	MLX90640_SetRefreshRate(MLX90640_REFRESH_RATE_32HZ);
+	MLX90640_SetRefreshRate(MLX90640_REFRESH_RATE_SET);
 						DBG_PRINT("SetRefreshRate = %d Hz \r\n",
-							MLX_REFRESH_RATE_HZ2[MLX90640_REFRESH_RATE_32HZ]);
+							MLX_REFRESH_RATE_HZ2[MLX90640_REFRESH_RATE_SET]);
 	osDelay(80);
-	osDelay(DELAYTIME_at_REFRESH_RATE2[MLX90640_REFRESH_RATE_32HZ]);
+	osDelay(DELAYTIME_at_REFRESH_RATE2[MLX90640_REFRESH_RATE_SET]);
 		DBG_PRINT("SetRefreshRate then delay  = %d ms \r\n",
-			DELAYTIME_at_REFRESH_RATE2[MLX90640_REFRESH_RATE_32HZ]);
+			DELAYTIME_at_REFRESH_RATE2[MLX90640_REFRESH_RATE_SET]);
 
 	// 設定 StepMode & Subpage0
 	error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);

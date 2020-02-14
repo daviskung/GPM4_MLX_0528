@@ -65,7 +65,7 @@
 #define SENSOR_AREA_WIDTH	32
 #define SENSOR_AREA_HIGH	24
 
-
+#define	DEBUG_IO_OUT		1
 #define TH_STATUS_PAD     	IO_A15
 #define TH_DISP_MODE_PAD    IO_A14
 
@@ -909,7 +909,7 @@ static void mazeTest_Preview_PScaler(void)
 
 			 pMLX_TH32x24_Para->result_image[pixelNumber] =image;
 
-		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)	// 開始計算溫度
+		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)	// 開始計算溫度 
 			{
 			 Sx = pow((double)alphaCompensated, (double)3) * (irData + alphaCompensated * taTr);
 			 Sx = sqrt(sqrt(Sx)) * pMLX90640_Para->ksTo[1];
@@ -1420,8 +1420,8 @@ void FindMax_ColorAssign(void){
 
 	if (pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET == 1)
 		{
-		
-		
+
+
 	//	|1 1 1|
 	//	|1 1 1|	Low Pass filiter 3*3
 	//	|1 1 1|
@@ -1429,7 +1429,7 @@ void FindMax_ColorAssign(void){
 	gp_memcpy((INT8S *)(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0),		// 先 copy 原來資料 
 			(INT8S *)pMLX_TH32x24_ImgOutput_INT32S_buf0,MLX_Pixel*IMAGE_DATA_INT32S_SIZE);
 	//
-	//	cellNum (33 -> 734) [main body] 
+	//	cellNum (33 -> 734) [main body]
 	//
 
 	for(cellNum=33;cellNum<735;cellNum++){
@@ -1484,7 +1484,7 @@ void FindMax_ColorAssign(void){
 
 	for(cellNum = 32;cellNum < 705;cellNum = cellNum + rowNumEnd_32){
 
-		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0) 	// >0 disable high energy 
+		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0) 	// >0 disable high energy
 			{
 			*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
 			(
@@ -1505,7 +1505,7 @@ void FindMax_ColorAssign(void){
 	//
 
 	cellNum = 31;
-	if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy 
+	if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy
 		{
 		*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
 		(
@@ -1517,7 +1517,7 @@ void FindMax_ColorAssign(void){
 		}
 
 	cellNum = 767;
-	if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy 
+	if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy
 		{
 		*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
 	 	(
@@ -1530,7 +1530,7 @@ void FindMax_ColorAssign(void){
 
 	for(cellNum = 63;cellNum < 736;cellNum = cellNum + rowNumEnd_32){
 
-		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0) 	// >0 disable high energy 
+		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0) 	// >0 disable high energy
 			{
 
 			*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
@@ -1554,7 +1554,7 @@ void FindMax_ColorAssign(void){
 	//
 	for(cellNum = 1;cellNum < 31;cellNum = cellNum + 1)
 	{
-		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy 
+		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy
 		{
 		*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
 		(
@@ -1573,7 +1573,7 @@ void FindMax_ColorAssign(void){
 	//
 	for(cellNum = 737;cellNum < 767;cellNum = cellNum + 1)
 	{
-		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy 
+		if( *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum) < 0)	// >0 disable high energy
 		{
 		*(pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 + cellNum) =
 		(
@@ -1587,15 +1587,15 @@ void FindMax_ColorAssign(void){
 		}
 	}
 
-	gp_memcpy((INT8S *)(pMLX_TH32x24_ImgOutput_INT32S_buf0),		//  copy LowPassFiliter to ImgOutput 
+	gp_memcpy((INT8S *)(pMLX_TH32x24_ImgOutput_INT32S_buf0),		//  copy LowPassFiliter to ImgOutput
 			(INT8S *)pMLX_TH32x24_LowPassImgOutput_INT32S_buf0,MLX_Pixel*IMAGE_DATA_INT32S_SIZE);
-	
+
 		}
 	#endif
 
 
 
-	
+
 
 	for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
 			 ImgObject = *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum);
@@ -2036,7 +2036,7 @@ void FindMax_ColorAssign(void){
 
 	/*
 	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt % 1750 == 0)
-		pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 1;	// 開始計算溫度
+		pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 1;	// 開始計算溫度 
 	*/
 
 	if( pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON == 1 )
@@ -2171,7 +2171,7 @@ static void csi_task_entry(void const *parm)
 
     // disp size
     drv_l2_display_get_size(DISPLAY_DEVICE, (INT16U *)&device_h_size, (INT16U *)&device_v_size);
-	
+
 	MLX_disp_dev = DISPLAY_DEVICE;
 	if (MLX_disp_dev == DISDEV_TFT)
 		{
@@ -2179,7 +2179,7 @@ static void csi_task_entry(void const *parm)
 		}
 	else
 		DBG_PRINT("\r\n*** MLX_disp_dev IS DISDEV_HDMI ***\r\n");
-	
+
 	PscalerBufferSize = (device_h_size * device_v_size * 2);
 	PscalerBuffer = (INT32U) gp_malloc_align(((PscalerBufferSize*C_DEVICE_FRAME_NUM)+64), 32);
     if(PscalerBuffer == 0)
@@ -2192,14 +2192,14 @@ static void csi_task_entry(void const *parm)
 	{
 		csi_buf = (PscalerBuffer+i*PscalerBufferSize);
 		pscaler_frame_buffer_add((INT32U *)csi_buf,1);
-		
+
 		DBG_PRINT("PscalerBuffer:0x%X ->width = %d / high = %d\r\n",csi_buf,device_h_size,device_v_size);
 	}
     prcess_state_post(PRCESS_STATE_OK);
 
 	MXL_handle.devNumber = I2C_1;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
-	MXL_handle.clkRate = 950;
+	MXL_handle.clkRate = 1000;
 
 	pEEaddr = EEaddr;
 	pMLX32x32_READ_INT8U_buf = (INT8U*)pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF;
@@ -2284,8 +2284,7 @@ static void csi_task_entry(void const *parm)
 	// 接收資料 
 
 	//DBG_PRINT("************ GetFrameData frame 0 ************************************** \r\n");
-	
-	 gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
+
 	 dataReady = 0;
 	 frameData_cnt=0;
 	 while(dataReady == 0)
@@ -2295,8 +2294,9 @@ static void csi_task_entry(void const *parm)
 			 //DBG_PRINT("read return-1  = %d \r\n",error);  // return data length , if error = -1
 			 //  需要 重新讀取 !! 改成 副程式 檢查 
 			 if( error == -1){
-				 DBG_PRINT("frame0 read status error !! delay %d ms - %d\r\n",CONVERT_WAIT_TIME,frameData_cnt);
-				 osDelay(10);
+				 DBG_PRINT("frame0 can NOT read status error-1 !! delay %d ms - %d\r\n",
+				 	DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/3,frameData_cnt);
+				 osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/3);
 			 }
 		 }while(error == -1);
 
@@ -2307,16 +2307,18 @@ static void csi_task_entry(void const *parm)
 		 if(dataReady == 0){
 
 			 //osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
-			 osDelay(CONVERT_WAIT_TIME);
-			 //DBG_PRINT("\r\n 1-frame0 delay  = %d ms > %d\r\n",
-		     //DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ],frameData_cnt);
+			 //osDelay(CONVERT_WAIT_TIME);
+			 osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/4);
+			 
+			 //DBG_PRINT(" frame0 read NOT RDY = %d ms > %d\r\n",
+		     //DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/4,frameData_cnt);
 
 			 frameData_cnt++;
 		 }
-		 if(frameData_cnt >8){	 // reset MLX
+		 if(frameData_cnt > DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET] ){	 // reset MLX
 
 
-			 DBG_PRINT("****wait over %d,re-send start of measurement  \r\n",frameData_cnt*CONVERT_WAIT_TIME);
+			 DBG_PRINT("****wait over %d,re-send start of measurement  \r\n",frameData_cnt*DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]);
 			/*
 			 error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrControlRegister1,&controlRegister1);
 			 controlRegister1 = controlRegister1 & MLX90640_SetModeClear ;
@@ -2334,6 +2336,10 @@ static void csi_task_entry(void const *parm)
 			 frameData_cnt = 0;
 			 }
 	 }
+
+#if DEBUG_IO_OUT
+		   gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
+#endif
 
 
 	  if(dataReady != 0)
@@ -2381,11 +2387,16 @@ static void csi_task_entry(void const *parm)
 	 }
 
 
+
 	 if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 )
 	 	pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
 
-	
+
+#if DEBUG_IO_OUT
+
 	gpio_write_io(TH_STATUS_PAD, DATA_LOW);
+
+#endif
 
 	 //TimeCnt2 = xTaskGetTickCount();
 
@@ -2454,7 +2465,7 @@ static void disp_task_entry(void const *parm)
 						device_h_size,110,0,16);
 					cpu_draw_line_osd(OverZeroDiff_value,display_buf,40,
 						device_h_size,160,0,17);
-					
+
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,display_buf,80,
 						device_h_size,110,0,10);
 
@@ -2468,8 +2479,8 @@ static void disp_task_entry(void const *parm)
 						device_h_size,110,0,6);
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMin,display_buf,120,
 						device_h_size,180,0,7);
-					
-					
+
+
 				}
 			else
 				{
@@ -2505,11 +2516,19 @@ static void disp_task_entry(void const *parm)
 				}
 
 
-			
-		
+
+
+	#if DEBUG_IO_OUT
 		   gpio_write_io(TH_DISP_MODE_PAD, DATA_LOW);
+	#endif
 
            nRet = drv_l2_display_update(DISPLAY_DEVICE,display_buf);
+
+			
+		 //if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 )
+		//	   pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
+		
+		   
 		 //DBG_PRINT("ret-1 = 0x%x\r\n", nRet);
             pscaler_frame_buffer_add((INT32U *)display_buf, 1);
 		//DBG_PRINT("ret-2 = 0x%x\r\n", nRet);
@@ -2589,11 +2608,15 @@ static void prcess_task_entry(void const *parm)
            //DBG_PRINT("user code add \r\n");
 
 
+		
+
 		TimeCnt1 = xTaskGetTickCount();
 		pMLX32x32_frameData_prcess_INT16U_buf = (INT16U*)prcess_buf;
 
-		
+
+	#if DEBUG_IO_OUT
 		gpio_write_io(TH_DISP_MODE_PAD, DATA_HIGH);
+	#endif
 
 		// 開始 計算 Tobject
 
@@ -2659,7 +2682,7 @@ static void prcess_task_entry(void const *parm)
 
 	 TimeCnt1a = xTaskGetTickCount();
 
-
+	 
 	//
 	// Tobject 轉換完成 
 	//
@@ -2737,10 +2760,14 @@ static void prcess_task_entry(void const *parm)
 	#endif
 
 #endif
+		
+		
+		
 		TimeCnt1b = xTaskGetTickCount();
 		FindMax_ColorAssign();
 
 		
+
 		//gpio_write_io(TH_DISP_MODE_PAD, DATA_LOW);
 
 		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)
@@ -3095,7 +3122,7 @@ void GPM4_CSI_DISP_Demo(void)
 	pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = COLOR_SET_0;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = GRAY_AMP_START;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE = GRAY_AMP_SCALE;
-	pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 1;
+	pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 0;
 
     // ad key init
 	adc_key_scan_init();

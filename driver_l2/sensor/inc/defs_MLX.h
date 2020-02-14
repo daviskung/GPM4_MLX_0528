@@ -23,7 +23,6 @@
 
 #define	TWO_FRAME_OUT			1
 #define	TMP_AVGBUF_ON			0
-#define	IMG_AVGBUF_ON			1	// avg ON is good
 
 #define	TmpTbInd_NO_BUF			0
 
@@ -100,6 +99,9 @@
 #define MLX90640_REFRESH_RATE_32HZ	 	0x06
 #define MLX90640_REFRESH_RATE_64HZ	 	0x07
 
+#define MLX90640_REFRESH_RATE_SET	 	MLX90640_REFRESH_RATE_64HZ
+
+
 #define MLX90640_SetModeClear			0xFFE6		// bit0=0 , bit3=0 , bit4 = 0
 #define MLX90640_SetStepModeSubpageRep	0x0001		// bit0=1 , bit3=0
 
@@ -115,7 +117,10 @@
 
   
 #define AVG_buf_len			4
+
 #define IMG_AVG_buf_len		3	// 信號穩定 5 次以上 
+#define	IMG_AVGBUF_ON			0	// avg ON is good
+
 #define IMG_VAL_buf_len		4
 #define IMG_GRAY_IND_buf_len		10
   
@@ -183,7 +188,7 @@
 	  float   result_image[MLX_Pixel];
   	  float   result_LOWPASS_image[MLX_Pixel];
   
-	  INT32U  MLX_TH32x24_ImgAvg_buf_addr[IMG_AVG_buf_len];   // MLX_TH32x24 image buffer addr
+	  INT32U  MLX_TH32x24_ImgAvg_buf_addr[IMG_AVG_buf_len];   // MLX_TH32x24 avg image buffer addr
 	  INT32U  MLX_TH32x24_GrayOutputFrame_addr;
 	  INT32U  MLX_TH32x24_GrayScaleUpFrame_addr;
 	  INT32U  MLX_TH32x24_ColorScaleUpFrame_addr;
