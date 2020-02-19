@@ -66,8 +66,10 @@
 #define SENSOR_AREA_HIGH	24
 
 #define	DEBUG_IO_OUT		1
-#define TH_STATUS_PAD     	IO_A15
-#define TH_DISP_MODE_PAD    IO_A14
+#define TH_STATUS_A15_PAD     	IO_A15
+#define TH_DISP_MODE_A14_PAD    IO_A14
+#define TH_TEST1_A12_PAD    	IO_A12
+
 
 
 #define COLOR_SET_0		0	// gray out
@@ -2034,10 +2036,10 @@ void FindMax_ColorAssign(void){
 
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt++;
 
-	/*
-	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt % 1750 == 0)
+	
+	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt % 125 == 0)
 		pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 1;	// 開始計算溫度 
-	*/
+	
 
 	if( pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON == 1 )
 		pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt ++;
@@ -2063,6 +2065,7 @@ void FindMax_ColorAssign(void){
 			//avi_encode_post_empty(MLX_TH32x24_task_q,frame);
             csi_frame_buffer_add((INT32U *)frame, 0);
 		}
+		
 		pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 1;
 	}
 }
@@ -2199,7 +2202,8 @@ static void csi_task_entry(void const *parm)
 
 	MXL_handle.devNumber = I2C_1;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
-	MXL_handle.clkRate = 1000;
+	//MXL_handle.clkRate = 1200; // 1Mhz check from OSC. and can run
+	MXL_handle.clkRate = 1000; // 900kHz check from OSC. 
 
 	pEEaddr = EEaddr;
 	pMLX32x32_READ_INT8U_buf = (INT8U*)pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF;
@@ -2278,7 +2282,6 @@ static void csi_task_entry(void const *parm)
 
 	//DBG_PRINT("c %d- 0x%x\r\n",xTaskGetTickCount(), csi_buf);
 
-
 	pMLX32x32_frameData_csi_INT16U_buf = (INT16U*)csi_buf;
 
 	// 接收資料 
@@ -2304,17 +2307,27 @@ static void csi_task_entry(void const *parm)
 
 		 //DBG_PRINT(" 2.statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d \r\n",
 		 //  statusRegister,dataReady,frameData_cnt);
+		 
+		 
 		 if(dataReady == 0){
 
 			 //osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_64HZ]);
-			 //osDelay(CONVERT_WAIT_TIME);
-			 osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/4);
 			 
+			 /*
+			 osDelay(CONVERT_WAIT_TIME);
+			 DBG_PRINT(" frame0 read NOT RDY = %d ms > %d\r\n",CONVERT_WAIT_TIME,frameData_cnt);
+			 */
+			 
+			 
+			 osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/3); // 依據 Hz 決定 osDelay()
 			 //DBG_PRINT(" frame0 read NOT RDY = %d ms > %d\r\n",
-		     //DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/4,frameData_cnt);
-
+		     //DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/3,frameData_cnt);
+			
+			
 			 frameData_cnt++;
 		 }
+		 
+		 
 		 if(frameData_cnt > DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET] ){	 // reset MLX
 
 
@@ -2337,9 +2350,9 @@ static void csi_task_entry(void const *parm)
 			 }
 	 }
 
-#if DEBUG_IO_OUT
-		   gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
-#endif
+	#if DEBUG_IO_OUT
+		   gpio_write_io(TH_STATUS_A15_PAD, DATA_HIGH);
+	#endif
 
 
 	  if(dataReady != 0)
@@ -2365,6 +2378,9 @@ static void csi_task_entry(void const *parm)
 	 // 1: In step mode - start of measurement
 	 // 	 (set by the customer and cleared once the measurement is done)
 	 //
+	
+	
+		 
 		 error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
 
 		  for(cnt=0; cnt < MLX90640_RAM_AddrRead; cnt++)
@@ -2386,21 +2402,15 @@ static void csi_task_entry(void const *parm)
 		// error = drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrStatus,0x0030);
 	 }
 
-
+	#if DEBUG_IO_OUT
+		   gpio_write_io(TH_STATUS_A15_PAD, DATA_LOW);
+	#endif
 
 	 if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 )
 	 	pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
 
-
-#if DEBUG_IO_OUT
-
-	gpio_write_io(TH_STATUS_PAD, DATA_LOW);
-
-#endif
-
-	 //TimeCnt2 = xTaskGetTickCount();
-
  	 event = prcess_state_get();
+ 	 
      if(event == PRCESS_STATE_OK)
      {
             //**************************************//
@@ -2408,14 +2418,16 @@ static void csi_task_entry(void const *parm)
 
             //**************************************//
             prcess_frame_buffer_add((INT32U *)csi_buf, 1);
+			
 
 			//DBG_PRINT("prcess_frame_buffer_add = 0x%x\r\n", csi_buf);
      }
 
 
      if(event != PRCESS_STATE_OK)
+	 	{
             free_frame_buffer_add((INT32U *)csi_buf, 1);
-
+     	}
 
 
 		// pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
@@ -2515,19 +2527,7 @@ static void disp_task_entry(void const *parm)
 
 				}
 
-
-
-
-	#if DEBUG_IO_OUT
-		   gpio_write_io(TH_DISP_MODE_PAD, DATA_LOW);
-	#endif
-
            nRet = drv_l2_display_update(DISPLAY_DEVICE,display_buf);
-
-			
-		 //if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 )
-		//	   pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
-		
 		   
 		 //DBG_PRINT("ret-1 = 0x%x\r\n", nRet);
             pscaler_frame_buffer_add((INT32U *)display_buf, 1);
@@ -2579,16 +2579,23 @@ static void prcess_task_entry(void const *parm)
 			pMLX_TH32x24_ImgOutput_INT32S_avg_buf[tmp_i]= (float*)pMLX_TH32x24_Para->MLX_TH32x24_ImgAvg_buf_addr[tmp_i];
 		}
 
-	gpio_init_io(TH_STATUS_PAD, GPIO_OUTPUT);
-	gpio_set_port_attribute(TH_STATUS_PAD, ATTRIBUTE_HIGH);
-	gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
+	gpio_init_io(TH_STATUS_A15_PAD, GPIO_OUTPUT);
+	gpio_set_port_attribute(TH_STATUS_A15_PAD, ATTRIBUTE_HIGH);
+	gpio_write_io(TH_STATUS_A15_PAD, DATA_HIGH);
 
-	gpio_init_io(TH_DISP_MODE_PAD, GPIO_OUTPUT);
-	gpio_set_port_attribute(TH_DISP_MODE_PAD, ATTRIBUTE_HIGH);
-	gpio_write_io(TH_DISP_MODE_PAD, DATA_HIGH);
+	gpio_init_io(TH_DISP_MODE_A14_PAD, GPIO_OUTPUT);
+	gpio_set_port_attribute(TH_DISP_MODE_A14_PAD, ATTRIBUTE_HIGH);
+	gpio_write_io(TH_DISP_MODE_A14_PAD, DATA_HIGH);
+
+	
+	gpio_init_io(TH_TEST1_A12_PAD, GPIO_OUTPUT);
+	gpio_set_port_attribute(TH_TEST1_A12_PAD, ATTRIBUTE_HIGH);
+	gpio_write_io(TH_TEST1_A12_PAD, DATA_HIGH);
 
 
 	pMLX_TH32x24_TmpOutput_INT16U_buf0 = (pMLX_TH32x24_Para->result);
+
+	
 
     //**************************************//
 
@@ -2599,7 +2606,7 @@ static void prcess_task_entry(void const *parm)
         if((result.status != osEventMessage) || !prcess_buf) {
                 continue;
         }
-        //DBG_PRINT("prcess_buf = 0x%x\r\n", prcess_buf);
+        
 
 		//DBG_PRINT("p %d- 0x%x\r\n",xTaskGetTickCount(), prcess_buf);
         //DBG_PRINT("P");
@@ -2609,13 +2616,13 @@ static void prcess_task_entry(void const *parm)
 
 
 		
-
+		//DBG_PRINT("prcess_buf = 0x%x -%d\r\n", prcess_buf,xTaskGetTickCount());
 		TimeCnt1 = xTaskGetTickCount();
 		pMLX32x32_frameData_prcess_INT16U_buf = (INT16U*)prcess_buf;
 
 
 	#if DEBUG_IO_OUT
-		gpio_write_io(TH_DISP_MODE_PAD, DATA_HIGH);
+		gpio_write_io(TH_TEST1_A12_PAD, DATA_HIGH);
 	#endif
 
 		// 開始 計算 Tobject
@@ -2766,10 +2773,6 @@ static void prcess_task_entry(void const *parm)
 		TimeCnt1b = xTaskGetTickCount();
 		FindMax_ColorAssign();
 
-		
-
-		//gpio_write_io(TH_DISP_MODE_PAD, DATA_LOW);
-
 		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)
 			{
 		#if DEBUG_TMP_READ_OUT2
@@ -2789,9 +2792,9 @@ static void prcess_task_entry(void const *parm)
 
 
 			if (lp_cnt%2 == 0 )
-				gpio_write_io(TH_STATUS_PAD, DATA_HIGH);
+				gpio_write_io(TH_STATUS_A15_PAD, DATA_HIGH);
 			else
-				gpio_write_io(TH_STATUS_PAD, DATA_LOW);
+				gpio_write_io(TH_STATUS_A15_PAD, DATA_LOW);
 		*/
 			DBG_PRINT(" CalculateTo [t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
 
@@ -2911,6 +2914,9 @@ static void prcess_task_entry(void const *parm)
 
         //================================================================
 
+	#if DEBUG_IO_OUT
+		   gpio_write_io(TH_TEST1_A12_PAD, DATA_LOW);
+	#endif
 
         //**************************************//
         //DBG_PRINT("user draw image \r\n");
@@ -2925,9 +2931,10 @@ static void prcess_task_entry(void const *parm)
 
         free_frame_buffer_add((INT32U *)prcess_buf, 1);
 
-	// pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
 
             prcess_state_post(PRCESS_STATE_OK);
+
+			
 
 			TimeCnt3 = xTaskGetTickCount();
 
@@ -3113,6 +3120,8 @@ void GPM4_CSI_DISP_Demo(void)
 	//pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
 	//pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 500; // 5.7~ 732 (100ms),20(50ms),100(10 ms),200(5ms),500(2 ms)
+	
+	//pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 1000; // 5.7~ 732 (100ms),20(50ms),100(10 ms),200(5ms),500(2 ms),1000(1 ms)
 
 	nRet = timer_freq_setup(TIMER_B, pMLX_TH32x24_Para->MLX_TH32x24_sampleHz, 0, MLX_TH32x24_start_timer_isr );
 
@@ -3122,7 +3131,9 @@ void GPM4_CSI_DISP_Demo(void)
 	pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = COLOR_SET_0;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = GRAY_AMP_START;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE = GRAY_AMP_SCALE;
-	pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 0;
+	pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 1;
+
+	
 
     // ad key init
 	adc_key_scan_init();

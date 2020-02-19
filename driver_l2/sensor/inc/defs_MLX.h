@@ -32,7 +32,7 @@
 
 
 
-#define CONVERT_WAIT_TIME		5
+#define CONVERT_WAIT_TIME		3
 #define IMAGE_DATA_INT32S_SIZE		4
 
 //mode[in]:i2c restart without stop or not:
@@ -99,11 +99,14 @@
 #define MLX90640_REFRESH_RATE_32HZ	 	0x06
 #define MLX90640_REFRESH_RATE_64HZ	 	0x07
 
-#define MLX90640_REFRESH_RATE_SET	 	MLX90640_REFRESH_RATE_64HZ
+#define MLX90640_REFRESH_RATE_SET	 	MLX90640_REFRESH_RATE_32HZ
 
 
 #define MLX90640_SetModeClear			0xFFE6		// bit0=0 , bit3=0 , bit4 = 0
 #define MLX90640_SetStepModeSubpageRep	0x0001		// bit0=1 , bit3=0
+
+#define MLX90640_SetEnableDataHold		0x0004		// bit2=1 , Transfer the data into storage RAM only if en_overwrite = 1 (check 0x8000)
+
 
 #define MLX90640_SetStepMode			0x0009		// bit0=1 , bit3=1 
 #define MLX90640_StepModeSubpage0		0xFFEF		// bit0=1 , bit3=1 , bit4 = 0 :subpage0 / 1 :subpage1
@@ -119,7 +122,7 @@
 #define AVG_buf_len			4
 
 #define IMG_AVG_buf_len		3	// 信號穩定 5 次以上 
-#define	IMG_AVGBUF_ON			0	// avg ON is good
+#define	IMG_AVGBUF_ON		1	// avg ON is good
 
 #define IMG_VAL_buf_len		4
 #define IMG_GRAY_IND_buf_len		10
@@ -185,10 +188,13 @@
 	  float  MLX_TH32x24_vdd;
   
 	  INT16S  result[MLX_Pixel];
+	  
 	  float   result_image[MLX_Pixel];
+	  
   	  float   result_LOWPASS_image[MLX_Pixel];
   
 	  INT32U  MLX_TH32x24_ImgAvg_buf_addr[IMG_AVG_buf_len];   // MLX_TH32x24 avg image buffer addr
+	  
 	  INT32U  MLX_TH32x24_GrayOutputFrame_addr;
 	  INT32U  MLX_TH32x24_GrayScaleUpFrame_addr;
 	  INT32U  MLX_TH32x24_ColorScaleUpFrame_addr;

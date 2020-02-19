@@ -100,7 +100,7 @@ static INT32S MXL_sccb_open(void)
 	MXL_handle.devNumber = I2C_1;
     MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
 
-    MXL_handle.clkRate = 950;
+    MXL_handle.clkRate = 1000;
     drv_l1_i2c_init(MXL_handle.devNumber);
 
 	DBG_PRINT(" MLX90640_SLAVE_ADDR Sccb open in HW_I2C.\r\n");
@@ -277,6 +277,8 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 		DBG_PRINT("davis --> MLX_TH32x24_ImgAvg_buf_addr[%d] addr = 0x%x\r\n",tmpN1, pMLX_TH32x24_Para->MLX_TH32x24_ImgAvg_buf_addr[tmpN1]);
 	}
 
+	
+
 		//	1 pixel takes 2 bytes => 32*24 pixel requires 32*24*3*3 放大3倍 
 		buffer_size = (pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height << 1)*ScaleUp_2*ScaleUp_2;
 
@@ -312,6 +314,19 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 		pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr = buffer_addr;
 		DBG_PRINT("davis --> MLX_TH32x24_GrayOutputFrame_addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr);
 
+		/*
+		//	1 pixel takes 2 bytes => 32*24 pixel requires 32*24*2
+		buffer_size = pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height << 1;
+	
+		buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+		//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
+		if(buffer_addr == 0) {
+			RETURN(STATUS_FAIL);
+		}
+		pMLX_TH32x24_Para->MLX_TH32x24_frameData_prcess_buf_addr = buffer_addr;
+		DBG_PRINT("davis --> MLX_TH32x24_frameData_prcess_buf_addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_frameData_prcess_buf_addr);
+		*/
+		
 	nRet = STATUS_OK;
 Return:
 	return nRet;
@@ -1124,7 +1139,7 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 
 	MXL_handle.devNumber = I2C_1;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
-	MXL_handle.clkRate = 900;
+	MXL_handle.clkRate = 1000;
 
 	//
 	//Wait 80ms + delay determined by the refresh rate
@@ -1195,6 +1210,7 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 
 	controlRegister1 = controlRegister1 & MLX90640_SetModeClear ;
 	controlRegister1 = controlRegister1 | MLX90640_SetStepModeSubpageRep ;
+	controlRegister1 = controlRegister1 | MLX90640_SetEnableDataHold ;	// I2C data transfer time too LONG ,[Enable data hold bit] need to SET
 
 	drv_l1_reg_2byte_data_2byte_write(&MXL_handle,MLX90640_AdrControlRegister1,controlRegister1);
 	DBG_PRINT("(set initial subpage = 0)write controlRegister1 = 0x%04x \r\n",controlRegister1);
