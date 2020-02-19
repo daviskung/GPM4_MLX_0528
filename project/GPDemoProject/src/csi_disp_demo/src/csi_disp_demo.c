@@ -3276,11 +3276,7 @@ static void disp_task_entry(void const *parm)
 			
 
 			drv_l2_display_update(DISPLAY_DEVICE,display_PPU_buf);
-			pscaler_frame_buffer_add((INT32U *)display_PPU_buf, 1);
-
-			 if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 ) // sprite too slowly need modify !!
-			 	pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
-
+			pscaler_frame_buffer_add((INT32U *)display_buf, 1);
 			
 			}
 	else{
