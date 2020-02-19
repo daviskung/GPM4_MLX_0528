@@ -114,8 +114,10 @@ static prcess_mem_t *prcess_mem_set;
 #define COLOR_SET_3		3
 #define COLOR_SET_4		4
 #define COLOR_SET_5		5
+#define COLOR_SET_6		6	// SPRITE out
 
-#define COLOR_SET_MAX		COLOR_SET_5
+
+#define COLOR_SET_MAX		COLOR_SET_6
 
 #define GRAY_AMP_START	20
 #define GRAY_AMP_SCALE	2
@@ -2622,6 +2624,472 @@ static void disp_task_entry(void const *parm)
 
 	// PPU init End ***
 
+
+#if 1	
+	
+	#if 1
+	
+		pMLX_TH32x24_GrayframeForSprite_INT8U_buf0 =
+					(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr;
+	
+		pMLX_TH32x24_MLX_TH32x24_SpriteCharacterNum_INT16U_buf0 =
+					(INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_SpriteCharacterNum_idx_addr;
+	
+		sprite_base_addr = (INT32U)gp_malloc_align((SP_CHR_SIZE*SP_MAX_A_LEVEL), 64);
+		if (!sprite_base_addr) {
+			DBG_PRINT("sprite_base_addr task failed to allocate character number array memory\r\n");
+				while(1);
+		}
+	
+	/*
+		src_ptr = (INT8U *)sprite_base_addr;
+		sprite_RedPos_addr = sprite_base_addr;
+	
+		for(ColorLp=1;ColorLp<129;ColorLp++)	// 產生 紅色 256 階 漸層 
+		{
+			for(i=0;i<(SP_H_SIZE*SP_V_SIZE);i++)	// sprite2
+			{
+					*src_ptr++ = 255-(INT8U)ColorLp;	//A  // 紅色 
+					*src_ptr++ = 0x0;	//B
+					*src_ptr++ = 0x0;	//G
+					*src_ptr++ = 0xff;	//R
+	
+			}
+	
+		}
+	*/
+	
+#if 1	
+		src_ptr = (INT8U *)sprite_base_addr;
+		sprite_GrayPos_addr = sprite_base_addr;
+		DBG_PRINT("sprite_GrayPos_addr = 0x%x\r\n",sprite_GrayPos_addr);
+	
+	
+		for(ColorLp=55 ; ColorLp<255 ; ColorLp=ColorLp+4)	// 產生 gray色 50 階 由暗到亮 漸層 
+		{
+	
+			for(i=0;i<(SP_H_SIZE*SP_V_SIZE);i++)	// sprite2
+			{
+				*src_ptr++ = (INT8U)ColorLp;	//A  // gray色 
+				*src_ptr++ = 0x0;	//B
+				*src_ptr++ = 0x0;	//G
+				*src_ptr++ = 0xf0;	//R (紅色)
+	
+			}
+		}
+		
+#else
+		src_ptr = (INT8U *)sprite_base_addr;
+		for(ColorLp=75 ; ColorLp<255 ; ColorLp=ColorLp+4)	// 產生 gray色 50 階 由暗到亮 漸層 
+		{
+	
+			for(i=0;i<(SP_H_SIZE*SP_V_SIZE);i++)	// sprite2
+			{
+				*src_ptr++ = (INT8U)ColorLp;	//A  // gray色 
+				*src_ptr++ = 0xff;	//B
+				*src_ptr++ = 0xff;	//G
+				*src_ptr++ = 0xff;	//R
+	
+			}
+		}
+	
+		src_ptr = (INT8U *)sprite_base_addr;
+		for(ColorLp=55 ; ColorLp<75 ; ColorLp=ColorLp+4)	// 產生 gray色 50 階 由暗到亮 漸層 
+		{
+	
+			for(i=0;i<(SP_H_SIZE*SP_V_SIZE);i++)	// sprite2
+			{
+				*src_ptr++ = (INT8U)ColorLp;	//A  // gray色 
+				*src_ptr++ = 0x0;	//B
+				*src_ptr++ = 0x0;	//G
+				*src_ptr++ = 0xff;	//R
+	
+			}
+		}
+	
+#endif
+	
+		//src_ptr = (INT8U *)sprite_base_addr;
+	
+#if 1
+	#if BIG_POINT
+		 for (ColorLp = 47; ColorLp < 50 ; ColorLp++)	// 大圓點
+		{
+			sprite_GrayPos_addr = sprite_base_addr + SP_CHR_SIZE*ColorLp;
+			src_ptr = (INT8U *)sprite_GrayPos_addr;
+		for(flag=0;flag<SP_V_SIZE;flag++)
+		   {
+			if((flag == 0) || (flag == 15)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+				//*src_ptr++=64;	//A
+				*src_ptr++=G_area;	//A
+				src_ptr+=3;
+	
+			   }
+			}
+			else if((flag == 1) || (flag == 14)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i < 3 ) || (i > 12 ))
+						{
+						//*src_ptr++=64;	//A
+						*src_ptr++=G_area;	//A
+						src_ptr+=3;
+						}
+						else if (((i > 2 ) && (i < 6 )) || ((i > 9 ) && (i < 13 )) )
+						{
+						//*src_ptr++=128;	//A
+						*src_ptr++=B_area;	//A
+						src_ptr+=3;
+						}
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else if((flag == 2) || (flag == 13)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i == 0 ) || (i == 1 ) || (i == 14 ) || (i == 15 ))
+						{
+						//*src_ptr++=64;	//A
+						*src_ptr++=G_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 2 )	|| (i == 13 ) )
+						{
+						//*src_ptr++=128;	//A
+						*src_ptr++=B_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 3 ) || (i == 12 ))
+						{
+						//*src_ptr++=192;	//A
+						*src_ptr++=A_area;	//A
+						src_ptr+=3;
+						}
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else if((flag == 3) || (flag == 12)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i == 0 ) || (i == 15 ))
+						{
+						//*src_ptr++=64;	//A
+						*src_ptr++=G_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 1 )	|| (i == 14 ) )
+						{
+						//*src_ptr++=128;	//A
+						*src_ptr++=B_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 2 )	|| (i == 13 ))
+						{
+						//*src_ptr++=192;	//A
+						*src_ptr++=A_area;	//A
+						src_ptr+=3;
+						}
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else if((flag == 5) || (flag == 10) || (flag == 4) || (flag == 11)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i == 0 ) || (i == 15 ))
+						{
+						//*src_ptr++=64;	//A
+						*src_ptr++=G_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 1 )	|| (i == 14 ) )
+						{
+						//*src_ptr++=128;	//A
+						*src_ptr++=B_area;	//A
+						src_ptr+=3;
+						}
+	
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else if((flag == 7) || (flag == 8) || (flag == 6) || (flag == 9) ){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i == 0 ) || (i == 15 ))
+						{
+						//*src_ptr++=64;	//A
+						*src_ptr++=A_area;	//A
+						src_ptr+=3;
+						}
+	
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else
+			{
+				for(i=0;i<SP_H_SIZE;i++){
+				src_ptr+=4;
+					}
+			}
+	
+		   }
+	
+			}
+#endif
+	
+	
+		 for (ColorLp = 0; ColorLp < 47 ; ColorLp++)	// 小圓點
+		{
+			sprite_GrayPos_addr = sprite_base_addr + SP_CHR_SIZE*ColorLp;
+			src_ptr = (INT8U *)sprite_GrayPos_addr;
+		for(flag=0;flag<SP_V_SIZE;flag++)
+		   {
+			if((flag == 0) || (flag == 15)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+				*src_ptr++=G_area;	//A
+				src_ptr+=3;
+	
+			   }
+			}
+			else if((flag == 1) || (flag == 14)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i < 3 ) || (i > 12 ))
+						{
+						*src_ptr++=G_area;	//A
+						src_ptr+=3;
+						}
+						else if (((i > 2 ) && (i < 6 )) || ((i > 9 ) && (i < 13 )) )
+						{
+						*src_ptr++=B_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 6 ) || (i == 7 ) || (i == 8 ) || (i == 9 ))
+						{
+						*src_ptr++=A_area;	//A
+						src_ptr+=3;
+						}
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else if((flag == 2) || (flag == 13)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i == 0 ) || (i == 1 ) || (i == 14 ) || (i == 15 ))
+						{
+						*src_ptr++=G_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 2 )	|| (i == 13 ) )
+						{
+						*src_ptr++=B_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 3 ) || (i == 12 ) || (i == 4 ) || (i == 5 ) 
+							|| (i == 10 ) || (i == 11 ))
+						{
+						*src_ptr++=A_area;	//A
+						src_ptr+=3;
+						}
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else if((flag == 3) || (flag == 12)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i == 0 ) || (i == 15 ))
+						{
+						*src_ptr++=G_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 1 )	|| (i == 14 ) )
+						{
+						*src_ptr++=B_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 2 )	|| (i == 13 ) || (i == 3 )	|| (i == 12 ))
+						{
+						*src_ptr++=A_area;	//A
+						src_ptr+=3;
+						}
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else if((flag == 5) || (flag == 10) || (flag == 4) || (flag == 11)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i == 0 ) || (i == 15 ))
+						{
+						*src_ptr++=G_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 1 )	|| (i == 14 ) )
+						{
+						*src_ptr++=B_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 2 )	|| (i == 13 ))
+						{
+						*src_ptr++=A_area;	//A
+						src_ptr+=3;
+						}
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else if((flag == 7) || (flag == 8) || (flag == 6) || (flag == 9) ){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+						if ((i == 0 ) || (i == 15 ))
+						{
+						*src_ptr++=G_area;	//A
+						src_ptr+=3;
+						}
+						else if ((i == 1 )	|| (i == 14 ) )
+						{
+						*src_ptr++=B_area;	//A
+						src_ptr+=3;
+						}
+						else
+							 src_ptr+=4;
+	
+			   }
+			}
+	
+			else
+			{
+				for(i=0;i<SP_H_SIZE;i++)
+				src_ptr+=4;
+			}
+	
+		   }
+	
+			}
+	
+#endif
+	
+	#endif
+	
+		// PPU setting start
+		DBG_PRINT("PPU setting start \r\n");
+	
+		// Now configure TEXT relative elements
+		gplib_ppu_text_compress_disable_set(ppu_register_set, 1) ;	  // Disable TEXT1/TEXT2 horizontal/vertical compress function
+		gplib_ppu_text_direct_mode_set(ppu_register_set, 0);				//Disable TEXT direct address mode
+	
+		//text 1 2D CSI
+		gplib_ppu_text_init(ppu_register_set, C_PPU_TEXT1);
+		buffer_ptr = (INT32U)gp_malloc_align(4096+64,4);
+		if(!buffer_ptr)
+		{
+			DBG_PRINT("gplib_ppu_text_number_array_ptr_set [ C_PPU_TEXT1 ] fail \r\n");
+			while(1);
+		}
+		buffer_ptr = (INT32U)((buffer_ptr + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
+		prcess_mem_set->ppu_narray_workmem = buffer_ptr;
+		gplib_ppu_text_number_array_ptr_set(ppu_register_set, C_PPU_TEXT1, (INT32U)buffer_ptr); // Set TEXT number array address
+		gplib_ppu_text_enable_set(ppu_register_set, C_PPU_TEXT1, 1); // Enable VALUE-display TEXT
+		gplib_ppu_text_bitmap_mode_set(ppu_register_set, C_PPU_TEXT1, 1);	  // Enable bitmap mode
+		gplib_ppu_text_attribute_source_select(ppu_register_set, C_PPU_TEXT1, 1);	 // Get TEXT attribute from register
+		gplib_ppu_text_color_set(ppu_register_set, C_PPU_TEXT1, 1, 3);	   // Set TEXT color to  < 1:RGB / 3:YUYV >
+		//gplib_ppu_text_size_set(ppu_register_set, C_PPU_TEXT1, 0);			 // Set TEXT size to 512x256
+		gplib_ppu_text_size_set(ppu_register_set, C_PPU_TEXT1, 2);			   // Set TEXT size to 1024x512
+	
+		gplib_ppu_text_segment_set(ppu_register_set, C_PPU_TEXT1, 0);	 // Set TEXT segment address
+		//gplib_ppu_rgb565_transparent_color_set(ppu_register_set, 1, TRANSPARENT_COLOR);	// TRANSPARENT_COLOR = 0x00CD
+	
+	
+		gplib_ppu_palette_type_set(ppu_register_set, 0,1);
+		gplib_ppu_sprite_enable_set(ppu_register_set, 1);										// Disable Sprite
+		gplib_ppu_sprite_coordinate_set(ppu_register_set, 0);									// set sprite coordinate
+		gplib_ppu_sprite_direct_mode_set(ppu_register_set, 1);									// Set sprite address mode
+		gplib_ppu_sprite_number_set(ppu_register_set, 256); 									// Set sprite number
+		gplib_ppu_sprite_attribute_ram_ptr_set(ppu_register_set, (INT32U)SpriteRAM);			// set sprite ram buffer
+		gplib_ppu_sprite_extend_attribute_ram_ptr_set(ppu_register_set, (INT32U)SpriteExRAM);	// value: 32-bit pointer to sprite extend attribute ram
+		gplib_ppu_sprite_segment_set(ppu_register_set, 0);										// sprite cell data
+		gplib_ppu_sprite_rgba_mode_set(ppu_register_set, 1);
+	
+		//gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, h_size, v_size,
+		//	(INT32U)_Text025_IMG0000_CellData); // Calculate Number array
+	
+		gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, h_size, v_size,
+			(INT32U)_Text001_IMG0000_CellData);	// Calculate Number array
+			//(INT32U)_Text_BLUE_IMG0_CellData);	// Calculate Number array
+			//(INT32U)_Text_WHITE_IMG0_CellData);
+			//(INT32U)_GREEN1_IMG0_CellData);
+			//(INT32U)_BlackGnd_IMG0_CellData);
+	
+	
+	
+	
+	#if 0
+		//text 2 2D UI
+		gplib_ppu_text_init(ppu_register_set, C_PPU_TEXT2);
+		buffer_ptr = (INT32U)gp_malloc_align(4096+64,4);
+		if(!buffer_ptr)
+		{
+			DBG_PRINT("gplib_ppu_text_number_array_ptr_set [ C_PPU_TEXT2 ] fail \r\n");
+			while(1);
+		}
+		buffer_ptr = (INT32U)((buffer_ptr + FRAME_BUF_ALIGN32) & ~FRAME_BUF_ALIGN32);
+		prcess_mem_set->ppu_narray_workmem = buffer_ptr;
+		gplib_ppu_text_number_array_ptr_set(ppu_register_set, C_PPU_TEXT2, (INT32U)buffer_ptr); // Set TEXT number array address
+		gplib_ppu_text_enable_set(ppu_register_set, C_PPU_TEXT2, 1);		//Enable TH TEXT
+		gplib_ppu_text_bitmap_mode_set(ppu_register_set, C_PPU_TEXT2, 1);	  // Enable bitmap mode
+		gplib_ppu_text_attribute_source_select(ppu_register_set, C_PPU_TEXT2, 1);	 // Get TEXT attribute from register
+		gplib_ppu_text_color_set(ppu_register_set, C_PPU_TEXT2, 1, 3);	   // Set TEXT color to < 1:RGB / 3:YUYV >
+		//gplib_ppu_text_size_set(ppu_register_set, C_PPU_TEXT2, 0);			 // Set TEXT size to 512x256
+		gplib_ppu_text_size_set(ppu_register_set, C_PPU_TEXT2, 2);			   // Set TEXT size to 1024x512
+	
+		gplib_ppu_text_segment_set(ppu_register_set, C_PPU_TEXT2, 0);	 // Set TEXT segment address
+		gplib_ppu_text_blend_set(ppu_register_set, C_PPU_TEXT2, 1, 1, 32);	// Set Blend
+		gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, h_size, v_size,
+			(INT32U)_Text001_IMG0000_CellData); // Calculate Number array
+	
+		//gplib_ppu_text_depth_set(ppu_register_set, C_PPU_TEXT2, 2);	   // Set TEXT Depth 1
+	
+	#endif
+	
+		DBG_PRINT("PPU setting End \r\n");
+	
+		// PPU setting End
+	
+		frame_size = (h_size * v_size * 2);
+		display_PPU_forScaler_buf = (INT32U) gp_malloc_align(frame_size, 64); // create buffer for scaler use
+	
+		userDefine_spNum = 0;
+		userDefine_spNumMax = 0 ;
+		lpcnt = 0;
+#endif
+
     while(1)
     {
             result = osMessageGet(disp_frame_buffer_queue, osWaitForever);
@@ -2691,11 +3159,138 @@ static void disp_task_entry(void const *parm)
 
 				}
 
-           nRet = drv_l2_display_update(DISPLAY_DEVICE,display_buf);
-		   
-		 //DBG_PRINT("ret-1 = 0x%x\r\n", nRet);
+
+		//
+		//	COLOR_SET_6 --> sprite display mode
+		//
+		if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_6 ){
+
+		pos_x = SP_H_SIZE - 6;
+		pos_y = SP_V_SIZE - 6;
+
+		#if 0
+		//if( userDefine_spNumMax != 0)
+		//	{
+				for (lpcnt = 0 ; lpcnt < 1024 ; ++lpcnt)
+					{
+					set_sprite_disable(lpcnt);
+					}
+		//	}
+		#endif
+
+
+		userDefine_spNum = 0;
+
+		for(lpcnt = 0 ; lpcnt < MLX_Pixel ; lpcnt++)
+        {
+        	if(*(pMLX_TH32x24_MLX_TH32x24_SpriteCharacterNum_INT16U_buf0+ lpcnt) != 0x00 ){
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite_16x16_SP);
+    #if 0
+			x_pos=(lpcnt%MLX_LINE)*SP_H_SIZE;
+			y_pos=(lpcnt/MLX_LINE)*SP_V_SIZE;
+    #else
+			x_pos=(lpcnt%MLX_LINE)*pos_x;
+			y_pos=(lpcnt/MLX_LINE)*pos_y;
+    #endif
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Sprite_16x16_IMG0000_CellIdx); // 放在 LCD 上位置 
+			userDefine_spNum++;
+
+			}
+			//else
+			//	set_sprite_disable(userDefine_spNum);
+		}
+
+																			
+							 
+
+		//DBG_PRINT("userDefine_spNum = %d /",userDefine_spNum);
+							 
+
+		if(userDefine_spNum != 0)
+		{
+			#if 1
+			if( userDefine_spNumMax > (userDefine_spNum - 1) )
+			{
+				for (lpcnt = userDefine_spNum ; lpcnt < userDefine_spNumMax ; ++lpcnt)
+					{
+					set_sprite_disable(lpcnt);
+							  
+																					
+							 
+					}
+				userDefine_spNumMax = userDefine_spNum - 1;
+			}
+			else userDefine_spNumMax = userDefine_spNum - 1;
+			#endif
+			userDefine_spNumMax = userDefine_spNum - 1;
+		}
+
+		else if( (userDefine_spNum == 0) && (userDefine_spNumMax != 0) )
+			userDefine_spNumMax = 0;
+
+
+
+		//DBG_PRINT("userDefine_spNumMax = %d /",userDefine_spNumMax);
+
+		//paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,1024);
+		if(userDefine_spNum > 0){
+			//DBG_PRINT("userDefine_spNum - 1 = %d ",userDefine_spNum -1);
+		paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum-1);
+			}
+		userDefine_spNum = 0;
+		for(lp2=0;lp2<MLX_Pixel;lp2++)
+        {
+        	if(*(pMLX_TH32x24_MLX_TH32x24_SpriteCharacterNum_INT16U_buf0+ lp2) != 0x00 ){
+
+            sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +
+				(*(pMLX_TH32x24_MLX_TH32x24_SpriteCharacterNum_INT16U_buf0+ lp2) * SP_CHR_SIZE));
+            Get_sprite_image_info(userDefine_spNum,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+			//DBG_PRINT("i = %d ,sp_num_addr = 0x%x \r\n",i,sp_num_addr);
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+
+			userDefine_spNum ++;
+
+        	}
+
+        }
+
+			//DBG_PRINT("set userDefine_spNum - 1 = %d \r\n",userDefine_spNum -1);
+
+			 //if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 ) // sprite too slowly need modify !!
+			 //	pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
+
+			nRet =  gplib_ppu_go_and_wait_done(ppu_register_set);
+			// 解決 free_frame_buffer_queue 未放回-start
+			display_PPU_buf = ppu_frame_buffer_display_get();
+			if(display_PPU_buf > 0)
+			         gplib_ppu_frame_buffer_add(ppu_register_set, display_PPU_buf);
+			// 解決 free_frame_buffer_queue 未放回-end
+			//DBG_PRINT("display_PPU_buf = 0x%x \r\n",display_PPU_buf);
+
+
+			
+
+			drv_l2_display_update(DISPLAY_DEVICE,display_PPU_buf);
+			pscaler_frame_buffer_add((INT32U *)display_PPU_buf, 1);
+
+			 if( pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON == 1 ) // sprite too slowly need modify !!
+			 	pMLX_TH32x24_Para->MLX_TH32x24_readout_block_startON = 0;
+
+			
+			}
+	else{
+			 drv_l2_display_update(DISPLAY_DEVICE,display_buf);
+	 
+										 
             pscaler_frame_buffer_add((INT32U *)display_buf, 1);
-		//DBG_PRINT("ret-2 = 0x%x\r\n", nRet);
+		}
+
+           
     }
 }
 
