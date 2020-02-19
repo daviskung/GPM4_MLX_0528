@@ -2519,10 +2519,108 @@ static void disp_task_entry(void const *parm)
     osEvent result;
 	INT32S  nRet;
 
+	INT32U buffer_ptr,frame_size,PPU_buffer_ptr;
+	PPU_REGISTER_SETS ppu_register_structure;
+	PPU_REGISTER_SETS *ppu_register_set;
+	INT16U	i,lp2;
+
+    INT32U display_PPU_buf,display_PPU_forScaler_buf;
+
+    INT16S x_pos,y_pos;
+	INT32S sprite_characterNum_pos_addr;
+	INT32U sp_num,sp_num_addr;
+    SpN_ptr sp_ptr;
+
+	INT8U *src_ptr;
+	INT32U sprite_base_addr;
+	INT32U pos_x,pos_y;
+	INT16U	userDefine_spNum;
+
+	INT32U 	lpcnt;
+
+	INT16S ColorLp,flag;
+
+
+	INT8U  *pMLX_TH32x24_GrayframeForSprite_INT8U_buf0;
+	INT16U *pMLX_TH32x24_MLX_TH32x24_SpriteCharacterNum_INT16U_buf0;
+	ScalerFormat_t scale;
+	ScalerPara_t para;
+
     DBG_PRINT("disp_task_entry start \r\n");
     // Initialize display device
     drv_l2_display_init();
+	// drv_l2_display_start(DISPLAY_DEVICE,DISP_FMT_YUYV);
+
+	if(DISPLAY_DEVICE == DISDEV_HDMI_720P)
+    {
+        h_size = 640;
+        v_size = 480;
+        drvl1_hdmi_h264_scaling_enable(h_size,v_size,0);
+    }
+    else if(DISPLAY_DEVICE != DISDEV_HDMI_720P)
+    {
+        h_size = 720;
+        v_size = 480;
+    }
     drv_l2_display_start(DISPLAY_DEVICE,DISP_FMT_YUYV);
+
+	
+    if(DISPLAY_DEVICE == DISDEV_TFT)
+        drv_l2_display_get_size(DISPLAY_DEVICE,(INT16U *)&h_size,(INT16U *)&v_size);
+
+	DBG_PRINT("h_size = %d v_size = %d\r\n",h_size,v_size);
+	osDelay(100);
+
+	DBG_PRINT("PPU init*** delay 100 ms \r\n");
+
+	//PPU init start ***
+
+	// initial ppu register parameter set structure /
+	ppu_register_set = (PPU_REGISTER_SETS *) &ppu_register_structure;
+
+	//Initiate PPU hardware engine and PPU register set structure
+	gplib_ppu_init(ppu_register_set);
+
+	//Now configure PPU software structure
+	gplib_ppu_enable_set(ppu_register_set, 1);            // Enable PPU
+
+	//TV frame mode
+	gplib_ppu_non_interlace_set(ppu_register_set, 0);            // Set non-interlace mode
+	gplib_ppu_frame_buffer_mode_set(ppu_register_set, 1, 0);        // Enable TV/TFT frame buffer mode
+
+	//PPU setting
+	gplib_ppu_fb_format_set(ppu_register_set, 1, 1);            // Set PPU output frame buffer format to YUYV
+	gplib_ppu_vga_mode_set(ppu_register_set, 0); // Disable VGA mode
+	gplib_ppu_resolution_set(ppu_register_set, C_TFT_RESOLUTION_320X240);
+	gplib_ppu_free_size_set(ppu_register_set, 0, h_size, v_size);
+	gplib_ppu_bottom_up_mode_set(ppu_register_set, 1);                      // bottom to top
+	gplib_ppu_long_burst_set(ppu_register_set, 1);
+	gplib_ppu_yuv_type_set(ppu_register_set, 3);// value[1:0]:0=BGRG/VYUY 1=GBGR/YVYU 2=RGBG/UYVY 3=GRGB/YUYV, value[2]:0=UV is unsigned(YCbCr) 1=UV is signed(YUV)
+	gplib_ppu_long_burst_set(ppu_register_set, 1);
+
+
+	//Frame buffer malloc
+	//frame_size = (PPU_TEXT_SIZE_HPIXEL * PPU_TEXT_SIZE_VPIXEL * 2);
+	frame_size = (h_size * v_size * 2);
+	PPU_buffer_ptr = (INT32U) gp_malloc_align(frame_size*C_PPU_DRV_FRAME_NUM, 64); // from 320B
+	   //PPU_buffer_ptr = (INT32U) gp_malloc_align(((frame_size*C_PPU_DRV_FRAME_NUM)+128), 64);
+	if(!PPU_buffer_ptr)
+	{
+		DBG_PRINT("failed to allocate frame buffer memory =>  PPU_buffer_ptr \r\n");
+		while(1);
+	}
+	   //PPU_buffer_ptr = (PPU_buffer_ptr + FRAME_BUF_ALIGN64) & ~FRAME_BUF_ALIGN64;
+
+
+	//prcess_mem_set->ppu_frame_workmem = PPU_buffer_ptr;
+	for (i=0; i<C_PPU_DRV_FRAME_NUM; i++) {
+		gplib_ppu_frame_buffer_add(ppu_register_set, PPU_buffer_ptr + (i*frame_size));
+		DBG_PRINT("PPU_buffer_ptr[%d] -> 0x%x\r\n",i,PPU_buffer_ptr + (i*frame_size));
+	}
+
+	DBG_PRINT("PPU_buffer_ptr -> 0x%x\r\n",PPU_buffer_ptr);
+
+	// PPU init End ***
 
     while(1)
     {
