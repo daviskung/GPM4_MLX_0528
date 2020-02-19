@@ -19,6 +19,42 @@
 #include "drv_l1_i2c.h"
 #include <math.h>		// for pow()
 
+/* PPU draw use */
+
+#include "gplib_ppu.h"
+#include "gplib_ppu_dma.h"
+#include "gplib_ppu_sprite.h"
+#include "gplib_ppu_text.h"
+#include "Sprite_demo.h"
+#include "Text_demo.h"
+#include "SPRITE_object_HDR.h"
+
+#include "sprite_dataSP_HDR.h"
+#include "TEXT_Platform_verification_1_HDR.h"
+
+
+
+
+#if  GPLIB_PPU_EN
+
+typedef struct {
+	INT32U ppu_frame_workmem;
+	INT32U ppu_narray_workmem;
+    INT32U prcess_post_workmem;
+    INT32U disp_prcess_workmem;
+} prcess_mem_t;
+
+#define C_PPU_DRV_FRAME_NUM		            3
+
+static PPU_REGISTER_SETS ppu_register_structure;
+static PPU_REGISTER_SETS *ppu_register_set;
+static INT16U h_size,v_size;
+#define EXSP_ENABLE                         1
+#define CDM_MODE_ENABLE                     1
+#define Photo_Disable                       1
+static prcess_mem_t *prcess_mem_set;
+
+#endif
 
 
 #define FRAME_BUF_ALIGN64                   0x3F
@@ -84,6 +120,23 @@
 #define GRAY_AMP_START	20
 #define GRAY_AMP_SCALE	2
 
+
+#define SP_RGBA_TEST_EN	1
+
+#define ENABLE_PPU_run	1
+
+
+#define SP_H_SIZE                           16 //8
+#define SP_V_SIZE                           16 //8
+#define SP_SIZE_CH                          4
+#define SP_CHR_SIZE                         (SP_H_SIZE*SP_V_SIZE*SP_SIZE_CH)
+#define SP_MAX_A_LEVEL                      256		// 256 sprite 可用 
+
+#define	G_area		0	 
+#define	B_area		0
+#define	A_area		0
+
+#define BIG_POINT	1
 
 
 
@@ -203,6 +256,13 @@ INT16U	*pMLX_TH32x24_INT16U_avg_buf[AVG_buf_len];
 INT8U	avg_buf_Enable;
 INT32U	Gcnt_lp,GlobalTimeCnt1,GlobalTimeCnt2;
 
+//T32S sprite_GreenPos_addr;
+INT32S sprite_RedPos_addr;
+//T32S sprite_BluePos_addr;
+INT32S sprite_GrayPos_addr;
+
+
+INT16U	userDefine_spNumMax;
 
 
 
@@ -1393,6 +1453,7 @@ void FindMax_ColorAssign(void){
 
 	INT16U	SingleColorTmpValue,SingleColorShiftValue;
 
+	INT16U *pMLX_TH32x24_MLX_TH32x24_SpriteCharacterNum_INT16U_buf0;
 
 	pMLX_TH32x24_ImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_image; // image format ?
 		pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_LOWPASS_image;
@@ -1415,6 +1476,10 @@ void FindMax_ColorAssign(void){
 	Tpoint3 = pMLX_TH32x24_Para->MLX_TH32x24_GRAY_Tpoint3;
 
 	TmaxUnderZeroTable = pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmaxUnderZeroTable;
+
+	
+	pMLX_TH32x24_MLX_TH32x24_SpriteCharacterNum_INT16U_buf0 =
+					(INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_SpriteCharacterNum_idx_addr;
 
 	//DBG_PRINT("cp Tpoint3=[%f] ",Tpoint3);
 
@@ -1596,8 +1661,9 @@ void FindMax_ColorAssign(void){
 	#endif
 
 
-
-
+	
+	//gp_memset((INT8S *)pMLX_TH32x24_Para->MLX_TH32x24_SpriteCharacterNum_idx_addr,0x00,
+	//	MLX_Pixel*2);	// set 0xff 值 (還沒定義 有 error)
 
 	for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
 			 ImgObject = *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum);

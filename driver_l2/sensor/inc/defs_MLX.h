@@ -224,6 +224,8 @@
 	  INT8S  MLX_TH32x24_GRAY_AMP_SCALE;
 
   	  INT8U  MLX_TH32x24_LowPass_SET;
+
+	  INT32U MLX_TH32x24_SpriteCharacterNum_idx_addr;
 	  
   } MLX_TH32x24Para_t;
 
