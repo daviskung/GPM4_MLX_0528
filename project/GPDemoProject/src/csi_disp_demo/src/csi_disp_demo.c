@@ -109,15 +109,16 @@ static prcess_mem_t *prcess_mem_set;
 
 
 #define COLOR_SET_0		0	// gray out
-#define COLOR_SET_1		1
+#define COLOR_SET_1		1	// SPRITE out
+/*
 #define COLOR_SET_2		2
 #define COLOR_SET_3		3
 #define COLOR_SET_4		4
 #define COLOR_SET_5		5
-#define COLOR_SET_6		6	// SPRITE out
+#define COLOR_SET_6		6
+*/
 
-
-#define COLOR_SET_MAX		COLOR_SET_6
+#define COLOR_SET_MAX		COLOR_SET_1
 
 #define GRAY_AMP_START	20
 #define GRAY_AMP_SCALE	2
@@ -128,11 +129,11 @@ static prcess_mem_t *prcess_mem_set;
 #define ENABLE_PPU_run	1
 
 
-#define SP_H_SIZE                           64//16 //8
-#define SP_V_SIZE                           64//16 //8
+#define SP_H_SIZE                           16//64//16 //8
+#define SP_V_SIZE                           16//64//16 //8
 #define SP_SIZE_CH                          4
 #define SP_CHR_SIZE                         (SP_H_SIZE*SP_V_SIZE*SP_SIZE_CH)
-#define SP_MAX_A_LEVEL                      256		// 256 sprite 可用 
+#define SP_MAX_A_LEVEL                      30		// 256 sprite 可用 
 
 #define	G_area		255
 #define	B_area		0
@@ -1420,6 +1421,8 @@ void FindMax_ColorAssign(void){
 
 	INT8U  *pMLX_TH32x24_Grayframe_INT8U_buf0,*pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0;
 
+	INT32U  *pMLX_TH32x24_RGB888Colorframe_INT32U_buf0;
+
 	INT16U  *pMLX_TH32x24_Colorframe_INT16U_buf0,*pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0;
 
 	INT16U	TminTable,TmaxTable;
@@ -1437,6 +1440,8 @@ void FindMax_ColorAssign(void){
 
 
 	INT8U	GrayTmpValue; // 	INT16U	TminTable,TmaxTable;
+
+	INT32U 	RGB888TmpValue; //
 	INT16S	GrayValueAmp;
 
 	INT8U	TmpTbInd;
@@ -1462,6 +1467,9 @@ void FindMax_ColorAssign(void){
 
 	pMLX_TH32x24_Grayframe_INT8U_buf0 =
 				(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr;
+
+	pMLX_TH32x24_RGB888Colorframe_INT32U_buf0=
+				(INT32U*)pMLX_TH32x24_Para->MLX_TH32x24_RGB888_OutputFrame_addr;
 
 	pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 =
 					(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr;
@@ -1778,148 +1786,8 @@ void FindMax_ColorAssign(void){
 		tmp_i = cellNum/rowNumEnd_32;
 		tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 
-		if ((pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != COLOR_SET_0) 
-			&& (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != COLOR_SET_6))
-		{
-
-		switch(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode)
-			{
-			case COLOR_SET_1:
-				// gray value => 0xff 最熱,最亮 ... 00 最紅 / 1f 粉紅 
-				if(GrayTmpValue >= 250) SingleColorTmpValue = 31 + 0xfcc0; // 粉色 
-
-				else if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){ // 橘色 
-					SingleColorTmpValue = 0xfcc0 ; //0xf81f;
-				}
-
-				else if(GrayTmpValue <= 128){
-					SingleColorTmpValue = (31 * GrayTmpValue)/128 + 0xfcc0 ; //0xf800 ; // 橘色 
-				}
-
-				else if(GrayTmpValue > 128) {
-					//GrayTmpValue = 255 -GrayTmpValue;
-					SingleColorTmpValue = (31 * (GrayTmpValue-128)/128) + 0xf800 ; //0xfcc0 ; // 紅色 
-				}
-				break;
-
-			case COLOR_SET_2:
-				// gray value => 0xff 最熱,最亮 ... 00 最紅 / 1f 粉紅 
-				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
-
-				else if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){ // 橘色 
-					SingleColorTmpValue = 0xfcc0 ; //0xf81f;
-				}
-
-				else if(GrayTmpValue <= 128){
-					SingleColorTmpValue = (31 * GrayTmpValue)/128 + 0xfcc0 ; //0xf800 ; // 橘色 
-				}
-
-				else if((GrayTmpValue > 128) && (GrayTmpValue <= 192) ) {
-					SingleColorTmpValue = 0xfdaf;
-				}
-
-				else if(GrayTmpValue > 192) {
-					SingleColorTmpValue = (31 * (GrayTmpValue-192)/64) + 0xf800 ; //0xfcc0 ; // 紅色 
-				}
-
-				break;
 
 
-			case COLOR_SET_3: // 紫紅色系 ================================================
-				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
-
-				else if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){
-					SingleColorTmpValue = 0x8811 ; // 紫色 
-				}
-
-				else if(GrayTmpValue <= 128){
-					SingleColorShiftValue = (14 * GrayTmpValue)/128 + 17;
-					SingleColorTmpValue = SingleColorShiftValue;
-					SingleColorTmpValue = SingleColorTmpValue << 11;
-					SingleColorTmpValue = SingleColorTmpValue + SingleColorShiftValue;
-				}
-
-				else if((GrayTmpValue > 128) && (GrayTmpValue < 192) ) {
-					SingleColorShiftValue = 31 * (GrayTmpValue -128)/63;
-					SingleColorTmpValue = SingleColorShiftValue + 0X0F800;
-				}
-
-				else if(GrayTmpValue >= 192) {
-					SingleColorShiftValue = (GrayTmpValue -192)/63;
-					SingleColorShiftValue = SingleColorShiftValue << 5;
-					SingleColorTmpValue = SingleColorShiftValue + 0x0F81F ;
-				}
-				break;
-
-
-			case COLOR_SET_4:	// 紫紅色系  比例微調    ================================================
-
-				if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
-
-				else if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){
-					SingleColorTmpValue = 0x8811 ; // 紫色 
-				}
-
-				else if(GrayTmpValue <= 46){
-					SingleColorShiftValue = (14 * GrayTmpValue)/46 + 17;
-					SingleColorTmpValue = SingleColorShiftValue;
-					SingleColorTmpValue = SingleColorTmpValue << 11;
-					SingleColorTmpValue = SingleColorTmpValue + SingleColorShiftValue;
-				}
-
-				else if((GrayTmpValue > 46) && (GrayTmpValue <= 152) ) {
-					SingleColorShiftValue = 31 * (GrayTmpValue -46)/105;
-					SingleColorTmpValue = SingleColorShiftValue + 0X0F800;
-				}
-
-				else if(GrayTmpValue > 152) {
-					SingleColorShiftValue = (GrayTmpValue -152)/98;
-					SingleColorShiftValue = SingleColorShiftValue << 5;
-					SingleColorTmpValue = SingleColorShiftValue + 0x0F81F ;
-				}
-			break;
-
-			case COLOR_SET_5:	// 黃色系  比例     ================================================
-
-				//if(GrayTmpValue >= 250) SingleColorTmpValue = 0xffff; // 白色 
-
-				//else
-				if(GrayTmpValue <= pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL){
-					SingleColorTmpValue = 0x6320   ; //
-				}
-
-				else if(GrayTmpValue <= 50){
-
-					SingleColorTmpValue = (12 * (50-GrayTmpValue))/50 + 0x6320 ;
-				}
-
-				else if((GrayTmpValue > 50) && (GrayTmpValue <= 78) ) {
-
-					SingleColorTmpValue = 6 * (GrayTmpValue -50)/28 + 0x9cc0;
-				}
-
-				else if((GrayTmpValue > 78) && (GrayTmpValue <= 128)) {
-
-					SingleColorTmpValue = 12 * (GrayTmpValue -78)/50 + 0xce60 ;
-
-
-				}
-
-				else if((GrayTmpValue > 128) && (GrayTmpValue <= 255)) {
-					SingleColorTmpValue = 15 * (GrayTmpValue -128)/127 + 0xffe0  ; // 31 改成 15
-
-				}
-
-
-			default:
-				break;
-			}
-
-
-		*(pMLX_TH32x24_Colorframe_INT16U_buf0+ tmp_i2)
-			= SingleColorTmpValue ;
-			}
-		else{
 			//
 			//	gray sacle modify ?
 			//
@@ -1940,7 +1808,12 @@ void FindMax_ColorAssign(void){
 			}
 			*(pMLX_TH32x24_Grayframe_INT8U_buf0+ tmp_i2)
 			= GrayTmpValue;
-			}
+
+			RGB888TmpValue =(INT32U)GrayTmpValue<<24 | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0x000000ff;
+
+			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ tmp_i2)
+			= RGB888TmpValue;
+
 
 	}
 
@@ -1980,12 +1853,7 @@ void FindMax_ColorAssign(void){
 		switch(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode)
 		{
 			case COLOR_SET_1:
-			case COLOR_SET_2:
-			case COLOR_SET_3:
-			case COLOR_SET_4:
-			case COLOR_SET_5:
 			case COLOR_SET_0:
-			case COLOR_SET_6:
 				if (OverZeroDiff_value > 0)
 				{
 					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[19];
@@ -2079,11 +1947,6 @@ void FindMax_ColorAssign(void){
 		pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[2] = OverZ_TminTable_number;
 		pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[3] = OverZ_TmaxTable_number;
 
-		if(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > 3)	// no signal ONE color
-			gp_memset((INT8S *)pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr,0x0f
-				,MLX_Pixel*2);
-
-
 }
 
 
@@ -2101,7 +1964,7 @@ void FindMax_ColorAssign(void){
 	//if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt == 1725 )
 		{
 
-			pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 1;	// 開始計算溫度
+			pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 1;	// 開始計算溫度 
 			pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt = 0;
 		}
 
@@ -2647,7 +2510,7 @@ static void disp_task_entry(void const *parm)
 
 			for(i=0;i<(SP_H_SIZE*SP_V_SIZE);i++)	// sprite2
 			{
-				*src_ptr++ = 0xff;	//(INT8U)ColorLp;	//A  // gray色 
+				*src_ptr++ = 0x8f;	//(INT8U)ColorLp;	//A  // gray色 
 				*src_ptr++ = 0x0;	//B
 				*src_ptr++ = 0x0;	//G
 				*src_ptr++ = 0xf0;	//R (紅色) 
@@ -2668,7 +2531,7 @@ static void disp_task_entry(void const *parm)
 			src_ptr = (INT8U *)sprite_GrayPos_addr;
 		for(flag=0;flag<SP_V_SIZE;flag++)
 		   {
-			if((flag == 32) || (flag == 33)){
+			if((flag == 8) || (flag == 8)){
 			   for(i=0;i<SP_H_SIZE;i++)
 			   {
 				*src_ptr++=G_area;	//A
@@ -2694,7 +2557,7 @@ static void disp_task_entry(void const *parm)
 			src_ptr = (INT8U *)sprite_GrayPos_addr;
 		for(flag=0;flag<SP_V_SIZE;flag++)
 		   {
-			if((flag == 16) || (flag == 17)){
+			if((flag == 3) || (flag == 4)){
 			   for(i=0;i<SP_H_SIZE;i++)
 			   {
 				*src_ptr++=G_area;	//A
@@ -2705,7 +2568,7 @@ static void disp_task_entry(void const *parm)
 
 			   }
 			}
-			  else if((flag == 16+32) || (flag == 17+32)){
+			  else if((flag == 3+8) || (flag == 4+8)){
 			   for(i=0;i<SP_H_SIZE;i++)
 			   {
 				*src_ptr++=G_area;	//A
@@ -2772,7 +2635,7 @@ static void disp_task_entry(void const *parm)
 			src_ptr = (INT8U *)sprite_GrayPos_addr;
 		for(flag=0;flag<SP_V_SIZE;flag++)
 		   {
-			if((flag == 0) || (flag == 63)){
+			if((flag == 3) || (flag == 4)){
 			   for(i=0;i<SP_H_SIZE;i++)
 			   {
 				*src_ptr++=G_area;	//A
@@ -2783,7 +2646,7 @@ static void disp_task_entry(void const *parm)
 
 			   }
 			}
-			  else if((flag == 1) || (flag == 62)){
+			  else if((flag == 8) || (flag == 9)){
 			   for(i=0;i<SP_H_SIZE;i++)
 			   {
 				*src_ptr++=G_area;	//A
@@ -2793,8 +2656,18 @@ static void disp_task_entry(void const *parm)
 				*src_ptr++ = 0x0;	//R (紅色) 
 
 			   }
-			  }
+			  	}
+			   else if((flag == 12) || (flag == 13)){
+			   for(i=0;i<SP_H_SIZE;i++)
+			   {
+				*src_ptr++=G_area;	//A
+				//src_ptr+=3;
+				*src_ptr++ = 0x0f;	//B
+				*src_ptr++ = 0x2f;	//G
+				*src_ptr++ = 0x0;	//R (紅色) 
 
+			   }
+			   	}
 
 			else
 			{
@@ -2850,19 +2723,6 @@ static void disp_task_entry(void const *parm)
 		gplib_ppu_sprite_extend_attribute_ram_ptr_set(ppu_register_set, (INT32U)SpriteExRAM);	// value: 32-bit pointer to sprite extend attribute ram
 		gplib_ppu_sprite_segment_set(ppu_register_set, 0);										// sprite cell data
 		gplib_ppu_sprite_rgba_mode_set(ppu_register_set, 1);
-
-		//gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, h_size, v_size,
-		//	(INT32U)_Text025_IMG0000_CellData); // Calculate Number array
-
-		//gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, h_size, v_size,
-			//(INT32U)_Text001_IMG0000_CellData);	// Calculate Number array
-			//(INT32U)_Text_BLUE_IMG0_CellData);	// Calculate Number array // TFT & HDMI need diff TEXT !!
-		//	(INT32U)_Text_WHITE_IMG0_CellData);
-			//(INT32U)_GREEN1_IMG0_CellData);
-			//(INT32U)_BlackGnd_IMG0_CellData);
-
-
-
 
 	#if 0
 		//text 2 2D UI
@@ -2920,8 +2780,8 @@ static void disp_task_entry(void const *parm)
             //DBG_PRINT("D");
 
 			//gp_memcpy((INT8S *)(display_buf),
-			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);			
-			
+			//	(INT8S *)&(sensor32X32_RGB565),32*32*2);
+
 			if(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > NO_SIGNAL_FACTOR)	// no signal ONE color
 				{
 
@@ -2963,15 +2823,23 @@ static void disp_task_entry(void const *parm)
 					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL,display_buf,
 						device_h_size,204,0,0);
 
+					/* for HDMI 480P
 					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMin,display_buf,
 						device_h_size,328,0,7);
 
 					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMax,display_buf,
 						device_h_size,368,0,6);
+					*/
+
+					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMin,display_buf,
+						device_h_size,248,0,7);
+
+					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMax,display_buf,
+						device_h_size,288,0,6);
 
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode,display_buf,0,
 						device_h_size,8,0,8);
-					if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0 )
+					if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0 )
 					{
 						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START,display_buf,0,
 							device_h_size,52,0,12);
@@ -2985,9 +2853,9 @@ static void disp_task_entry(void const *parm)
 		//
 		//	COLOR_SET_6 --> sprite display mode
 		//
-		if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_6 ){
+		if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_1 ){
 
-		
+
 
 		Gcnt_lp++;
 			if (Gcnt_lp>5)
@@ -3001,9 +2869,9 @@ static void disp_task_entry(void const *parm)
 
 		#if 1
 
-		for (lpcnt = 0 ; lpcnt < 1024 ; ++lpcnt)
+		for (lpcnt = 0 ; lpcnt < Gcnt_lp ; ++lpcnt)
 		{
-			set_sprite_disable(lpcnt);
+			set_sprite_disable(Gcnt_lp);
 		}
 
 		#endif
@@ -3011,17 +2879,20 @@ static void disp_task_entry(void const *parm)
 		userDefine_spNum = 0;
 		for(lpcnt = 0 ; lpcnt < Gcnt_lp ; lpcnt++)
         {
-			set_sprite_init(userDefine_spNum,(INT32U)&Sprite_64x64_SP);
+			//set_sprite_init(userDefine_spNum,(INT32U)&Sprite_64x64_SP);// 放在 HDMI 上位置 
+
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite_16x16_SP);
     #if 1
-			x_pos=(lpcnt%4)*SP_H_SIZE;
-			y_pos=(lpcnt/4)*SP_V_SIZE;
+			x_pos=SP_H_SIZE*5+(lpcnt%5)*SP_H_SIZE;
+			y_pos=(lpcnt/5)*SP_V_SIZE;
 
 			//DBG_PRINT("x_pos = %d y_pos = %d\r\n",x_pos,y_pos);
     #else
 			x_pos=(lpcnt%MLX_LINE)*pos_x;
 			y_pos=(lpcnt/MLX_LINE)*pos_y;
     #endif
-			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Sprite_64x64_IMG0000_CellIdx); // 放在 LCD 上位置 
+			//set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Sprite_64x64_IMG0000_CellIdx); // 放在 HDMI 上位置 
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Sprite_16x16_IMG0000_CellIdx); // 放在 LCD 上位置 
 			userDefine_spNum++;
 
 		}
@@ -3052,18 +2923,18 @@ static void disp_task_entry(void const *parm)
 
         }
 
-		
-			
+
+
 	#endif
 
 
-			
-			
+
+
 			gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, h_size, h_size,
 			//(INT32U)_Text_BLUE_IMG0_CellData);	// Calculate Number array // TFT & HDMI need diff TEXT !!
 			//(INT32U)_Text_WHITE_IMG0_CellData);
 							(INT32U)display_buf);	 // from TH sensor
-			
+
 
 			nRet =  gplib_ppu_go_and_wait_done(ppu_register_set);
 			// 解決 free_frame_buffer_queue 未放回-start
@@ -3382,21 +3253,17 @@ static void prcess_task_entry(void const *parm)
 			//drv_l2_scaler_init();
 			//scale.input_format = pAviEncVidPara->sensor_output_format;
 
-		if ((pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0) 
-			|| (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_6))
+			if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0) 
 			{
-				if (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > NO_SIGNAL_FACTOR)
-				{
-					scale.input_format = C_SCALER_CTRL_IN_RGB565;	// gray out but No value
-				}
-			else
 				scale.input_format = C_SCALER_CTRL_IN_Y_ONLY; 	// gray value
 			}
-
-		else
+			else
 			{
-				scale.input_format = C_SCALER_CTRL_IN_RGB565;
+				scale.input_format = C_SCALER_CTRL_IN_ARGB8888;
 			}
+
+
+
 			scale.input_width = rowNumEnd_32;
 			scale.input_height = colNumEnd_24;
 			scale.input_visible_width = rowNumEnd_32;
@@ -3405,22 +3272,13 @@ static void prcess_task_entry(void const *parm)
 			scale.input_y_offset = 0;
 
 			//scale.input_y_addr = sensor_frame;
+			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
 
-
-		if ((pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != COLOR_SET_0) 
-			&& (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode != COLOR_SET_6) ) 
-			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorScaleUpFrame_addr ;
-			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
-		else
-			{
-
-			if (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > NO_SIGNAL_FACTOR)
-				scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
+			if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0) 
+			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr ;
 			else
-				scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr ;
-			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr ;
-
-			//DBG_PRINT("GrayScaleUpFrame_addr\r\n");
+			{
+				scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_RGB888_OutputFrame_addr;
 			}
 
 			scale.input_u_addr = 0;
@@ -3686,7 +3544,7 @@ void GPM4_CSI_DISP_Demo(void)
 	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d, set -%d- ms \r\n",nRet,
 		1000/pMLX_TH32x24_Para->MLX_TH32x24_sampleHz) ;
 
-	pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = COLOR_SET_6;
+	pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = COLOR_SET_1;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = GRAY_AMP_START;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE = GRAY_AMP_SCALE;
 	pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 1;

@@ -198,6 +198,8 @@
 	  INT32U  MLX_TH32x24_GrayOutputFrame_addr;
 	  INT32U  MLX_TH32x24_GrayScaleUpFrame_addr;
 	  INT32U  MLX_TH32x24_ColorScaleUpFrame_addr;
+
+	  INT32U  MLX_TH32x24_RGB888_OutputFrame_addr;
 	  
 	  INT8U  MLX_TH32x24_GrayOutputFactor;
 	  INT8U  MLX_TH32x24_GRAY_MAX_VAL;
@@ -223,10 +225,7 @@
 	  INT8U  MLX_TH32x24_GRAY_AMP_START;
 	  INT8S  MLX_TH32x24_GRAY_AMP_SCALE;
 
-  	  INT8U  MLX_TH32x24_LowPass_SET;
-
-	  INT32U MLX_TH32x24_SpriteCharacterNum_idx_addr;
-	  
+  	  INT8U  MLX_TH32x24_LowPass_SET;	  
   } MLX_TH32x24Para_t;
 
   typedef struct	paramsMLX90640_s

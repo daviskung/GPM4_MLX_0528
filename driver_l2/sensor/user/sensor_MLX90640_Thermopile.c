@@ -314,6 +314,20 @@ static INT32S MLX_TH32x24_mem_alloc(void)	//davis
 		pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr = buffer_addr;
 		DBG_PRINT("davis --> MLX_TH32x24_GrayOutputFrame_addr = 0x%x\r\n", pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr);
 
+		
+	//	1 pixel takes 32 bytes (ARGB 888 color out) => 32*24 pixel requires 32*24 *4
+			buffer_size = (pMLX_TH32x24_Para->MLX_TH32x24_width * pMLX_TH32x24_Para->MLX_TH32x24_height ) * 4;
+	
+			buffer_addr = (INT32U) gp_malloc_align(buffer_size , 32);
+			//buffer_addr = (INT32U) gp_malloc_align(buffer_size , 64);  // 64 ?
+			if(buffer_addr == 0) {
+				RETURN(STATUS_FAIL);
+			}
+			pMLX_TH32x24_Para->MLX_TH32x24_RGB888_OutputFrame_addr = buffer_addr;
+			DBG_PRINT("davis --> MLX_TH32x24_RGB888_OutputFrame_addr   = 0x%x\r\n",
+				pMLX_TH32x24_Para->MLX_TH32x24_RGB888_OutputFrame_addr);
+
+
 	nRet = STATUS_OK;
 Return:
 	return nRet;
