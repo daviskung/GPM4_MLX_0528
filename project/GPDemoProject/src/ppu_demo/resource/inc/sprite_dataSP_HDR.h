@@ -6,6 +6,10 @@ extern INT16U _sprite_dataSP_Palette1[];
 extern INT16U _Sprite_16x16_IMG0000_CellIdx[];
 extern SPRITE Sprite_16x16_SP[];
 
+extern INT16U _Sprite_64x64_IMG0000_CellIdx[];
+extern SPRITE Sprite_64x64_SP[];
+
+
 
 //Sprite Cell index extern variables declaration
 extern INT16U _a1_CellIdx[];

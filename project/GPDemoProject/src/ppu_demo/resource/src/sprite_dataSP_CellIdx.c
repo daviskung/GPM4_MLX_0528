@@ -14,6 +14,14 @@ const SPRITE ALIGN4 Sprite_16x16_SP[]={
  { 0, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, (const INT32U *)_Sprite_16x16_IMG0000_CellIdx }
 };
 
+const INT16U ALIGN4 _Sprite_64x64_IMG0000_CellIdx[]={
+	   1,	SP_ROTATE0,	   0,	SP_ZOOM0,	   0,	SP_PBANK1,	SPBLEND_DISABLE,	SP_DEPTH1,	SP_PALETTE5,	SP_VSIZE64,	SP_HSIZE64,	SPVFLIP_DISABLE,	SPHFLIP_DISABLE,	SP_COLOR256,	SP_MOSAIC0,	SPBLEND_LEVEL0,	0,	SpriteNoGroupID,	SPLarge_DISABLE,	SPInterpolation_DISABLE,
+	0xffff, 0xffff };
+const SPRITE ALIGN4 Sprite_64x64_SP[]={
+ { 0, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, (const INT32U *)_Sprite_64x64_IMG0000_CellIdx }
+};
+
+
 
 //=== This is for code configuration DON'T REMOVE or MODIFY it ===//
 #if (defined GPLIB_PPU_EN) && (GPLIB_PPU_EN == 1) //
