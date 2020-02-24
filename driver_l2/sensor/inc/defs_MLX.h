@@ -155,8 +155,9 @@
 	  INT8U   MLX_TH32x24_PPU_frame_ON; // 0: none , 1:keep sensor_frame ;
   
 	  // data read
-  
-	  INT32U  MLX_TH32x24_display_frame;
+
+	  INT32U  MLX_TH32x24_display_frame;		//待刪除
+	  INT32U  MLX_TH32x24_HighTMark_display_frame;
 	  INT32U  MLX_TH32x24_PPU_frame;
 	  INT32U  MLX_TH32x24_ScalerUp_status;		// 0: read E. offset
 	  INT16U  MLX_TH32x24_sampleCnt;	  // for MLX_TH32x24_start_timer_isr
@@ -196,10 +197,12 @@
 	  INT32U  MLX_TH32x24_ImgAvg_buf_addr[IMG_AVG_buf_len];   // MLX_TH32x24 avg image buffer addr
 	  
 	  INT32U  MLX_TH32x24_GrayOutputFrame_addr;
-	  INT32U  MLX_TH32x24_GrayScaleUpFrame_addr;
-	  INT32U  MLX_TH32x24_ColorScaleUpFrame_addr;
+	  INT32U  MLX_TH32x24_GrayScaleUpFrame_addr;	//待刪除
+	  INT32U  MLX_TH32x24_ColorScaleUpFrame_addr;	//待刪除
 
 	  INT32U  MLX_TH32x24_RGB888_OutputFrame_addr;
+	  INT32U  MLX_TH32x24_RGB888_HighTMark_OutputFrame_addr;
+	  INT32U  MLX_TH32x24_RGB888_HighTMarkScaleUp_OutputFrame_addr;
 	  
 	  INT8U  MLX_TH32x24_GrayOutputFactor;
 	  INT8U  MLX_TH32x24_GRAY_MAX_VAL;

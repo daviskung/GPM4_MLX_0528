@@ -153,7 +153,7 @@ static prcess_mem_t *prcess_mem_set;
   	{1,1,1}
   	};
 #define LowPassFiliter_ON	1
-#define NO_SIGNAL_FACTOR	4	// for LP filiter
+#define NO_SIGNAL_FACTOR	7	// for LP filiter
 
 
 #if(LowPassFiliter_ON == 1)
@@ -1419,12 +1419,12 @@ void FindMax_ColorAssign(void){
 
  	float	*pMLX_TH32x24_LowPassImgOutput_INT32S_buf0;
 
-	INT8U  *pMLX_TH32x24_Grayframe_INT8U_buf0,*pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0;
+	INT8U  *pMLX_TH32x24_Grayframe_INT8U_buf0;
 
-	INT32U  *pMLX_TH32x24_RGB888Colorframe_INT32U_buf0;
+	INT32U  *pMLX_TH32x24_RGB888Colorframe_INT32U_buf0,*pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0,
+			*pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0;
 
-	INT16U  *pMLX_TH32x24_Colorframe_INT16U_buf0,*pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0;
-
+	INT16U  *pMLX_TH32x24_Colorframe_INT16U_buf0;
 	INT16U	TminTable,TmaxTable;
 
 	float	TmaxOverZero,TminOverZero,TmaxUnderZero,TminUnderZero;
@@ -1455,6 +1455,7 @@ void FindMax_ColorAssign(void){
 	INT16S	 TmpMax,TmpMin;
 
 	INT16U	 TmpMin_number,TmpMax_number,TmpMinTable_number,TmpMaxTable_number;
+	//INT16U	 TmpMaxTable_Mark_number[5];
 
 	INT16U  *pMLX_TH32x24_TmpOutput_INT16U_buf0;
 
@@ -1471,14 +1472,16 @@ void FindMax_ColorAssign(void){
 	pMLX_TH32x24_RGB888Colorframe_INT32U_buf0=
 				(INT32U*)pMLX_TH32x24_Para->MLX_TH32x24_RGB888_OutputFrame_addr;
 
-	pMLX_TH32x24_GrayScaleUpframe_INT8U_buf0 =
-					(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayScaleUpFrame_addr;
+	pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0=
+				(INT32U*)pMLX_TH32x24_Para->MLX_TH32x24_RGB888_HighTMarkScaleUp_OutputFrame_addr;
+
+
+	pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0=
+					(INT32U*)pMLX_TH32x24_Para->MLX_TH32x24_RGB888_HighTMark_OutputFrame_addr;
+
 
 	pMLX_TH32x24_Colorframe_INT16U_buf0 =
 				(INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr;
-
-	pMLX_TH32x24_ColorScaleUpframe_INT16U_buf0 =
-					(INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_ColorScaleUpFrame_addr;
 
 
 	Tpoint3 = pMLX_TH32x24_Para->MLX_TH32x24_GRAY_Tpoint3;
@@ -1665,9 +1668,9 @@ void FindMax_ColorAssign(void){
 	#endif
 
 	//gp_memset((INT8S *)pMLX_TH32x24_RGB888Colorframe_INT32U_buf0,
-	//	0xffffffff,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 白色
-	
-	//0xffff0099,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 白色
+	//	0xffffffff,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 白色 
+
+	//0xffff0099,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 白色 
 
 
 	for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
@@ -1736,7 +1739,9 @@ void FindMax_ColorAssign(void){
 				 tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 				 TmpMinTable_number=tmp_i2; //(左右 對調 後 正確位置) 
 				}
-			if(TmpOutObject > (TmpMax+10)){
+			//if(TmpOutObject > (TmpMax+10)){	// over 1 C
+			
+			if(TmpOutObject > TmpMax){
 				TmpMax = TmpOutObject;
 				 tmp_i = cellNum/rowNumEnd_32;
 				 tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
@@ -1815,9 +1820,9 @@ void FindMax_ColorAssign(void){
 			*(pMLX_TH32x24_Grayframe_INT8U_buf0+ tmp_i2)
 			= GrayTmpValue;
 
-			//RGB888TmpValue =(INT32U)GrayTmpValue<<24 | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0x000000ff; // 籃底色
-			// FF’ (255) 表示 alpha 係數。‘00’ 表示紅色的數量，‘FF’ 表示綠色的數量 ‘00’ 表示藍色的數量.
-			RGB888TmpValue =(INT32U)GrayTmpValue | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0xff000000;	// 灰階
+			//RGB888TmpValue =(INT32U)GrayTmpValue<<24 | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0x000000ff; // 籃底色 
+			// FF’ (255) 表示 alpha 係數。‘00’ 表示紅色的數量，‘FF’ 表示綠色的數量 ‘00’ 表示藍色的數量. 
+			RGB888TmpValue =(INT32U)GrayTmpValue | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0xff000000;	// 灰階 
 
 			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ tmp_i2)
 			= RGB888TmpValue;
@@ -1833,35 +1838,104 @@ void FindMax_ColorAssign(void){
 			//DBG_PRINT("TmpMin=%d [%d] , TmpMax=%d [%d] \r\n",TmpMin,TmpMinTable_number,TmpMax,TmpMaxTable_number);
 		}
 	*/
-	
-	
-	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1){
+
+
+	if ((pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)
+		&& (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))
+	{
 		pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
 		pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
 		//DBG_PRINT("TmpMin=%d [%d] , TmpMax=%d [%d] \r\n",TmpMin,TmpMinTable_number,TmpMax,TmpMaxTable_number);
 
-		
-		if(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR)
-			{
+		gp_memset((INT8S *)pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0,
+		0x00,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 透明度0 ,RGB 白色 
+		//0xffff0000,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // ARGB 紅色 
 
-		*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number)
+		/* HighTMark is Cross Red
+		*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number)
 			= 0xffff0000;
 		if(((TmpMaxTable_number+1) < MLX_Pixel) && ((TmpMaxTable_number+1) %rowNumEnd_32 != 0))
-			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number+1)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+1)
 				= 0xffff0000;
-		
 		if(((TmpMaxTable_number-1) >0) && ((TmpMaxTable_number-1) %rowNumEnd_32 != 31))
-			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number-1)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-1)
 				= 0xffff0000;
-		
 		if((TmpMaxTable_number+rowNumEnd_32) < MLX_Pixel)
-			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32)
+				= 0xffff0000;
+		if((TmpMaxTable_number-rowNumEnd_32) > 0)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32)
+			= 0xffff0000;
+		*/
+
+		// HighTMark is Squre Red
+		//*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number)
+		//	= 0xffff0000;
+		if(((TmpMaxTable_number+1) < MLX_Pixel) && ((TmpMaxTable_number+1) %rowNumEnd_32 != 0))
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+1)
+				= 0xffff0000;
+		if(((TmpMaxTable_number-1) >0) && ((TmpMaxTable_number-1) %rowNumEnd_32 != 31))
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-1)
 				= 0xffff0000;
 		
 		if((TmpMaxTable_number-rowNumEnd_32) > 0)
-		*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32)
 			= 0xffff0000;
-			}
+		if(((TmpMaxTable_number-rowNumEnd_32)+1) > 0)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32+1)
+			= 0xffff0000;
+		if(((TmpMaxTable_number-rowNumEnd_32)-1) > 0)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32-1)
+			= 0xffff0000;
+		
+		if((TmpMaxTable_number+rowNumEnd_32) < MLX_Pixel)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32)
+				= 0xffff0000;
+		if(((TmpMaxTable_number+rowNumEnd_32)+1) < MLX_Pixel)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32+1)
+				= 0xffff0000;
+		if(((TmpMaxTable_number+rowNumEnd_32)-1) < MLX_Pixel)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32-1)
+				= 0xffff0000;
+		
+		//
+		// scale function for HighTMark (x 3) / ScaleUp_3
+		//
+		tmp_i2 = 0;
+		tmp_start =0;
+		for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
+				RGB888TmpValue = *(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0 + cellNum);
+				tmp_i2 = cellNum % 32;
+
+			if((( cellNum % 32) == 0 ) && ( cellNum != 0 ))
+				{
+					tmp_start = tmp_i;
+					//DBG_PRINT("tmp_start = %d,tmp_i2 = %d , cellNum = %d  \r\n",tmp_start,tmp_i2,cellNum);
+				}
+
+			for (tmp_i = tmp_start + tmp_i2 *ScaleUp_3 ; tmp_i < tmp_start + (tmp_i2 *ScaleUp_3)+ ScaleUp_3; ++tmp_i)
+				{
+				*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
+						=RGB888TmpValue;
+				}
+			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
+				{
+
+				*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
+						=RGB888TmpValue;
+				}
+			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32*2)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32*2)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
+				{
+
+				*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
+						=RGB888TmpValue;
+				}
+
+		}
+
+
+
+
 		}
 
 
@@ -2166,6 +2240,20 @@ static void csi_task_entry(void const *parm)
 		DBG_PRINT("PscalerBuffer:0x%X ->width = %d / high = %d\r\n",csi_buf,device_h_size,device_v_size);
 	}
     prcess_state_post(PRCESS_STATE_OK);
+
+	DBG_PRINT("PscalerBufferSize for HighTMark = %d\r\n",PscalerBufferSize);
+	PscalerBuffer = (INT32U) gp_malloc_align(PscalerBufferSize , 32);
+	if(PscalerBuffer == 0)
+	{
+			DBG_PRINT("MLX_TH32x24_HighTMark_display_frame fail\r\n");
+        while(1);
+	}
+	pMLX_TH32x24_Para->MLX_TH32x24_HighTMark_display_frame = PscalerBuffer;
+	DBG_PRINT("davis --> MLX_TH32x24_HighTMark_display_frame addr = 0x%x\r\n",
+		pMLX_TH32x24_Para->MLX_TH32x24_HighTMark_display_frame);
+
+
+
 
 	MXL_handle.devNumber = I2C_1;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
@@ -2968,8 +3056,16 @@ static void disp_task_entry(void const *parm)
 
 	#endif
 
+		if(( pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1 ) &&
+			(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))	// no signal ONE color
+			{
+			gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, h_size, v_size,
+			//	(INT32U)_Text001_IMG0000_CellData); // Calculate Number array
+			//(INT32U)_Text_BLUE_IMG0_CellData);
+			(INT32U)pMLX_TH32x24_Para->MLX_TH32x24_HighTMark_display_frame);
 
-
+			pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 0;
+			}
 
 			gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, h_size, h_size,
 			//(INT32U)_Text_BLUE_IMG0_CellData);	// Calculate Number array // TFT & HDMI need diff TEXT !!
@@ -3266,7 +3362,7 @@ static void prcess_task_entry(void const *parm)
 		*/
 			DBG_PRINT(" CalculateTo [t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
 
-			pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 0;
+				//pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 0;
 
 		}
 		//else DBG_PRINT("NO  CalculateTo -t=%d- \r\n",xTaskGetTickCount()-TimeCnt1);
@@ -3365,6 +3461,88 @@ static void prcess_task_entry(void const *parm)
 			while(1);
 			}
 
+
+		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)
+		{
+
+		//DBG_PRINT(" HighTMark-S [t=%d] ",xTaskGetTickCount());
+		//
+		// MLX_TH32x24 HighTMark display scaler
+		//
+
+
+		gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
+
+
+			scale.input_format = C_SCALER_CTRL_IN_ARGB8888;
+
+			scale.input_width = rowNumEnd_32*ScaleUp_3;
+			scale.input_height = colNumEnd_24*ScaleUp_3;
+			scale.input_visible_width = rowNumEnd_32*ScaleUp_3;
+			scale.input_visible_height = colNumEnd_24*ScaleUp_3;
+			scale.input_x_offset = 0;
+			scale.input_y_offset = 0;
+
+			//scale.input_y_addr = sensor_frame;
+			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
+
+			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_RGB888_OutputFrame_addr;
+			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_RGB888_HighTMarkScaleUp_OutputFrame_addr;
+
+
+			scale.input_u_addr = 0;
+			scale.input_v_addr = 0;
+			#if 1
+			scale.input_b_y_addr =0;
+			scale.input_b_u_addr = 0;
+			scale.input_b_v_addr = 0;
+			#endif
+
+			scale.output_format = C_SCALER_CTRL_OUT_YUYV;
+			scale.output_width = device_h_size;
+			scale.output_height = device_v_size;
+			scale.output_buf_width = device_h_size;
+			scale.output_buf_height = device_v_size;
+			scale.output_x_offset = 0;
+
+			//scale.output_y_addr = scaler_frame;
+			
+			scale.output_y_addr = pMLX_TH32x24_Para->MLX_TH32x24_HighTMark_display_frame;
+			//scale.output_y_addr = PscalerBuffer;
+			scale.output_u_addr = 0;
+			scale.output_v_addr = 0;
+
+
+			scale.fifo_mode = C_SCALER_CTRL_FIFO_DISABLE;
+			//scale.scale_mode = C_SCALER_FULL_SCREEN;
+			scale.scale_mode = C_SCALER_BY_RATIO;
+			scale.digizoom_m = 10;
+			scale.digizoom_n = 10;
+			//#endif
+			memset((void *)&para, 0x00, sizeof(para));
+
+			//para.gamma_en = 1;
+			//para.color_matrix_en = 1;
+			para.boundary_color = 0x008080;
+			//para.yuv_type = C_SCALER_CTRL_TYPE_YUV;
+
+    		nRet = drv_l2_scaler_trigger(SCALER_0, 1, &scale, &para);
+			if(nRet == C_SCALER_STATUS_DONE || nRet == C_SCALER_STATUS_STOP) {
+				drv_l2_scaler_stop(SCALER_0);
+			}
+			else {
+				DBG_PRINT("-HighTMark- Scale1 Fail\r\n");
+			while(1);
+			}
+
+
+
+		//DBG_PRINT(" HighTMark-F [t=%d] \r\n",xTaskGetTickCount());
+
+		//pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 0;
+
+
+		}
 
 
 		}
@@ -3573,7 +3751,7 @@ void GPM4_CSI_DISP_Demo(void)
 	// start timer_B
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleCnt = 0;
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt = 0;
-	pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 1;
+	pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 0;
 	//pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
 	//pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 500; // 5.7~ 732 (100ms),20(50ms),100(10 ms),200(5ms),500(2 ms)
