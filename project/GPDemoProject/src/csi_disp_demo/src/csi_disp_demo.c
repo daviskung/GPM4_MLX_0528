@@ -1664,6 +1664,12 @@ void FindMax_ColorAssign(void){
 		}
 	#endif
 
+	//gp_memset((INT8S *)pMLX_TH32x24_RGB888Colorframe_INT32U_buf0,
+	//	0xffffffff,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 白色
+	
+	//0xffff0099,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 白色
+
+
 	for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
 			 ImgObject = *(pMLX_TH32x24_ImgOutput_INT32S_buf0 + cellNum);
 
@@ -1730,7 +1736,7 @@ void FindMax_ColorAssign(void){
 				 tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 				 TmpMinTable_number=tmp_i2; //(左右 對調 後 正確位置) 
 				}
-			if(TmpOutObject > TmpMax){
+			if(TmpOutObject > (TmpMax+10)){
 				TmpMax = TmpOutObject;
 				 tmp_i = cellNum/rowNumEnd_32;
 				 tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
@@ -1809,7 +1815,9 @@ void FindMax_ColorAssign(void){
 			*(pMLX_TH32x24_Grayframe_INT8U_buf0+ tmp_i2)
 			= GrayTmpValue;
 
-			RGB888TmpValue =(INT32U)GrayTmpValue<<24 | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0x000000ff;
+			//RGB888TmpValue =(INT32U)GrayTmpValue<<24 | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0x000000ff; // 籃底色
+			// FF’ (255) 表示 alpha 係數。‘00’ 表示紅色的數量，‘FF’ 表示綠色的數量 ‘00’ 表示藍色的數量.
+			RGB888TmpValue =(INT32U)GrayTmpValue | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0xff000000;	// 灰階
 
 			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ tmp_i2)
 			= RGB888TmpValue;
@@ -1818,12 +1826,43 @@ void FindMax_ColorAssign(void){
 	}
 
 
+	/*
+	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1){
+			pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
+			pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
+			//DBG_PRINT("TmpMin=%d [%d] , TmpMax=%d [%d] \r\n",TmpMin,TmpMinTable_number,TmpMax,TmpMaxTable_number);
+		}
+	*/
+	
+	
 	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1){
 		pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
 		pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
 		//DBG_PRINT("TmpMin=%d [%d] , TmpMax=%d [%d] \r\n",TmpMin,TmpMinTable_number,TmpMax,TmpMaxTable_number);
-		}
 
+		
+		if(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR)
+			{
+
+		*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number)
+			= 0xffff0000;
+		if(((TmpMaxTable_number+1) < MLX_Pixel) && ((TmpMaxTable_number+1) %rowNumEnd_32 != 0))
+			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number+1)
+				= 0xffff0000;
+		
+		if(((TmpMaxTable_number-1) >0) && ((TmpMaxTable_number-1) %rowNumEnd_32 != 31))
+			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number-1)
+				= 0xffff0000;
+		
+		if((TmpMaxTable_number+rowNumEnd_32) < MLX_Pixel)
+			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32)
+				= 0xffff0000;
+		
+		if((TmpMaxTable_number-rowNumEnd_32) > 0)
+		*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32)
+			= 0xffff0000;
+			}
+		}
 
 
 	//
@@ -2724,7 +2763,7 @@ static void disp_task_entry(void const *parm)
 		gplib_ppu_sprite_segment_set(ppu_register_set, 0);										// sprite cell data
 		gplib_ppu_sprite_rgba_mode_set(ppu_register_set, 1);
 
-	#if 0
+	#if 1
 		//text 2 2D UI
 		gplib_ppu_text_init(ppu_register_set, C_PPU_TEXT2);
 		buffer_ptr = (INT32U)gp_malloc_align(4096+64,4);
@@ -2745,8 +2784,10 @@ static void disp_task_entry(void const *parm)
 
 		gplib_ppu_text_segment_set(ppu_register_set, C_PPU_TEXT2, 0);	 // Set TEXT segment address
 		gplib_ppu_text_blend_set(ppu_register_set, C_PPU_TEXT2, 1, 1, 32);	// Set Blend
-		//gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, h_size, v_size,
+		gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, h_size, v_size,
 		//	(INT32U)_Text001_IMG0000_CellData); // Calculate Number array
+		//(INT32U)_Text_BLUE_IMG0_CellData);
+		(INT32U)_Text_WHITE_IMG0_CellData);
 
 
 
@@ -3253,7 +3294,7 @@ static void prcess_task_entry(void const *parm)
 			//drv_l2_scaler_init();
 			//scale.input_format = pAviEncVidPara->sensor_output_format;
 
-			if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0) 
+			if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0)
 			{
 				scale.input_format = C_SCALER_CTRL_IN_Y_ONLY; 	// gray value
 			}
@@ -3274,7 +3315,7 @@ static void prcess_task_entry(void const *parm)
 			//scale.input_y_addr = sensor_frame;
 			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
 
-			if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0) 
+			if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0)
 			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr ;
 			else
 			{
