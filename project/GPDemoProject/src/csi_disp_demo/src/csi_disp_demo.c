@@ -101,6 +101,12 @@ static prcess_mem_t *prcess_mem_set;
 #define SENSOR_AREA_WIDTH	32
 #define SENSOR_AREA_HIGH	24
 
+#define TMPZONE1_HOR_AREA_limit		8
+#define TMPZONE1_VER_AREA_limit		4
+
+
+
+
 #define	DEBUG_IO_OUT		1
 #define TH_STATUS_A15_PAD     	IO_A15
 #define TH_DISP_MODE_A14_PAD    IO_A14
@@ -976,6 +982,10 @@ static void mazeTest_Preview_PScaler(void)
 
 		if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1)	// 開始計算溫度 
 			{
+			// ZONE 1 only
+			if (((pixelNumber/32) >= TMPZONE1_VER_AREA_limit)&&((pixelNumber/32)<(SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit))
+			 &&((pixelNumber%32) >= TMPZONE1_HOR_AREA_limit)&&((pixelNumber%32)<(SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit)))
+				{
 			 Sx = pow((double)alphaCompensated, (double)3) * (irData + alphaCompensated * taTr);
 			 Sx = sqrt(sqrt(Sx)) * pMLX90640_Para->ksTo[1];
 
@@ -1001,6 +1011,7 @@ static void mazeTest_Preview_PScaler(void)
 			 To = sqrt(sqrt(irData / (alphaCompensated * alphaCorrR[range] * (1 + pMLX90640_Para->ksTo[range] * (To - pMLX90640_Para->ct[range]))) + taTr)) - 273.15;
 
 			 pMLX_TH32x24_Para->result[pixelNumber] =(INT16S)(To*10);
+			 	}
 			}
 		 }
 	 }
@@ -1410,6 +1421,55 @@ static void mazeTest_Preview_PScaler(void)
  }
 
 #endif
+
+/*
+void ScaleUpForH_Mark(void)
+
+{
+	//
+			// scale function for HighTMark (x 3) / ScaleUp_3
+			//
+			tmp_i2 = 0;
+			tmp_start =0;
+			RGB888TmpValue = 0xffff0000;
+			for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
+					//RGB888TmpValue = *(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0 + cellNum);
+					tmp_i2 = cellNum % 32;
+	
+				if((( cellNum % 32) == 0 ) && ( cellNum != 0 ))
+					{
+						tmp_start = tmp_i;
+						//DBG_PRINT("tmp_start = %d,tmp_i2 = %d , cellNum = %d	\r\n",tmp_start,tmp_i2,cellNum);
+					}
+	
+				for (tmp_i = tmp_start + tmp_i2 *ScaleUp_3 ; tmp_i < tmp_start + (tmp_i2 *ScaleUp_3)+ ScaleUp_3; ++tmp_i)
+					{
+					*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
+							=RGB888TmpValue;
+					}
+				for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
+					{
+	
+					*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
+							=RGB888TmpValue;
+					}
+				for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32*2)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32*2)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
+					{
+	
+					*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
+							=RGB888TmpValue;
+					}
+	
+			}
+
+	
+
+
+}
+
+*/
+
+
 
 void FindMax_ColorAssign(void){
 
@@ -1868,6 +1928,30 @@ void FindMax_ColorAssign(void){
 			= 0xffff0000;
 		*/
 
+		
+		for (tmp_i2 = 103; tmp_i2 < 121; ++tmp_i2)	// upper line
+			{
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ tmp_i2)
+			= 0x20008f00;
+			}
+		for (tmp_i2 = 647; tmp_i2 < 665; ++tmp_i2)	// lower line
+			{
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ tmp_i2)
+			= 0x20008f00;
+			}
+		for (tmp_i2 = 135; tmp_i2 < 616; tmp_i2=tmp_i2+SENSOR_AREA_WIDTH)	// left line
+			{
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ tmp_i2)
+			= 0x20008f00;
+			}
+		for (tmp_i2 = 152; tmp_i2 < 633; tmp_i2=tmp_i2+SENSOR_AREA_WIDTH)	// right line
+			{
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ tmp_i2)
+			= 0x20008f00;
+			}
+
+			
+
 		// HighTMark is Squre Red
 		//*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number)
 		//	= 0xffff0000;
@@ -1898,6 +1982,7 @@ void FindMax_ColorAssign(void){
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32-1)
 				= 0xffff0000;
 		
+		//ScaleUpForH_Mark();
 		//
 		// scale function for HighTMark (x 3) / ScaleUp_3
 		//
@@ -2073,7 +2158,7 @@ void FindMax_ColorAssign(void){
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt++;
 
 
-	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt % 125 == 0)
+	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt == 75)
 	//if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt == 1725 )
 		{
 
