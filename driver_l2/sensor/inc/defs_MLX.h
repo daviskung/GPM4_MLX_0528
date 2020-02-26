@@ -53,6 +53,9 @@
 //#define ELAMOUNT 256
 //#define MAXNROFDEFECTS	5
 
+#define MLX_ZONE1_1stPixel 136				
+
+
 #define rowNumEnd_32 32
 #define colNumEnd_24 24
 #define ScaleUp_10	 10
@@ -219,7 +222,8 @@
 	  INT16U  MLX_TH32x24_Time_cnt;	
 
 	  
-	  INT8U  MLX_TH32x24_Time_Flag; 
+	  INT8U  MLX_TH32x24_calc_Time_Flag; 
+	  INT8U  MLX_TH32x24_disp_Time_Flag;
 	  INT16S MLX_TH32x24_TmpMin;
 	  INT16S MLX_TH32x24_TmpMax;
 
