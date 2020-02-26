@@ -983,8 +983,8 @@ static void mazeTest_Preview_PScaler(void)
 		if (pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag == 1)	// 開始計算溫度 
 			{
 			// ZONE 1 only
-			if (((pixelNumber/32) >= TMPZONE1_VER_AREA_limit)&&((pixelNumber/32)<(SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit))
-			 &&((pixelNumber%32) >= TMPZONE1_HOR_AREA_limit)&&((pixelNumber%32)<(SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit)))
+			if (((pixelNumber/rowNumEnd_32) >= TMPZONE1_VER_AREA_limit)&&((pixelNumber/rowNumEnd_32)<(SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit))
+			 &&((pixelNumber%rowNumEnd_32) >= TMPZONE1_HOR_AREA_limit)&&((pixelNumber%rowNumEnd_32)<(SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit)))
 				{
 			 Sx = pow((double)alphaCompensated, (double)3) * (irData + alphaCompensated * taTr);
 			 Sx = sqrt(sqrt(Sx)) * pMLX90640_Para->ksTo[1];
@@ -1515,7 +1515,7 @@ void FindMax_ColorAssign(void){
 
 
 	INT16S	 TmpOutObject;
-	INT16S	 TmpMax,TmpMin;
+	INT16S	 TmpMax,TmpMin,RedMarkTmpMax;
 
 	INT16U	 TmpMin_number,TmpMax_number,TmpMinTable_number,TmpMaxTable_number;
 	//INT16U	 TmpMaxTable_Mark_number[5];
@@ -1738,6 +1738,7 @@ void FindMax_ColorAssign(void){
 	if (pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag == 1){
 			TmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
 			TmpMin = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
+			RedMarkTmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
 			
 			//DBG_PRINT("M=%d m=%d\r\n ",TmpMax,TmpMin);
 			}
@@ -1803,13 +1804,16 @@ void FindMax_ColorAssign(void){
 				 tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 				 TmpMinTable_number=tmp_i2; //(左右 對調 後 正確位置) 
 				}
-			if(TmpOutObject > (TmpMax+10)){	// over 1 C
+			if(TmpOutObject > (RedMarkTmpMax+10)){	// over 1 C for Red Mark
 			//if(TmpOutObject > TmpMax){
-				TmpMax = TmpOutObject;
+				RedMarkTmpMax = TmpOutObject;
 				 tmp_i = cellNum/rowNumEnd_32;
 				 tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 				 TmpMaxTable_number=tmp_i2; //(左右 對調 後 正確位置) 
 
+				}
+			if(TmpOutObject > TmpMax){	// for display
+				TmpMax = TmpOutObject;
 				}
 			}
 
@@ -1912,6 +1916,7 @@ void FindMax_ColorAssign(void){
 				
 		pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
 		pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
+		pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax=RedMarkTmpMax;
 		
 		//DBG_PRINT("M=%d m=%d (f)\r\n ",TmpMax,TmpMin);
 		//DBG_PRINT("TmpMin=%d [%d] , TmpMax=%d [%d] \r\n",TmpMin,TmpMinTable_number,TmpMax,TmpMaxTable_number);
@@ -1962,32 +1967,38 @@ void FindMax_ColorAssign(void){
 			
 
 		// HighTMark is Squre Red
+		// ZONE 1 only		
 		//*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number)
 		//	= 0xffff0000;
-		if(((TmpMaxTable_number+1) < MLX_Pixel) && ((TmpMaxTable_number+1) %rowNumEnd_32 != 0))
+		
+		if((TmpMaxTable_number+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit) ) // to right < 24
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+1)
 				= 0xffff0000;
-		if(((TmpMaxTable_number-1) >0) && ((TmpMaxTable_number-1) %rowNumEnd_32 != 31))
+		if((TmpMaxTable_number-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit ) // to left >= 8
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-1)
 				= 0xffff0000;
 		
-		if((TmpMaxTable_number-rowNumEnd_32) > 0)
+		if((TmpMaxTable_number-rowNumEnd_32)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32)
 			= 0xffff0000;
-		if(((TmpMaxTable_number-rowNumEnd_32)+1) > 0)
+		if( ((TmpMaxTable_number-rowNumEnd_32+1)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
+			&& ((TmpMaxTable_number-rowNumEnd_32+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit)) ) // to right < 24
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32+1)
 			= 0xffff0000;
-		if(((TmpMaxTable_number-rowNumEnd_32)-1) > 0)
+		if(((TmpMaxTable_number-rowNumEnd_32-1)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
+			&& ((TmpMaxTable_number-rowNumEnd_32-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit)) // to left >= 8
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32-1)
 			= 0xffff0000;
 		
-		if((TmpMaxTable_number+rowNumEnd_32) < MLX_Pixel)
+		if((TmpMaxTable_number+rowNumEnd_32)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit) ) // to lower <=20
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32)
 				= 0xffff0000;
-		if(((TmpMaxTable_number+rowNumEnd_32)+1) < MLX_Pixel)
+		if(((TmpMaxTable_number+rowNumEnd_32+1)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit)) // to lower <=20
+			&& ((TmpMaxTable_number+rowNumEnd_32+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit) )) // to right < 24
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32+1)
 				= 0xffff0000;
-		if(((TmpMaxTable_number+rowNumEnd_32)-1) < MLX_Pixel)
+		if(((TmpMaxTable_number+rowNumEnd_32-1)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit)) // to lower <=20
+			&& ((TmpMaxTable_number+rowNumEnd_32-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit)) // to left >= 8
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32-1)
 				= 0xffff0000;
 		
@@ -3059,9 +3070,14 @@ static void disp_task_entry(void const *parm)
 
 					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMax,display_buf,
 						device_h_size,288,0,6);
+					
+					
 
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode,display_buf,0,
 						device_h_size,8,0,8);
+					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax,display_buf,0,
+						device_h_size,50,0,6);
+						
 					if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0 )
 					{
 						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START,display_buf,0,
