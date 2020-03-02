@@ -9,6 +9,49 @@ extern SPRITE Sprite_16x16_SP[];
 extern INT16U _Sprite_64x64_IMG0000_CellIdx[];
 extern SPRITE Sprite_64x64_SP[];
 
+/*
+extern const INT16U _Img0001_NO2_CellIdx[];
+extern const SPRITE Sprite001_NO2_SP[];
+*/
+
+ /*
+//Sprite Cell index extern variables declaration
+extern const INT16U _Img0001_NO1_CellIdx[];
+extern const SPRITE Sprite001_NO1_SP[];
+extern const SPRITE* Sprites_NO1_Pool[];
+
+//Sprite Cell data extern variables declaration
+extern const INT16U _SPRITE_sp_number1_set_CellData[];
+*/
+
+/*
+//Sprite Cell index extern variables declaration
+extern const INT16U _Img0001_NEW1_CellIdx[];
+extern const SPRITE Sprite001_NEW1_SP[];
+extern const SPRITE* SpritesPool[];
+
+//Sprite Cell data extern variables declaration
+extern const INT16U _SPRITE_sp_number1_RGB_CellData[];
+*/
+
+//Sprite Cell index extern variables declaration
+extern const INT16U _Img0001_N1_CellIdx[];
+extern const SPRITE Sprite001_N1_SP[];
+//extern const INT16U _Img0001_CellIdx[];
+//extern const SPRITE Sprite002_SP[];
+//extern const INT16U _Img0001_CellIdx[];
+//extern const SPRITE Sprite003_SP[];
+//extern const INT16U _Img0001_CellIdx[];
+//extern const SPRITE Sprite004_SP[];
+//extern const INT16U _Img0001_CellIdx[];
+//extern const SPRITE Sprite005_SP[];
+//extern const SPRITE* SpritesPool[];
+
+//Sprite Cell data extern variables declaration
+extern const INT16U _SPRITE_Number0_9_V0_CellData[];
+extern const INT16U _SPRITE_Number0_9pv1_CellData[];
+
+
 
 
 //Sprite Cell index extern variables declaration
@@ -55,3 +98,8 @@ extern SPRITE Sprite0010_SP[];
 
 //Sprite Cell data extern variables declaration
 extern INT16U _Sprite_CellData[];
+/*
+extern const INT16U _SPRITE_NO2_sprite0225_CellData[];
+extern const INT16U _SPRITE_text_NO3a_spri_CellData[];
+*/
+

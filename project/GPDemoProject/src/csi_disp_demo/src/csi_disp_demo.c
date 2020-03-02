@@ -30,6 +30,8 @@
 #include "SPRITE_object_HDR.h"
 
 #include "sprite_dataSP_HDR.h"
+//#include "SPRITE_Number0_9_HDR.h" //  自己產生 先不用
+
 #include "TEXT_Platform_verification_1_HDR.h"
 
 
@@ -126,6 +128,10 @@ static prcess_mem_t *prcess_mem_set;
 
 #define COLOR_SET_MAX		COLOR_SET_1
 
+#define ALTERTmpSet_MAX		500
+#define ALTERTmpSet_MIN		150
+
+
 #define GRAY_AMP_START	20
 #define GRAY_AMP_SCALE	2
 
@@ -135,8 +141,8 @@ static prcess_mem_t *prcess_mem_set;
 #define ENABLE_PPU_run	1
 
 
-#define SP_H_SIZE                           16//64//16 //8
-#define SP_V_SIZE                           16//64//16 //8
+#define SP_H_SIZE                           64//64//16 //8
+#define SP_V_SIZE                           64//64//16 //8
 #define SP_SIZE_CH                          4
 #define SP_CHR_SIZE                         (SP_H_SIZE*SP_V_SIZE*SP_SIZE_CH)
 #define SP_MAX_A_LEVEL                      30		// 256 sprite 可用 
@@ -1517,7 +1523,7 @@ void FindMax_ColorAssign(void){
 	INT16S	 TmpOutObject;
 	INT16S	 TmpMax,TmpMin,RedMarkTmpMax;
 
-	INT16U	 TmpMin_number,TmpMax_number,TmpMinTable_number,TmpMaxTable_number;
+	INT16U	 TmpMin_number,TmpMax_number,TmpMinTable_number,TmpMax_Mark_Table_number,TmpMaxTable_number;
 	//INT16U	 TmpMaxTable_Mark_number[5];
 
 	INT16U  *pMLX_TH32x24_TmpOutput_INT16U_buf0;
@@ -1735,6 +1741,10 @@ void FindMax_ColorAssign(void){
 
 	//0xffff0099,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 白色 
 
+	TmpMax = 0;
+	TmpMin = 0;
+	RedMarkTmpMax = 0;
+
 	if (pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag == 1){
 			TmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
 			TmpMin = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
@@ -1809,11 +1819,14 @@ void FindMax_ColorAssign(void){
 				RedMarkTmpMax = TmpOutObject;
 				 tmp_i = cellNum/rowNumEnd_32;
 				 tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
-				 TmpMaxTable_number=tmp_i2; //(左右 對調 後 正確位置) 
+				 TmpMax_Mark_Table_number=tmp_i2; //(左右 對調 後 正確位置) 
 
 				}
 			if(TmpOutObject > TmpMax){	// for display
 				TmpMax = TmpOutObject;
+				tmp_i = cellNum/rowNumEnd_32;
+				tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
+				TmpMaxTable_number=tmp_i2; //(左右 對調 後 正確位置) 
 				}
 			}
 
@@ -1913,12 +1926,15 @@ void FindMax_ColorAssign(void){
 		pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag = 0;	// 
 		pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag = 1;
 		
-				
-		pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
-		pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
-		pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax=RedMarkTmpMax;
+		if((TmpMin != 0) && (TmpMax != 0))
+			{
+			pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
+			pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
+			pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax=RedMarkTmpMax;
+			}
 		
-		//DBG_PRINT("M=%d m=%d (f)\r\n ",TmpMax,TmpMin);
+		
+		//DBG_PRINT("M_=%d \r\n ",TmpMaxTable_number);
 		//DBG_PRINT("TmpMin=%d [%d] , TmpMax=%d [%d] \r\n",TmpMin,TmpMinTable_number,TmpMax,TmpMaxTable_number);
 
 		gp_memset((INT8S *)pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0,
@@ -1926,19 +1942,19 @@ void FindMax_ColorAssign(void){
 		//0xffff0000,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // ARGB 紅色 
 
 		/* HighTMark is Cross Red
-		*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number)
+		*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number)
 			= 0xffff0000;
-		if(((TmpMaxTable_number+1) < MLX_Pixel) && ((TmpMaxTable_number+1) %rowNumEnd_32 != 0))
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+1)
+		if(((TmpMax_Mark_Table_number+1) < MLX_Pixel) && ((TmpMax_Mark_Table_number+1) %rowNumEnd_32 != 0))
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+1)
 				= 0xffff0000;
-		if(((TmpMaxTable_number-1) >0) && ((TmpMaxTable_number-1) %rowNumEnd_32 != 31))
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-1)
+		if(((TmpMax_Mark_Table_number-1) >0) && ((TmpMax_Mark_Table_number-1) %rowNumEnd_32 != 31))
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-1)
 				= 0xffff0000;
-		if((TmpMaxTable_number+rowNumEnd_32) < MLX_Pixel)
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32)
+		if((TmpMax_Mark_Table_number+rowNumEnd_32) < MLX_Pixel)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+rowNumEnd_32)
 				= 0xffff0000;
-		if((TmpMaxTable_number-rowNumEnd_32) > 0)
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32)
+		if((TmpMax_Mark_Table_number-rowNumEnd_32) > 0)
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-rowNumEnd_32)
 			= 0xffff0000;
 		*/
 
@@ -1968,38 +1984,38 @@ void FindMax_ColorAssign(void){
 
 		// HighTMark is Squre Red
 		// ZONE 1 only		
-		//*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number)
+		//*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number)
 		//	= 0xffff0000;
 		
-		if((TmpMaxTable_number+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit) ) // to right < 24
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+1)
+		if((TmpMax_Mark_Table_number+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit) ) // to right < 24
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+1)
 				= 0xffff0000;
-		if((TmpMaxTable_number-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit ) // to left >= 8
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-1)
+		if((TmpMax_Mark_Table_number-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit ) // to left >= 8
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-1)
 				= 0xffff0000;
 		
-		if((TmpMaxTable_number-rowNumEnd_32)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32)
+		if((TmpMax_Mark_Table_number-rowNumEnd_32)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-rowNumEnd_32)
 			= 0xffff0000;
-		if( ((TmpMaxTable_number-rowNumEnd_32+1)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
-			&& ((TmpMaxTable_number-rowNumEnd_32+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit)) ) // to right < 24
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32+1)
+		if( ((TmpMax_Mark_Table_number-rowNumEnd_32+1)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
+			&& ((TmpMax_Mark_Table_number-rowNumEnd_32+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit)) ) // to right < 24
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-rowNumEnd_32+1)
 			= 0xffff0000;
-		if(((TmpMaxTable_number-rowNumEnd_32-1)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
-			&& ((TmpMaxTable_number-rowNumEnd_32-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit)) // to left >= 8
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number-rowNumEnd_32-1)
+		if(((TmpMax_Mark_Table_number-rowNumEnd_32-1)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
+			&& ((TmpMax_Mark_Table_number-rowNumEnd_32-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit)) // to left >= 8
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-rowNumEnd_32-1)
 			= 0xffff0000;
 		
-		if((TmpMaxTable_number+rowNumEnd_32)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit) ) // to lower <=20
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32)
+		if((TmpMax_Mark_Table_number+rowNumEnd_32)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit) ) // to lower <=20
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+rowNumEnd_32)
 				= 0xffff0000;
-		if(((TmpMaxTable_number+rowNumEnd_32+1)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit)) // to lower <=20
-			&& ((TmpMaxTable_number+rowNumEnd_32+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit) )) // to right < 24
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32+1)
+		if(((TmpMax_Mark_Table_number+rowNumEnd_32+1)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit)) // to lower <=20
+			&& ((TmpMax_Mark_Table_number+rowNumEnd_32+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit) )) // to right < 24
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+rowNumEnd_32+1)
 				= 0xffff0000;
-		if(((TmpMaxTable_number+rowNumEnd_32-1)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit)) // to lower <=20
-			&& ((TmpMaxTable_number+rowNumEnd_32-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit)) // to left >= 8
-			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMaxTable_number+rowNumEnd_32-1)
+		if(((TmpMax_Mark_Table_number+rowNumEnd_32-1)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit)) // to lower <=20
+			&& ((TmpMax_Mark_Table_number+rowNumEnd_32-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit)) // to left >= 8
+			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+rowNumEnd_32-1)
 				= 0xffff0000;
 		
 		//ScaleUpForH_Mark();
@@ -2068,10 +2084,6 @@ void FindMax_ColorAssign(void){
 
 
 	 // MLX_GrayOutputFactor_Ary[10]={8,8,7,7,6,5,4,3,3,3,3};
-		switch(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode)
-		{
-			case COLOR_SET_1:
-			case COLOR_SET_0:
 				if (OverZeroDiff_value > 0)
 				{
 					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[19];
@@ -2130,12 +2142,7 @@ void FindMax_ColorAssign(void){
 #endif
 
 				}
-				break;
-			default:	// for Gray output  only (可以與 COLOR_SET_1 ~ COLOR_SET_5 合併) 
-
-
-				break;
-		}
+			
 
 
 
@@ -2734,8 +2741,6 @@ static void disp_task_entry(void const *parm)
 				while(1);
 		}
 
-
-
 		src_ptr = (INT8U *)sprite_base_addr;
 		sprite_GrayPos_addr = sprite_base_addr;
 		DBG_PRINT("sprite_GrayPos_addr = 0x%x\r\n",sprite_GrayPos_addr);
@@ -2754,14 +2759,7 @@ static void disp_task_entry(void const *parm)
 			}
 		}
 
-
-
-
 #if 1
-
-		// for (ColorLp = 0; ColorLp < 10 ; ColorLp++)	// 小圓點 
-		//{
-
 			ColorLp = 0;
 			sprite_GrayPos_addr = sprite_base_addr + SP_CHR_SIZE*ColorLp;
 			src_ptr = (INT8U *)sprite_GrayPos_addr;
@@ -3000,6 +2998,41 @@ static void disp_task_entry(void const *parm)
 		lpcnt = 0;
 #endif
 
+		userDefine_spNum = 0;
+		for(lpcnt = 0 ; lpcnt < 3 ; lpcnt++)
+        {
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
+						
+    #if 1
+			
+			if(DISPLAY_DEVICE == DISDEV_TFT)
+				{
+				x_pos=(lpcnt%5)*(SP_H_SIZE-26) + 3*SP_H_SIZE;
+				y_pos=(lpcnt/5)*SP_V_SIZE;
+				}
+		
+			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
+				{
+			x_pos=(lpcnt%5)*SP_H_SIZE +6* SP_H_SIZE;
+			y_pos=(lpcnt/5)*SP_V_SIZE -2* SP_V_SIZE;
+				}
+
+    #else
+			x_pos=(lpcnt%MLX_LINE)*pos_x;
+			y_pos=(lpcnt/MLX_LINE)*pos_y;
+    #endif
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N1_CellIdx); // 放在 HDMI 上位置 
+				userDefine_spNum++;
+
+		}
+
+		
+
+	//paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,1024);
+		if(userDefine_spNum > 0){
+			DBG_PRINT("userDefine_spNum  = %d \r\n ",userDefine_spNum );
+		paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
+			}
 
 
 
@@ -3073,11 +3106,12 @@ static void disp_task_entry(void const *parm)
 					
 					
 
-					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_ColorMode,display_buf,0,
+					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet,display_buf,0,
 						device_h_size,8,0,8);
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax,display_buf,0,
-						device_h_size,50,0,6);
-						
+						device_h_size,60,0,6);
+					
+					/*	
 					if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0 )
 					{
 						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START,display_buf,0,
@@ -3085,92 +3119,60 @@ static void disp_task_entry(void const *parm)
 						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE,display_buf,0,
 							device_h_size,96,0,0);
 					}
-
+					*/
+					
 				}
 
 
 		//
 		//	COLOR_SET_6 --> sprite display mode
 		//
-		if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_1 ){
+		
+		if(( pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag == 1 ) &&
+			(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))	// no signal ONE color
+			{
 
+			
+			paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
+			Gcnt_lp = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
+			
+	
+			sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
+		    	
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	
+				( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax/100) * SP_CHR_SIZE));
 
-
-		Gcnt_lp++;
-			if (Gcnt_lp>5)
-				{
-				Gcnt_lp = 1;
-				}
-	#if 1
-
-		pos_x = SP_H_SIZE - 6;
-		pos_y = SP_V_SIZE - 6;
-
-		#if 1
-
-		for (lpcnt = 0 ; lpcnt < Gcnt_lp ; ++lpcnt)
-		{
-			set_sprite_disable(Gcnt_lp);
-		}
-
-		#endif
-
-		userDefine_spNum = 0;
-		for(lpcnt = 0 ; lpcnt < Gcnt_lp ; lpcnt++)
-        {
-			//set_sprite_init(userDefine_spNum,(INT32U)&Sprite_64x64_SP);// 放在 HDMI 上位置 
-
-			set_sprite_init(userDefine_spNum,(INT32U)&Sprite_16x16_SP);
-    #if 1
-			x_pos=SP_H_SIZE*5+(lpcnt%5)*SP_H_SIZE;
-			y_pos=(lpcnt/5)*SP_V_SIZE;
-
-			//DBG_PRINT("x_pos = %d y_pos = %d\r\n",x_pos,y_pos);
-    #else
-			x_pos=(lpcnt%MLX_LINE)*pos_x;
-			y_pos=(lpcnt/MLX_LINE)*pos_y;
-    #endif
-			//set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Sprite_64x64_IMG0000_CellIdx); // 放在 HDMI 上位置 
-			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Sprite_16x16_IMG0000_CellIdx); // 放在 LCD 上位置 
-			userDefine_spNum++;
-
-		}
-
-		//DBG_PRINT("userDefine_spNum = %d /",userDefine_spNum);
-
-		//paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,1024);
-		if(userDefine_spNum > 0){
-			//DBG_PRINT("userDefine_spNum - 1 = %d ",userDefine_spNum -1);
-		paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
-			}
-		userDefine_spNum = 0;
-		for(lp2=0;lp2<Gcnt_lp;lp2++)
-        {
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	( lp2 * SP_CHR_SIZE));
-            Get_sprite_image_info(userDefine_spNum,(SpN_ptr *)&sp_ptr);
+            Get_sprite_image_info(0,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
-			//DBG_PRINT("i = %d ,sp_num_addr = 0x%x \r\n",i,sp_num_addr);
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
-			userDefine_spNum ++;
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	
+				( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%100)/10 * SP_CHR_SIZE));
 
-        	//}
+            Get_sprite_image_info(1,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
 
-        }
-
-
-
-	#endif
-
-		if(( pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag == 1 ) &&
-			(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))	// no signal ONE color
-			{
 			
-			
+			 sprite_base_addr = (INT32U)_SPRITE_Number0_9pv1_CellData;
+			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  
+			 	((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
+			 Get_sprite_image_info(2,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+
 			gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, device_h_size, device_v_size,
 			//	(INT32U)_Text001_IMG0000_CellData); // Calculate Number array
 			//(INT32U)_Text_BLUE_IMG0_CellData);
@@ -3201,15 +3203,15 @@ static void disp_task_entry(void const *parm)
 			pscaler_frame_buffer_add((INT32U *)display_buf, 1);
 
 			}
-	else{
-			 drv_l2_display_update(DISPLAY_DEVICE,display_buf);
+	//else{
+	//		 drv_l2_display_update(DISPLAY_DEVICE,display_buf);
 
 
-            pscaler_frame_buffer_add((INT32U *)display_buf, 1);
-		}
+     //       pscaler_frame_buffer_add((INT32U *)display_buf, 1);
+	//	}
 
 
-    }
+    
 }
 
 static void prcess_task_entry(void const *parm)
@@ -3473,7 +3475,8 @@ static void prcess_task_entry(void const *parm)
 			else
 				gpio_write_io(TH_STATUS_A15_PAD, DATA_LOW);
 		*/
-			DBG_PRINT(" CalculateTo [t=%d] \r\n",xTaskGetTickCount()-TimeCnt1);
+			DBG_PRINT(" CalculateTo [t=%d] %d\r\n",xTaskGetTickCount()-TimeCnt1,
+				pMLX_TH32x24_Para->MLX_TH32x24_TmpMax);
 
 				//pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 0;
 
@@ -3503,14 +3506,14 @@ static void prcess_task_entry(void const *parm)
 			//drv_l2_scaler_init();
 			//scale.input_format = pAviEncVidPara->sensor_output_format;
 
-			if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0)
-			{
-				scale.input_format = C_SCALER_CTRL_IN_Y_ONLY; 	// gray value
-			}
-			else
-			{
+			//if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0)
+			//{
+			//	scale.input_format = C_SCALER_CTRL_IN_Y_ONLY; 	// gray value
+			//}
+			//else
+			//{
 				scale.input_format = C_SCALER_CTRL_IN_ARGB8888;
-			}
+			//}
 
 
 
@@ -3524,12 +3527,12 @@ static void prcess_task_entry(void const *parm)
 			//scale.input_y_addr = sensor_frame;
 			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_ColorOutputFrame_addr ;
 
-			if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0)
-			scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr ;
-			else
-			{
+			//if (pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0)
+			//scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr ;
+			//else
+			//{
 				scale.input_y_addr =pMLX_TH32x24_Para->MLX_TH32x24_RGB888_OutputFrame_addr;
-			}
+			//}
 
 			scale.input_u_addr = 0;
 			scale.input_v_addr = 0;
@@ -3878,7 +3881,7 @@ void GPM4_CSI_DISP_Demo(void)
 	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d, set -%d- ms \r\n",nRet,
 		1000/pMLX_TH32x24_Para->MLX_TH32x24_sampleHz) ;
 
-	pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = COLOR_SET_1;
+	pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet = 370;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = GRAY_AMP_START;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE = GRAY_AMP_SCALE;
 	pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 1;
@@ -3894,20 +3897,22 @@ void GPM4_CSI_DISP_Demo(void)
 
 		if(ADKEY_IO1)
 		{
-			pMLX_TH32x24_Para->MLX_TH32x24_ColorMode ++;
-			if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode > COLOR_SET_MAX )
-				pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = 0;
+			pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet=
+				pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet+5;
+			if( pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet > ALTERTmpSet_MAX )
+				pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet = ALTERTmpSet_MIN;
 
-			DBG_PRINT("ad_key-1 selection -ColorMode = %d\r\n",
-				pMLX_TH32x24_Para->MLX_TH32x24_ColorMode);
+			DBG_PRINT("ad_key-1 selection -alterTmpSet = %d\r\n",
+				pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet);
 		}
 		else if(ADKEY_IO2)
 		{
-			pMLX_TH32x24_Para->MLX_TH32x24_ColorMode --;
-			if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode < 0 )
-				pMLX_TH32x24_Para->MLX_TH32x24_ColorMode = COLOR_SET_MAX;
-			DBG_PRINT("ad_key-2 selection -ColorMode = %d\r\n",
-				pMLX_TH32x24_Para->MLX_TH32x24_ColorMode);
+			pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet=
+				pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet-5;
+			if( pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet < ALTERTmpSet_MIN )
+				pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet = ALTERTmpSet_MAX;
+			DBG_PRINT("ad_key-2 selection -alterTmpSet = %d\r\n",
+				pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet);
 		}
 		else if(ADKEY_IO6)
 			{
@@ -3918,9 +3923,9 @@ void GPM4_CSI_DISP_Demo(void)
 				pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET);
 			}
 
-		if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0 ){
+		//if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0 ){
 
-			if(ADKEY_IO3)
+		else if(ADKEY_IO3)
 			{
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START =
 				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START + 10;
@@ -3930,7 +3935,7 @@ void GPM4_CSI_DISP_Demo(void)
 			DBG_PRINT("ad_key-3 selection -AMP_START = %d\r\n",
 				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START);
 			}
-			else if(ADKEY_IO4)
+		else if(ADKEY_IO4)
 			{
 			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE ++;
 			if( pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE > 10 )
@@ -3939,7 +3944,7 @@ void GPM4_CSI_DISP_Demo(void)
 				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE);
 			}
 
-		}
+		//}
 
 
 	}
