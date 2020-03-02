@@ -147,6 +147,12 @@ static prcess_mem_t *prcess_mem_set;
 #define SP_CHR_SIZE                         (SP_H_SIZE*SP_V_SIZE*SP_SIZE_CH)
 #define SP_MAX_A_LEVEL                      30		// 256 sprite 可用 
 
+#define SP_sm_H_SIZE                           32//64//16 //8
+#define SP_sm_V_SIZE                           32//64//16 //8
+#define SP_SIZE_CH                          4
+#define SP_sm_CHR_SIZE                         (SP_sm_H_SIZE*SP_sm_V_SIZE*SP_SIZE_CH)
+//define SP_MAX_A_LEVEL                      30		// 256 sprite 可用 
+
 #define	G_area		255
 #define	B_area		0
 #define	A_area		0
@@ -2646,7 +2652,6 @@ static void disp_task_entry(void const *parm)
 	INT16S ColorLp,flag;
 
 
-	INT8U  *pMLX_TH32x24_GrayframeForSprite_INT8U_buf0;
 	ScalerFormat_t scale;
 	ScalerPara_t para;
 
@@ -2730,195 +2735,7 @@ static void disp_task_entry(void const *parm)
 
 #if 1
 
-	#if 1
-
-		pMLX_TH32x24_GrayframeForSprite_INT8U_buf0 =
-					(INT8U*)pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFrame_addr;
-
-		sprite_base_addr = (INT32U)gp_malloc_align((SP_CHR_SIZE*SP_MAX_A_LEVEL), 64);
-		if (!sprite_base_addr) {
-			DBG_PRINT("sprite_base_addr task failed to allocate character number array memory\r\n");
-				while(1);
-		}
-
-		src_ptr = (INT8U *)sprite_base_addr;
-		sprite_GrayPos_addr = sprite_base_addr;
-		DBG_PRINT("sprite_GrayPos_addr = 0x%x\r\n",sprite_GrayPos_addr);
-
-
-		for(ColorLp=0 ; ColorLp<10 ; ColorLp++)	// 0-10 紅底色 
-		{
-
-			for(i=0;i<(SP_H_SIZE*SP_V_SIZE);i++)	// sprite2
-			{
-				*src_ptr++ = 0x8f;	//(INT8U)ColorLp;	//A  // gray色 
-				*src_ptr++ = 0x0;	//B
-				*src_ptr++ = 0x0;	//G
-				*src_ptr++ = 0xf0;	//R (紅色) 
-
-			}
-		}
-
-#if 1
-			ColorLp = 0;
-			sprite_GrayPos_addr = sprite_base_addr + SP_CHR_SIZE*ColorLp;
-			src_ptr = (INT8U *)sprite_GrayPos_addr;
-		for(flag=0;flag<SP_V_SIZE;flag++)
-		   {
-			if((flag == 8) || (flag == 8)){
-			   for(i=0;i<SP_H_SIZE;i++)
-			   {
-				*src_ptr++=G_area;	//A
-				//src_ptr+=3;
-				*src_ptr++ = 0x0;	//B
-				*src_ptr++ = 0xff;	//G
-				*src_ptr++ = 0x0;	//R (紅色) 
-
-			   }
-			}
-
-			else
-			{
-				for(i=0;i<SP_H_SIZE;i++)
-				src_ptr+=4;
-			}
-
-		   }
-
-		#if 1
-		ColorLp = 1;
-		sprite_GrayPos_addr = sprite_base_addr + SP_CHR_SIZE*ColorLp;
-			src_ptr = (INT8U *)sprite_GrayPos_addr;
-		for(flag=0;flag<SP_V_SIZE;flag++)
-		   {
-			if((flag == 3) || (flag == 4)){
-			   for(i=0;i<SP_H_SIZE;i++)
-			   {
-				*src_ptr++=G_area;	//A
-				//src_ptr+=3;
-				*src_ptr++ = 0xff;	//B
-				*src_ptr++ = 0x0;	//G
-				*src_ptr++ = 0x0;	//R (紅色) 
-
-			   }
-			}
-			  else if((flag == 3+8) || (flag == 4+8)){
-			   for(i=0;i<SP_H_SIZE;i++)
-			   {
-				*src_ptr++=G_area;	//A
-				//src_ptr+=3;
-				*src_ptr++ = 0xff;	//B
-				*src_ptr++ = 0x0;	//G
-				*src_ptr++ = 0x0;	//R (紅色) 
-
-			   }
-			  }
-
-
-			else
-			{
-				for(i=0;i<SP_H_SIZE;i++)
-				src_ptr+=4;
-			}
-
-		   }
-
-
-		ColorLp = 2;
-		sprite_GrayPos_addr = sprite_base_addr + SP_CHR_SIZE*ColorLp;
-			src_ptr = (INT8U *)sprite_GrayPos_addr;
-		for(flag=0;flag<SP_V_SIZE;flag++)
-		   {
-			if((flag == 16) || (flag == 17)){
-			   for(i=0;i<SP_H_SIZE;i++)
-			   {
-				*src_ptr++=G_area;	//A
-				//src_ptr+=3;
-				*src_ptr++ = 0xff;	//B
-				*src_ptr++ = 0x0;	//G
-				*src_ptr++ = 0x0;	//R (紅色) 
-
-			   }
-			}
-			  else if((flag == 16+32) || (flag == 17+32)){
-			   for(i=0;i<SP_H_SIZE;i++)
-			   {
-				*src_ptr++=G_area;	//A
-				//src_ptr+=3;
-				*src_ptr++ = 0x00;	//B
-				*src_ptr++ = 0xff;	//G
-				*src_ptr++ = 0x0;	//R (紅色) 
-
-			   }
-			  }
-
-
-			else
-			{
-				for(i=0;i<SP_H_SIZE;i++)
-				src_ptr+=4;
-			}
-
-		   }
-
-
-
-
-			ColorLp = 3;
-		sprite_GrayPos_addr = sprite_base_addr + SP_CHR_SIZE*ColorLp;
-			src_ptr = (INT8U *)sprite_GrayPos_addr;
-		for(flag=0;flag<SP_V_SIZE;flag++)
-		   {
-			if((flag == 3) || (flag == 4)){
-			   for(i=0;i<SP_H_SIZE;i++)
-			   {
-				*src_ptr++=G_area;	//A
-				//src_ptr+=3;
-				*src_ptr++ = 0xff;	//B
-				*src_ptr++ = 0x0;	//G
-				*src_ptr++ = 0x0;	//R (紅色) 
-
-			   }
-			}
-			  else if((flag == 8) || (flag == 9)){
-			   for(i=0;i<SP_H_SIZE;i++)
-			   {
-				*src_ptr++=G_area;	//A
-				//src_ptr+=3;
-				*src_ptr++ = 0x00;	//B
-				*src_ptr++ = 0xff;	//G
-				*src_ptr++ = 0x0;	//R (紅色) 
-
-			   }
-			  	}
-			   else if((flag == 12) || (flag == 13)){
-			   for(i=0;i<SP_H_SIZE;i++)
-			   {
-				*src_ptr++=G_area;	//A
-				//src_ptr+=3;
-				*src_ptr++ = 0x0f;	//B
-				*src_ptr++ = 0x2f;	//G
-				*src_ptr++ = 0x0;	//R (紅色) 
-
-			   }
-			   	}
-
-			else
-			{
-				for(i=0;i<SP_H_SIZE;i++)
-				src_ptr+=4;
-			}
-
-		   }
-
-		//	}
-
-		#endif
-
-#endif
-
-	#endif
-
+	
 		// PPU setting start
 		DBG_PRINT("PPU setting start \r\n");
 
@@ -2999,7 +2816,7 @@ static void disp_task_entry(void const *parm)
 #endif
 
 		userDefine_spNum = 0;
-		for(lpcnt = 0 ; lpcnt < 3 ; lpcnt++)
+		for(lpcnt = 0 ; lpcnt < 3 ; lpcnt++) // 64x64 Big Font
         {
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
 						
@@ -3022,6 +2839,34 @@ static void disp_task_entry(void const *parm)
 			y_pos=(lpcnt/MLX_LINE)*pos_y;
     #endif
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N1_CellIdx); // 放在 HDMI 上位置 
+				userDefine_spNum++;
+
+		}
+
+
+		for(lpcnt = 3 ; lpcnt < 6 ; lpcnt++)	// 32x32 small Font
+		{
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
+						
+    #if 1
+			
+			if(DISPLAY_DEVICE == DISDEV_TFT)
+				{
+				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
+				y_pos=3*SP_sm_V_SIZE;
+				}
+		
+			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
+				{
+			x_pos=(lpcnt%5)*SP_sm_H_SIZE +6* SP_sm_H_SIZE;
+			y_pos=(lpcnt/5)*SP_sm_V_SIZE -2* SP_sm_V_SIZE;
+				}
+
+    #else
+			x_pos=(lpcnt%MLX_LINE)*pos_x;
+			y_pos=(lpcnt/MLX_LINE)*pos_y;
+    #endif
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
 
 		}
@@ -3104,12 +2949,8 @@ static void disp_task_entry(void const *parm)
 					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMax,display_buf,
 						device_h_size,288,0,6);
 					
-					
-
-					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet,display_buf,0,
-						device_h_size,8,0,8);
-					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax,display_buf,0,
-						device_h_size,60,0,6);
+					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax,display_buf,200,
+						device_h_size,220,0,8);
 					
 					/*	
 					if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0 )
@@ -3134,9 +2975,10 @@ static void disp_task_entry(void const *parm)
 
 			
 			paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
-			Gcnt_lp = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
 			
-	
+			//
+			//	64x64 Big Font
+			//
 			sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
 		    	
 			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	
@@ -3172,6 +3014,65 @@ static void disp_task_entry(void const *parm)
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
+
+
+			//
+			//	32x32 small Font
+			//
+			sprite_base_addr = (INT32U)_SPRITE_NumFntSmall_N3_CellData;
+		    	
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	
+				( (pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet/100) * SP_sm_CHR_SIZE));
+			
+			//DBG_PRINT(" \r\n");
+			//DBG_PRINT("32x32-0 = 0x%x /",sprite_characterNum_pos_addr);
+
+            Get_sprite_image_info(3,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	
+				( (pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet%100)/10* SP_sm_CHR_SIZE));
+			
+			//DBG_PRINT("32x32-1 = 0x%x /",sprite_characterNum_pos_addr);
+            Get_sprite_image_info(4,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+
+			 sprite_base_addr = (INT32U)_SPRITE_SmFnt_N3p_CellData;
+			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  
+			 	((pMLX_TH32x24_Para->MLX_TH32x24_alterTmpSet%10) * SP_sm_CHR_SIZE));
+			 
+			 //DBG_PRINT("32x32-2 = 0x%x \r\n",sprite_characterNum_pos_addr);
+			 Get_sprite_image_info(5,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+
+			/*
+			 sprite_base_addr = (INT32U)_SPRITE_Number0_9pv1_CellData;
+			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  
+			 	((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
+			 Get_sprite_image_info(2,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+			*/
+
 
 			gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, device_h_size, device_v_size,
 			//	(INT32U)_Text001_IMG0000_CellData); // Calculate Number array
