@@ -1530,6 +1530,8 @@ void FindMax_ColorAssign(void){
 	INT16S	 TmpMax,TmpMin,RedMarkTmpMax;
 
 	INT16U	 TmpMin_number,TmpMax_number,TmpMinTable_number,TmpMax_Mark_Table_number,TmpMaxTable_number;
+	INT16S	TmpMax_avg;
+		
 	//INT16U	 TmpMaxTable_Mark_number[5];
 
 	INT16U  *pMLX_TH32x24_TmpOutput_INT16U_buf0;
@@ -1934,6 +1936,58 @@ void FindMax_ColorAssign(void){
 		
 		if((TmpMin != 0) && (TmpMax != 0))
 			{
+			//
+			//	TmpMax avg 3x3 (TmpMaxTable_number is center point)
+			//
+
+			TmpMax_avg = TmpMax;
+			tmp_i2 = 0;
+			
+			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1) != -1 )
+				{
+				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1);
+				tmp_i2++;
+				}
+			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number -1) != -1 )
+				{
+				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1);
+				tmp_i2++;
+				}
+			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number + rowNumEnd_32 +1) != -1 )
+				{
+				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1);
+				tmp_i2++;
+				}
+			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number + rowNumEnd_32 -1) != -1 )
+				{
+				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1);
+				tmp_i2++;
+				}
+			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number + rowNumEnd_32 ) != -1 )
+				{
+				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1);
+				tmp_i2++;
+				}
+			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number - rowNumEnd_32 +1) != -1 )
+				{
+				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1);
+				tmp_i2++;
+				}
+			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number - rowNumEnd_32 -1) != -1 )
+				{
+				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1);
+				tmp_i2++;
+				}
+			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number - rowNumEnd_32 ) != -1 )
+				{
+				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1);
+				tmp_i2++;
+				}
+
+			TmpMax_avg = TmpMax_avg / (INT16S)tmp_i2 ;
+			
+			//DBG_PRINT("M=%d P=%d V =%d \r\n ",TmpMax,TmpMaxTable_number,TmpMax_avg);
+			
 			pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
 			pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
 			pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax=RedMarkTmpMax;
@@ -2830,7 +2884,7 @@ static void disp_task_entry(void const *parm)
 		
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=(lpcnt%5)*SP_H_SIZE +6* SP_H_SIZE;
+			x_pos=(lpcnt%5)*(SP_H_SIZE-26) +6* SP_H_SIZE;
 			y_pos=(lpcnt/5)*SP_V_SIZE -2* SP_V_SIZE;
 				}
 
@@ -2858,8 +2912,8 @@ static void disp_task_entry(void const *parm)
 		
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=(lpcnt%5)*SP_sm_H_SIZE +6* SP_sm_H_SIZE;
-			y_pos=(lpcnt/5)*SP_sm_V_SIZE -2* SP_sm_V_SIZE;
+			x_pos=lpcnt*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
+			y_pos=-2*SP_sm_V_SIZE;
 				}
 
     #else
