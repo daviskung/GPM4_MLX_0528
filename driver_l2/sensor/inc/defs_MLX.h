@@ -124,11 +124,13 @@
   
 #define AVG_buf_len			4
 
-#define IMG_AVG_buf_len		3	// 信號穩定 5 次以上 
+#define IMG_AVG_buf_len		4	// 信號穩定 5 次以上 
 #define	IMG_AVGBUF_ON		1	// avg ON is good
 
 #define IMG_VAL_buf_len		4
 #define IMG_GRAY_IND_buf_len		10
+#define ALERT_BUF_LEN		5
+
   
   
   
@@ -228,7 +230,11 @@
 	  INT16S MLX_TH32x24_TmpMax;
 	  INT16S MLX_TH32x24_RedMarkTmpMax;
 	  
-	  INT16S MLX_TH32x24_alterTmpSet;
+	  INT16S MLX_TH32x24_alertTmpSet;
+	  
+	  INT16S MLX_TH32x24_TmpMaxAVG;
+	  
+	  INT16S MLX_TH32x24_OvAlertVal[ALERT_BUF_LEN];
 	  
 	  //INT8S  MLX_TH32x24_ColorMode;
 	  INT8U  MLX_TH32x24_GRAY_AMP_START;

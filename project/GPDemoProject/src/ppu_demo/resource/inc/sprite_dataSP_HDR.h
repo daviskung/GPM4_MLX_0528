@@ -30,6 +30,8 @@ extern const SPRITE Sprite001_N3_SP[];
 //Sprite Cell data extern variables declaration
 extern const INT16U _SPRITE_NumFntSmall_N3_CellData[];
 extern const INT16U _SPRITE_SmFnt_N3p_CellData[];
+extern const INT16U _SPRITE_SmFnt_signOnly_CellData[];
+
 
 
 
