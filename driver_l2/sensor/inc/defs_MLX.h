@@ -127,9 +127,10 @@
 #define IMG_AVG_buf_len		4	// 信號穩定 5 次以上 
 #define	IMG_AVGBUF_ON		1	// avg ON is good
 
-#define IMG_VAL_buf_len		4
+#define TMP_MAX_buf_len		3
 #define IMG_GRAY_IND_buf_len		10
 #define ALERT_BUF_LEN		5
+#define TMP_MAX_DISP_buf_len		3
 
   
   
@@ -180,8 +181,8 @@
 	  INT8U   MLX_TH32x24_CMOS_OFF;
   
 	  float  MLX_TH32x24_ta;
-	  INT16U  MLX_TH32x24_ImgValAry[IMG_VAL_buf_len]; // over zero max/min , under zero max/min
-	  INT16S  MLX_TH32x24_ImgTempAry[IMG_VAL_buf_len]; // over zero max/min , under zero max/min
+	  //INT16U  MLX_TH32x24_ImgValAry[IMG_VAL_buf_len]; // over zero max/min , under zero max/min
+	  //INT16S  MLX_TH32x24_ImgTempAry[IMG_VAL_buf_len]; // over zero max/min , under zero max/min
 	  INT16U  MLX_TH32x24_Tmin;
 	  
 	  INT32U  MLX_TH32x24_avg_buf_addr[AVG_buf_len];  // MLX_TH32x24 temperature buffer addr
@@ -236,11 +237,16 @@
 	  
 	  INT16S MLX_TH32x24_OvAlertVal[ALERT_BUF_LEN];
 	  
+	  INT16S  MLX_TH32x24_TempMaxAry[TMP_MAX_buf_len]; // 取 排最高點 順序
+	  INT16U  MLX_TH32x24_TempMaxNum_Ary[TMP_MAX_buf_len]; // 取 排最高點 順序
+	  
 	  //INT8S  MLX_TH32x24_ColorMode;
 	  INT8U  MLX_TH32x24_GRAY_AMP_START;
 	  INT8S  MLX_TH32x24_GRAY_AMP_SCALE;
 
   	  INT8U  MLX_TH32x24_LowPass_SET;	  
+	  
+	  INT8U  MLX_TH32x24_GRAY_TmpTbInd;	  
   } MLX_TH32x24Para_t;
 
   typedef struct	paramsMLX90640_s

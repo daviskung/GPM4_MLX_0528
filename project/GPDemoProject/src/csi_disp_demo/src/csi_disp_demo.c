@@ -177,8 +177,8 @@ static prcess_mem_t *prcess_mem_set;
 
 #if(LowPassFiliter_ON == 1)
 
-const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  4,  4,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
-const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20,220,220,220,220,220,220,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
+const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  5,  5,  5,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
+const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20,110,110,110,220,220,220,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
 const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5};
 
 #endif
@@ -274,7 +274,7 @@ const INT8U MLX_REFRESH_RATE_HZ3[8]={0,1,2,4,8,16,32,64};
 
 INT32U UnderZeroDiff_value,OverZeroDiff_value;
 INT8U	firstRun;
-INT16U	*pMLX_TH32x24_INT16U_avg_buf[AVG_buf_len];
+//INT16U	*pMLX_TH32x24_INT16U_avg_buf[AVG_buf_len];
 INT8U	avg_buf_Enable;
 INT32U	Gcnt_lp,Gcnt_lp2,GlobalTimeCnt1,GlobalTimeCnt2;
 
@@ -285,6 +285,9 @@ INT32U	Gcnt_lp,Gcnt_lp2,GlobalTimeCnt1,GlobalTimeCnt2;
 
 
 int	OvAlertVal_SUM;
+INT16S TmpDispBuf[TMP_MAX_DISP_buf_len];
+INT8U  TmpMaxDispBuf_cnt;
+INT16S TmpDispBuf_Pre;
 
 
 
@@ -1530,14 +1533,16 @@ void FindMax_ColorAssign(void){
 	INT16S	 TmpOutObject;
 	INT16S	 TmpMax,TmpMin,RedMarkTmpMax;
 
-	INT16U	 TmpMin_number,TmpMax_number,TmpMinTable_number,TmpMax_Mark_Table_number,TmpMaxTable_number;
-	INT16S	TmpMax_avg;
+	INT16U	 TmpMinTable_number,TmpMax_Mark_Table_number,TmpMaxTable_number;
+	INT16S	 TmpMax_avg;
 		
 	//INT16U	 TmpMaxTable_Mark_number[5];
 
 	INT16U  *pMLX_TH32x24_TmpOutput_INT16U_buf0;
 
 	INT16U	SingleColorTmpValue,SingleColorShiftValue;
+	
+	INT8U TmpMaxBuf_cnt;
 
 	pMLX_TH32x24_ImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_image; // image format ?
 		pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_LOWPASS_image;
@@ -1758,6 +1763,7 @@ void FindMax_ColorAssign(void){
 			TmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
 			TmpMin = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
 			RedMarkTmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
+			TmpMaxBuf_cnt = 0;
 			
 			//DBG_PRINT("M=%d m=%d\r\n ",TmpMax,TmpMin);
 			}
@@ -1823,7 +1829,7 @@ void FindMax_ColorAssign(void){
 				 tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 				 TmpMinTable_number=tmp_i2; //(左右 對調 後 正確位置) 
 				}
-			if(TmpOutObject > (RedMarkTmpMax+20)){	// over 1 C for Red Mark
+			if(TmpOutObject > (RedMarkTmpMax+20)){	// over 2 C for Red Mark
 			//if(TmpOutObject > TmpMax){
 				RedMarkTmpMax = TmpOutObject;
 				 tmp_i = cellNum/rowNumEnd_32;
@@ -1836,6 +1842,27 @@ void FindMax_ColorAssign(void){
 				tmp_i = cellNum/rowNumEnd_32;
 				tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 				TmpMaxTable_number=tmp_i2; //(左右 對調 後 正確位置) 
+				if (TmpMaxBuf_cnt < 5)
+					{
+					pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[TmpMaxBuf_cnt] = TmpMax;
+					pMLX_TH32x24_Para->MLX_TH32x24_TempMaxNum_Ary[TmpMaxBuf_cnt] = TmpMaxTable_number;
+					TmpMaxBuf_cnt++;
+					}
+				else
+					{
+					for (tmp_i2 = 0; tmp_i2 < (TMP_MAX_buf_len - 1); ++tmp_i2)
+						{
+						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[tmp_i2] = 
+						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[tmp_i2 + 1];
+						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxNum_Ary[tmp_i2] = 
+						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxNum_Ary[tmp_i2 + 1];
+				
+						}
+						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[TMP_MAX_buf_len-1] = 	TmpMax;		
+						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxNum_Ary[TMP_MAX_buf_len-1] = 	TmpMaxTable_number;		
+					}
+				
+				
 				}
 			}
 
@@ -1909,10 +1936,13 @@ void FindMax_ColorAssign(void){
 			*(pMLX_TH32x24_Grayframe_INT8U_buf0+ tmp_i2)
 			= GrayTmpValue;
 
-			//RGB888TmpValue =(INT32U)GrayTmpValue<<24 | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0x000000ff; // 籃底色 
+			#if 0	// 背景藍色
+			RGB888TmpValue =(INT32U)GrayTmpValue<<24 | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0x000000ff; // 籃底色 
 			// FF’ (255) 表示 alpha 係數。‘00’ 表示紅色的數量，‘FF’ 表示綠色的數量 ‘00’ 表示藍色的數量. 
+			#else	// 灰階
 			RGB888TmpValue =(INT32U)GrayTmpValue | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0xff000000;	// 灰階 
-
+			#endif
+			
 			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ tmp_i2)
 			= RGB888TmpValue;
 
@@ -2003,10 +2033,19 @@ void FindMax_ColorAssign(void){
 			
 		#endif // TMP_MAX_AVG_ON
 		
+			
+			DBG_PRINT(" Max - 1p = %d\r\n",TmpMax);
+			TmpMax = 0;
+			for (tmp_i2 = 0; tmp_i2 < TMP_MAX_buf_len; ++tmp_i2)
+				{
+				TmpMax = TmpMax + pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[tmp_i2];	
+				}
+			TmpMax = TmpMax/TMP_MAX_buf_len;
+			//DBG_PRINT("\r\nMax-E\r\n");
+			
 			pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
 			pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
 			pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax=RedMarkTmpMax;
-
 			
 			OvAlertVal_SUM = 0;
 						
@@ -2204,7 +2243,8 @@ void FindMax_ColorAssign(void){
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[19]; // 255 會有計算 error
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[19];
 					pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 0;
-
+					
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd = 19;
 					TmpTbInd = 0;
 					//DBG_PRINT("OverZeroDiff_value > 0  \r\n");
 				}
@@ -2250,6 +2290,8 @@ void FindMax_ColorAssign(void){
 					}
 
 					if (TmpTbInd > 19) TmpTbInd = 19;
+					//DBG_PRINT("Ind=%d",TmpTbInd);
+					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd = TmpTbInd;
 					pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor = MLX_GrayOutputFactor_Ary[TmpTbInd];
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[TmpTbInd];
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[TmpTbInd];
@@ -2281,10 +2323,6 @@ void FindMax_ColorAssign(void){
 			((pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor * TmaxUnderZeroTable )
 						+ (10-pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor) * TminUnderZeroTable)/10; // 30% 以下 0值 
 		//DBG_PRINT("Tpoint3=[%f] ",pMLX_TH32x24_Para->MLX_TH32x24_GRAY_Tpoint3);
-		pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[0] = UnderZ_TminTable_number;
-		pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[1] = UnderZ_TmaxTable_number;
-		pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[2] = OverZ_TminTable_number;
-		pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[3] = OverZ_TmaxTable_number;
 
 }
 
@@ -2416,7 +2454,7 @@ static void csi_task_entry(void const *parm)
 
 	INT16U  *pMLX32x32_frameData_csi_INT16U_buf;
 
-	INT16U  *pMLX_TH32x24_INT16U_avg_buf[AVG_buf_len];
+	//INT16U  *pMLX_TH32x24_INT16U_avg_buf[AVG_buf_len];
 
 
 	float  *pMLX_TH32x24_ImgOutput_INT32S_buf0;
@@ -2540,10 +2578,10 @@ static void csi_task_entry(void const *parm)
 
 		pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = GRAY_START_COLOR;
 			DBG_PRINT("MLX_TH32x24_GRAY_START_VAL =%d \r\n",pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL);
-
-		for(tmp_i=0;tmp_i<IMG_AVG_buf_len;tmp_i++){
-			pMLX_TH32x24_INT16U_avg_buf[tmp_i]= (INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmp_i];
-		}
+		
+		//for(tmp_i=0;tmp_i<IMG_AVG_buf_len;tmp_i++){
+		//	pMLX_TH32x24_INT16U_avg_buf[tmp_i]= (INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmp_i];
+		//}
 
 
 	Gcnt_lp = 0;
@@ -2762,6 +2800,7 @@ static void disp_task_entry(void const *parm)
 
 	ScalerFormat_t scale;
 	ScalerPara_t para;
+	INT16S TmpDispBuf_sum;
 
     DBG_PRINT("disp_task_entry start \r\n");
     // Initialize display device
@@ -2920,6 +2959,7 @@ static void disp_task_entry(void const *parm)
 
 		userDefine_spNum = 0;
 		lpcnt = 0;
+		//TmpDispBuf = 250;
 #endif
 
 		userDefine_spNum = 0;
@@ -3031,6 +3071,8 @@ static void disp_task_entry(void const *parm)
 					cpu_draw_line_osd(OverZeroDiff_value,display_buf,40,
 						device_h_size,160,0,17);
 
+					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,80,
+						device_h_size,90,0,10);
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,display_buf,80,
 						device_h_size,110,0,10);
 
@@ -3050,7 +3092,7 @@ static void disp_task_entry(void const *parm)
 						pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal[lpcnt] = 0;
 					}
 					OvAlertVal_SUM = 0 ;
-
+					TmpMaxDispBuf_cnt = 0;
 
 				}
 			else
@@ -3084,6 +3126,8 @@ static void disp_task_entry(void const *parm)
 					
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet,display_buf,200,
 						device_h_size,220,0,8);
+					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,200,
+						device_h_size,220,100,17);
 					
 					/*	
 					if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0 )
@@ -3105,7 +3149,39 @@ static void disp_task_entry(void const *parm)
 		if(( pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag == 1 ) &&
 			(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))	// no signal ONE color
 			{
+			// TmpDispBuf = 250; ini val
 
+			if (TmpMaxDispBuf_cnt == 0)
+				{
+				for (i = 0; i< TMP_MAX_DISP_buf_len; ++i)
+					{
+					TmpDispBuf[i] = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
+					}
+				TmpMaxDispBuf_cnt++;
+				TmpDispBuf_sum = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
+				
+				TmpDispBuf_Pre = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
+				}
+			else
+				{
+					TmpDispBuf_sum = 0;
+					for (i = 0; i < TMP_MAX_DISP_buf_len; ++i)
+						{
+						TmpDispBuf[i] = TmpDispBuf[i + 1];
+						TmpDispBuf_sum = TmpDispBuf_sum + TmpDispBuf[i];
+						}
+						TmpDispBuf[TMP_MAX_DISP_buf_len -1 ] = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
+					TmpDispBuf_sum = TmpDispBuf_sum + TmpDispBuf[TMP_MAX_DISP_buf_len -1];
+					TmpDispBuf_sum = TmpDispBuf_sum/TMP_MAX_DISP_buf_len ;
+				}
+			if ( abs(TmpDispBuf_Pre - TmpDispBuf_sum) < 5 ) 
+				{
+				TmpDispBuf_sum = TmpDispBuf_Pre;
+				}
+			else
+				{
+				TmpDispBuf_Pre = TmpDispBuf_sum;
+				}
 			
 			paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
 			
@@ -3114,8 +3190,9 @@ static void disp_task_entry(void const *parm)
 			//
 			sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
 		    	
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	
-				( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax/100) * SP_CHR_SIZE));
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +		
+				( (TmpDispBuf_sum/100) * SP_CHR_SIZE));
+				//( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax/100) * SP_CHR_SIZE));
 
             Get_sprite_image_info(0,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -3126,7 +3203,8 @@ static void disp_task_entry(void const *parm)
             }
 
 			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	
-				( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%100)/10 * SP_CHR_SIZE));
+				( (TmpDispBuf_sum%100)/10 * SP_CHR_SIZE));
+				//( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%100)/10 * SP_CHR_SIZE));
 
             Get_sprite_image_info(1,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -3139,7 +3217,8 @@ static void disp_task_entry(void const *parm)
 			
 			 sprite_base_addr = (INT32U)_SPRITE_Number0_9pv1_CellData;
 			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  
-			 	((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
+			 	((TmpDispBuf_sum%10) * SP_CHR_SIZE));
+			 	//((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
 			 Get_sprite_image_info(2,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
@@ -3561,6 +3640,7 @@ static void prcess_task_entry(void const *parm)
 		//
 		// MLX_TH32x24 sensor scaler
 		//
+		
 
 		gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
 			//drv_l2_scaler_init();
@@ -3646,7 +3726,7 @@ static void prcess_task_entry(void const *parm)
 		// MLX_TH32x24 HighTMark display scaler
 		//
 
-		
+
 		gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
 
 

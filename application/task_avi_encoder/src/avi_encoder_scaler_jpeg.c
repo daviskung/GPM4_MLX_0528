@@ -2425,12 +2425,12 @@ NO_VAL:
 
 			Tpoint3 = ((pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor * TmaxUnderZeroTable )
 							+ (10-pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor) * TminUnderZeroTable)/10; // 30% 以下 0值 
-
+			/*
 			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[0] = UnderZ_TminTable_number;
 			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[1] = UnderZ_TmaxTable_number;
 			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[2] = OverZ_TminTable_number;
 			pMLX_TH32x24_Para->MLX_TH32x24_ImgValAry[3] = OverZ_TmaxTable_number;
-
+			*/
 
 			// set Tmax/Tmin marker
 
