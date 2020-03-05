@@ -3053,7 +3053,7 @@ static void disp_task_entry(void const *parm)
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
 			x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
-			y_pos=-3*SP_sm_V_SIZE;
+			y_pos=(-1)*SP_sm_V_SIZE;
 				}
 
     #else
@@ -3138,34 +3138,33 @@ static void disp_task_entry(void const *parm)
 					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL,display_buf,
 						device_h_size,204,0,0);
 
-					/* for HDMI 480P
-					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMin,display_buf,
-						device_h_size,328,0,7);
+					if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
+						{
+						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMin,display_buf,
+							device_h_size,244,0,7);
 
-					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMax,display_buf,
-						device_h_size,368,0,6);
-					*/
-
-					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMin,display_buf,
-						device_h_size,248,0,7);
-
-					cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMax,display_buf,
-						device_h_size,288,0,6);
+						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMax,display_buf,
+							device_h_size,288,0,6);
+						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet,display_buf,
+							device_h_size,320,100,8);
+						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,
+							device_h_size,360,110,17);
+						}
 					
-					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet,display_buf,200,
-						device_h_size,220,0,8);
-					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,200,
-						device_h_size,220,100,17);
+					if(DISPLAY_DEVICE == DISDEV_TFT)
+						{
+						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMin,display_buf,
+							device_h_size,248,0,7);
+
+						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMax,display_buf,
+							device_h_size,288,0,6);
 					
-					/*	
-					if ( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == COLOR_SET_0 )
-					{
-						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START,display_buf,0,
-							device_h_size,52,0,12);
-						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE,display_buf,0,
-							device_h_size,96,0,0);
-					}
-					*/
+						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet,display_buf,200,
+							device_h_size,220,0,8);
+						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,200,
+							device_h_size,220,100,17);
+					}	
+					
 					
 				}
 
@@ -3198,7 +3197,7 @@ static void disp_task_entry(void const *parm)
 						TmpDispBuf[i] = TmpDispBuf[i + 1];
 						TmpDispBuf_sum = TmpDispBuf_sum + TmpDispBuf[i];
 						}
-						TmpDispBuf[TMP_MAX_DISP_buf_len -1 ] = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
+					TmpDispBuf[TMP_MAX_DISP_buf_len -1 ] = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
 					TmpDispBuf_sum = TmpDispBuf_sum + TmpDispBuf[TMP_MAX_DISP_buf_len -1];
 					TmpDispBuf_sum = TmpDispBuf_sum/TMP_MAX_DISP_buf_len ;
 				}
