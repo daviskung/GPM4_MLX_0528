@@ -171,14 +171,14 @@ static prcess_mem_t *prcess_mem_set;
   	{1,1,1}
   	};
 #define LowPassFiliter_ON	1
-#define NO_SIGNAL_FACTOR	7	// for LP filiter
+#define NO_SIGNAL_FACTOR	3	// for LP filiter
 #define TMP_MAX_AVG_ON 		0
 
 
 #if(LowPassFiliter_ON == 1)
 
-const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  5,  5,  5,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
-const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20,110,110,110,220,220,220,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
+const INT8U MLX_GrayOutputFactor_Ary[20]={8 , 8, 8, 8,  7,  5,  5,  4,  4,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3};
+const INT8U MLX_Gray_MAX_val_Ary[20]   = {30,30,30,20, 20, 80, 80, 80, 80,220,220,220,220,220,220,220,220,220,240,240};	// 255 會有計算 error
 const INT8U MLX_Gray_START_val_Ary[20] = {20,20,20,10, 10,10 ,10 , 10, 10, 10, 10,  5,  5,  5,  5,  5,  5,  5,  5,  5};
 
 #endif
@@ -286,8 +286,8 @@ INT32U	Gcnt_lp,Gcnt_lp2,GlobalTimeCnt1,GlobalTimeCnt2;
 
 int	OvAlertVal_SUM;
 INT16S TmpDispBuf[TMP_MAX_DISP_buf_len];
-INT8U  TmpMaxDispBuf_cnt;
-INT16S TmpDispBuf_Pre;
+INT8U  TmpMaxDispBuf_cnt,Tmp1pointMaxDisp_cnt;
+INT16S TmpDispBuf_Pre,Tmp1pointDisp_Pre;
 
 
 
@@ -2035,6 +2035,7 @@ void FindMax_ColorAssign(void){
 		
 			
 			DBG_PRINT(" Max - 1p = %d\r\n",TmpMax);
+			pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax = TmpMax;
 			TmpMax = 0;
 			for (tmp_i2 = 0; tmp_i2 < TMP_MAX_buf_len; ++tmp_i2)
 				{
@@ -2795,7 +2796,6 @@ static void disp_task_entry(void const *parm)
 
 	INT32U 	lpcnt;
 
-	INT16S ColorLp;
 	INT16U OvAlertVal_SUMtmp;
 
 	ScalerFormat_t scale;
@@ -2963,7 +2963,7 @@ static void disp_task_entry(void const *parm)
 #endif
 
 		userDefine_spNum = 0;
-		for(lpcnt = 0 ; lpcnt < 3 ; lpcnt++) // 64x64 Big Font
+		for(lpcnt = 0 ; lpcnt < 3 ; lpcnt++) // 64x64 Big Font (line 1)
         {
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
 						
@@ -2991,7 +2991,7 @@ static void disp_task_entry(void const *parm)
 		}
 
 
-		for(lpcnt = 3 ; lpcnt < 6 ; lpcnt++)	// 32x32 small Font
+		for(lpcnt = 3 ; lpcnt < 6 ; lpcnt++)	// 32x32 small Font (line 2)
 		{
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
 						
@@ -3018,10 +3018,10 @@ static void disp_task_entry(void const *parm)
 
 		}
 
-			// +/- sign 
-			lpcnt = 2;
+			// +/- sign [userDefine_spNum = 6]
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
-
+			
+			lpcnt = 2;
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
 				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
@@ -3037,8 +3037,35 @@ static void disp_task_entry(void const *parm)
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
 
+
+				
+		for(lpcnt = 7 ; lpcnt < 10 ; lpcnt++)	// 32x32 small Font (line 3)
+		{
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
+						
+    #if 1
+			
+			if(DISPLAY_DEVICE == DISDEV_TFT)
+				{
+				x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
+				y_pos=4*SP_sm_V_SIZE;
+				}
 		
-		
+			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
+				{
+			x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
+			y_pos=-3*SP_sm_V_SIZE;
+				}
+
+    #else
+			x_pos=(lpcnt%MLX_LINE)*pos_x;
+			y_pos=(lpcnt/MLX_LINE)*pos_y;
+    #endif
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
+				userDefine_spNum++;
+
+		}
+
 
 	//paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,1024);
 		if(userDefine_spNum > 0){
@@ -3093,6 +3120,8 @@ static void disp_task_entry(void const *parm)
 					}
 					OvAlertVal_SUM = 0 ;
 					TmpMaxDispBuf_cnt = 0;
+					Tmp1pointDisp_Pre = 0;
+					Tmp1pointMaxDisp_cnt = 0;
 
 				}
 			else
@@ -3186,7 +3215,7 @@ static void disp_task_entry(void const *parm)
 			paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
 			
 			//
-			//	64x64 Big Font
+			//	64x64 Big Font (line 1)
 			//
 			sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
 		    	
@@ -3229,7 +3258,7 @@ static void disp_task_entry(void const *parm)
 
 
 			//
-			//	32x32 small Font
+			//	32x32 small Font (line 2)
 			//
 
 			// +/- sign
@@ -3300,6 +3329,68 @@ static void disp_task_entry(void const *parm)
 			 
 			 //DBG_PRINT("32x32-2 = 0x%x \r\n",sprite_characterNum_pos_addr);
 			 Get_sprite_image_info(5,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+
+			//
+			//	32x32 small Font (line 3)
+			//
+
+			//
+			if (Tmp1pointMaxDisp_cnt == 0)
+				{
+				Tmp1pointDisp_Pre = pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax;
+				Tmp1pointMaxDisp_cnt++;
+				}
+			if ( abs(Tmp1pointDisp_Pre - pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax) < 5 ) 
+				{
+				TmpDispBuf_sum = Tmp1pointDisp_Pre;
+				}
+			else
+				{
+				TmpDispBuf_sum = pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax;
+				Tmp1pointDisp_Pre = TmpDispBuf_sum;
+				}
+
+			sprite_base_addr = (INT32U)_SPRITE_NumFntSmall_N3_CellData;
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 百位數
+			//	( (pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet/100) * SP_sm_CHR_SIZE));
+			//((INT16U)OvAlertVal_SUM/100) * SP_sm_CHR_SIZE);
+			TmpDispBuf_sum/100 * SP_sm_CHR_SIZE);
+			
+			//DBG_PRINT(" \r\n");
+			//DBG_PRINT("32x32-0 = 0x%x /",sprite_characterNum_pos_addr);
+
+            Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 十位數
+				( ( TmpDispBuf_sum%100)/10* SP_sm_CHR_SIZE)); // for test
+			
+			//DBG_PRINT("32x32-1 = 0x%x /",sprite_characterNum_pos_addr);
+            Get_sprite_image_info(8,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+
+			 sprite_base_addr = (INT32U)_SPRITE_SmFnt_N3p_CellData;
+			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 個位數
+			 	(( TmpDispBuf_sum%10) * SP_sm_CHR_SIZE)); // fortest
+			 
+			 //DBG_PRINT("32x32-2 = 0x%x \r\n",sprite_characterNum_pos_addr);
+			 Get_sprite_image_info(9,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {

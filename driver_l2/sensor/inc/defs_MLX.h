@@ -124,7 +124,7 @@
   
 #define AVG_buf_len			4
 
-#define IMG_AVG_buf_len		4	// 信號穩定 5 次以上 
+#define IMG_AVG_buf_len		3	// 信號穩定 5 次以上 
 #define	IMG_AVGBUF_ON		1	// avg ON is good
 
 #define TMP_MAX_buf_len		3
@@ -229,6 +229,7 @@
 	  INT8U  MLX_TH32x24_disp_Time_Flag;
 	  INT16S MLX_TH32x24_TmpMin;
 	  INT16S MLX_TH32x24_TmpMax;
+	  INT16S MLX_TH32x24_1pointTmpMax;
 	  INT16S MLX_TH32x24_RedMarkTmpMax;
 	  
 	  INT16S MLX_TH32x24_alertTmpSet;
