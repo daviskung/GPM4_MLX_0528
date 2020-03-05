@@ -231,7 +231,6 @@
 	  INT16S MLX_TH32x24_TmpMax;
 	  INT16S MLX_TH32x24_1pointTmpMax;
 	  INT16S MLX_TH32x24_RedMarkTmpMax;
-	  INT16S MLX_TH32x24_1pointTmpMax;
 	  
 	  INT16S MLX_TH32x24_alertTmpSet;
 	  
