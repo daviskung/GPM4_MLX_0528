@@ -172,7 +172,7 @@ static prcess_mem_t *prcess_mem_set;
   	{1,1,1}
   	};
 #define LowPassFiliter_ON	1
-#define NO_SIGNAL_FACTOR	8	// for LP filiter
+#define NO_SIGNAL_FACTOR	9	// for LP filiter
 #define TMP_MAX_AVG_ON 		0
 
 
@@ -2824,6 +2824,8 @@ static void disp_task_entry(void const *parm)
 		gplib_ppu_sprite_segment_set(ppu_register_set, 0);										// sprite cell data
 		gplib_ppu_sprite_zoom_enable_set(ppu_register_set, 1);							 // Enable sprite zoom mode
 		gplib_ppu_sprite_rgba_mode_set(ppu_register_set, 1);
+		
+		gplib_ppu_sprite_blend_mode_set(ppu_register_set, 1);							 // Enable sprite blend mode
 
 	#if 1
 		//text 2 2D UI
@@ -3153,6 +3155,9 @@ static void disp_task_entry(void const *parm)
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
+            	// Blending is 64-level when sprite window function is disabled.
+				// This function should be used to set blending level when sprite window function is disabled.
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,60);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
