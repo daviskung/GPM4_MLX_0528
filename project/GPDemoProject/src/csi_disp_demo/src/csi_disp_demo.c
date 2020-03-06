@@ -29,6 +29,7 @@
 #include "Text_demo.h"
 #include "SPRITE_object_HDR.h"
 
+
 #include "sprite_dataSP_HDR.h"
 //#include "SPRITE_Number0_9_HDR.h" //  自己產生 先不用
 
@@ -2821,6 +2822,7 @@ static void disp_task_entry(void const *parm)
 		gplib_ppu_sprite_attribute_ram_ptr_set(ppu_register_set, (INT32U)SpriteRAM);			// set sprite ram buffer
 		gplib_ppu_sprite_extend_attribute_ram_ptr_set(ppu_register_set, (INT32U)SpriteExRAM);	// value: 32-bit pointer to sprite extend attribute ram
 		gplib_ppu_sprite_segment_set(ppu_register_set, 0);										// sprite cell data
+		gplib_ppu_sprite_zoom_enable_set(ppu_register_set, 1);							 // Enable sprite zoom mode
 		gplib_ppu_sprite_rgba_mode_set(ppu_register_set, 1);
 
 	#if 1
@@ -2942,7 +2944,7 @@ static void disp_task_entry(void const *parm)
 
 			// alert/No alert sign [userDefine_spNum = 7] // line3
 			lpcnt = 2;
-			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_ZOOM_SP);
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
 
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
@@ -2956,7 +2958,7 @@ static void disp_task_entry(void const *parm)
 			y_pos=0*SP_sm_V_SIZE;
 				}
 
-			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_ZOOM_CellIdx); // 放在 HDMI 上位置 
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
 			
 				
@@ -3264,19 +3266,30 @@ static void disp_task_entry(void const *parm)
 			if (pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG == 1)
 				{
 				sprite_base_addr = (INT32U)_SPRITE_SmFnt_alert_CellData;
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // -
+				 Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
+				gplib_ppu_sprite_attribute_zoom_set((SpN_RAM *)sp_ptr.nSPNum_ptr, 36); // SP_ZOOM36
+            	sp_num_addr=sp_ptr.nSPNum_ptr;
+           	 	for(i=0;i<sp_ptr.nSP_CharNum;i++)
+           			 {
+		                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+        		        sp_num_addr+=sizeof(SpN_RAM);
+            		}
 				}
 			else
 				{
 				sprite_base_addr = (INT32U)_SPRITE_SmFnt_NoAlert_CellData;
-				}
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // -
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // -
 				 Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
+				gplib_ppu_sprite_attribute_zoom_set((SpN_RAM *)sp_ptr.nSPNum_ptr, 0); // SP_ZOOM0
             	sp_num_addr=sp_ptr.nSPNum_ptr;
-           	 for(i=0;i<sp_ptr.nSP_CharNum;i++)
-           		 {
-                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
-                sp_num_addr+=sizeof(SpN_RAM);
-            	}
+           	 	for(i=0;i<sp_ptr.nSP_CharNum;i++)
+           			 {
+		                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+        		        sp_num_addr+=sizeof(SpN_RAM);
+            		}
+				}
+				
 				
 			
 			
