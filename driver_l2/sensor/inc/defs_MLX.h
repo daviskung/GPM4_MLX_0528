@@ -223,23 +223,28 @@
 	  INT16U  MLX_TH32x24_InitSet_controlRegister1;	  // to check controlRegister1 setting
 
 	  INT16U  MLX_TH32x24_Time_cnt;	
+	  
+	  INT16U  MLX_TH32x24_AlertTime_cnt;	
+	  
+	  INT8U  MLX_TH32x24_AlertTime_ON_FLAG;	
 
 	  
 	  INT8U  MLX_TH32x24_calc_Time_Flag; 
 	  INT8U  MLX_TH32x24_disp_Time_Flag;
 	  INT16S MLX_TH32x24_TmpMin;
 	  INT16S MLX_TH32x24_TmpMax;
-	  INT16S MLX_TH32x24_1pointTmpMax;
+	  //INT16S MLX_TH32x24_1pointTmpMax;
 	  INT16S MLX_TH32x24_RedMarkTmpMax;
 	  
 	  INT16S MLX_TH32x24_alertTmpSet;
 	  
 	  INT16S MLX_TH32x24_TmpMaxAVG;
 	  
-	  INT16S MLX_TH32x24_OvAlertVal[ALERT_BUF_LEN];
+	  INT16S MLX_TH32x24_OvAlertVal[ALERT_BUF_LEN];  
+	  INT16S MLX_TH32x24_OvAlertVal_SET;
 	  
-	  INT16S  MLX_TH32x24_TempMaxAry[TMP_MAX_buf_len]; // 取 排最高點 順序
-	  INT16U  MLX_TH32x24_TempMaxNum_Ary[TMP_MAX_buf_len]; // 取 排最高點 順序
+	  //INT16S  MLX_TH32x24_TempMaxAry[TMP_MAX_buf_len]; // 取 排最高點 順序
+	  //INT16U  MLX_TH32x24_TempMaxNum_Ary[TMP_MAX_buf_len]; // 取 排最高點 順序
 	  
 	  //INT8S  MLX_TH32x24_ColorMode;
 	  INT8U  MLX_TH32x24_GRAY_AMP_START;

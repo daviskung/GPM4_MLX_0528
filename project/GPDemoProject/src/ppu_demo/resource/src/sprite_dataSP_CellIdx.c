@@ -30,6 +30,14 @@ const SPRITE ALIGN4 Sprite001_N3_SP[]={
  { 0, 0, 0, 32, 32, 0, 0, 0, 0, 0, 0, 0, 0, (const INT32U *)_Img0001_N3_CellIdx } 
 };
 
+const INT16U ALIGN4 _Img0001_N3_ZOOM_CellIdx[]={
+	   1,	SP_ROTATE0,	   0,	SP_ZOOM63,	   0,	SP_PBANK1,	SPBLEND_DISABLE,	SP_DEPTH1,	SP_PALETTE5,	SP_VSIZE32,	SP_HSIZE32,	SPVFLIP_DISABLE,	SPHFLIP_DISABLE,	SP_COLOR256,	SP_MOSAIC0,	SPBLEND_LEVEL0,	0,	SpriteNoGroupID,	SPLarge_DISABLE,	SPInterpolation_DISABLE,
+	0xffff, 0xffff };
+const SPRITE ALIGN4 Sprite001_N3_ZOOM_SP[]={ 
+ { 0, 0, 0, 32, 32, 0, 0, 0, 0, 0, 0, 0, 0, (const INT32U *)_Img0001_N3_ZOOM_CellIdx } 
+};
+
+
 
 
 //=== This is for code configuration DON'T REMOVE or MODIFY it ===//

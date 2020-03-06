@@ -171,7 +171,7 @@ static prcess_mem_t *prcess_mem_set;
   	{1,1,1}
   	};
 #define LowPassFiliter_ON	1
-#define NO_SIGNAL_FACTOR	7	// for LP filiter
+#define NO_SIGNAL_FACTOR	8	// for LP filiter
 #define TMP_MAX_AVG_ON 		0
 
 
@@ -285,8 +285,8 @@ INT32U	Gcnt_lp,Gcnt_lp2,GlobalTimeCnt1,GlobalTimeCnt2;
 
 
 int	OvAlertVal_SUM;
-INT16S TmpDispBuf[TMP_MAX_DISP_buf_len];
-INT8U  TmpMaxDispBuf_cnt,Tmp1pointMaxDisp_cnt;
+//INT16S TmpDispBuf[TMP_MAX_DISP_buf_len];
+INT8U  TmpMaxDispBuf_cnt;
 INT16S TmpDispBuf_Pre,Tmp1pointDisp_Pre;
 
 
@@ -1542,7 +1542,7 @@ void FindMax_ColorAssign(void){
 
 	INT16U	SingleColorTmpValue,SingleColorShiftValue;
 	
-	INT8U TmpMaxBuf_cnt;
+	
 
 	pMLX_TH32x24_ImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_image; // image format ?
 		pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_LOWPASS_image;
@@ -1763,7 +1763,6 @@ void FindMax_ColorAssign(void){
 			TmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
 			TmpMin = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
 			RedMarkTmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
-			TmpMaxBuf_cnt = 0;
 			
 			//DBG_PRINT("M=%d m=%d\r\n ",TmpMax,TmpMin);
 			}
@@ -1842,27 +1841,6 @@ void FindMax_ColorAssign(void){
 				tmp_i = cellNum/rowNumEnd_32;
 				tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
 				TmpMaxTable_number=tmp_i2; //(左右 對調 後 正確位置) 
-				if (TmpMaxBuf_cnt < 5)
-					{
-					pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[TmpMaxBuf_cnt] = TmpMax;
-					pMLX_TH32x24_Para->MLX_TH32x24_TempMaxNum_Ary[TmpMaxBuf_cnt] = TmpMaxTable_number;
-					TmpMaxBuf_cnt++;
-					}
-				else
-					{
-					for (tmp_i2 = 0; tmp_i2 < (TMP_MAX_buf_len - 1); ++tmp_i2)
-						{
-						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[tmp_i2] = 
-						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[tmp_i2 + 1];
-						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxNum_Ary[tmp_i2] = 
-						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxNum_Ary[tmp_i2 + 1];
-				
-						}
-						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[TMP_MAX_buf_len-1] = 	TmpMax;		
-						pMLX_TH32x24_Para->MLX_TH32x24_TempMaxNum_Ary[TMP_MAX_buf_len-1] = 	TmpMaxTable_number;		
-					}
-				
-				
 				}
 			}
 
@@ -1949,16 +1927,6 @@ void FindMax_ColorAssign(void){
 
 	}
 
-
-	/*
-	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag == 1){
-			pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
-			pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
-			//DBG_PRINT("TmpMin=%d [%d] , TmpMax=%d [%d] \r\n",TmpMin,TmpMinTable_number,TmpMax,TmpMaxTable_number);
-		}
-	*/
-
-
 	if ((pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag == 1)
 		&& (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))
 	{
@@ -1967,83 +1935,7 @@ void FindMax_ColorAssign(void){
 		if((TmpMin != 0) && (TmpMax != 0))
 			{
 
-		#if TMP_MAX_AVG_ON
-			//
-			//	TmpMax avg 3x3 (TmpMaxTable_number is center point)
-			//
-
-			TmpMax_avg = TmpMax;
-			tmp_i2 = 0;
-			
-			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number +1) != -1 )
-				{
-				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + 
-								TmpMaxTable_number +1);
-				tmp_i2++;
-				}
-			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number -1) != -1 )
-				{
-				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + 
-								TmpMaxTable_number -1);
-				tmp_i2++;
-				}
-			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number + rowNumEnd_32 +1) != -1 )
-				{
-				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + 
-								TmpMaxTable_number + rowNumEnd_32 +1);
-				tmp_i2++;
-				}
-			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number + rowNumEnd_32 -1) != -1 )
-				{
-				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + 
-								TmpMaxTable_number + rowNumEnd_32 -1);
-				tmp_i2++;
-				}
-			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number + rowNumEnd_32 ) != -1 )
-				{
-				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + 
-								TmpMaxTable_number + rowNumEnd_32);
-				tmp_i2++;
-				}
-			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number - rowNumEnd_32 +1) != -1 )
-				{
-				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + 
-								TmpMaxTable_number - rowNumEnd_32 +1);
-				tmp_i2++;
-				}
-			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number - rowNumEnd_32 -1) != -1 )
-				{
-				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + 
-								TmpMaxTable_number- rowNumEnd_32 -1);
-				tmp_i2++;
-				}
-			if (*(pMLX_TH32x24_TmpOutput_INT16U_buf0 + TmpMaxTable_number - rowNumEnd_32 ) != -1 )
-				{
-				TmpMax_avg = TmpMax_avg + *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + 
-								TmpMaxTable_number - rowNumEnd_32);
-				tmp_i2++;
-				}
-
-			
-			tmp_i2++;
-			TmpMax_avg = TmpMax_avg / (INT16S)tmp_i2 ;
-			
-			//DBG_PRINT("M=%d P=%d \r\n ",TmpMax,TmpMaxTable_number);
-			pMLX_TH32x24_Para->MLX_TH32x24_TmpMaxAVG = TmpMax_avg;
-			
-		#endif // TMP_MAX_AVG_ON
-		
-			
-			DBG_PRINT(" Max - 1p = %d\r\n",TmpMax);
-			pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax = TmpMax;											
-			TmpMax = 0;
-			for (tmp_i2 = 0; tmp_i2 < TMP_MAX_buf_len; ++tmp_i2)
-				{
-				TmpMax = TmpMax + pMLX_TH32x24_Para->MLX_TH32x24_TempMaxAry[tmp_i2];	
-				}
-			TmpMax = TmpMax/TMP_MAX_buf_len;
-			//DBG_PRINT("\r\nMax-E\r\n");
-			
+			//DBG_PRINT(" Max - 1p = %d\r\n",TmpMax);
 			pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
 			pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
 			pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax=RedMarkTmpMax;
@@ -2063,13 +1955,19 @@ void FindMax_ColorAssign(void){
 			
 			OvAlertVal_SUM = OvAlertVal_SUM + pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal[ALERT_BUF_LEN-1];
 
-			if (OvAlertVal_SUM > 15)
+			if (OvAlertVal_SUM > pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET)
 				{
+				pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG = 1;
+				pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt = 0;
 				gpio_write_io(TH_ALERT_A14_PAD, DATA_HIGH);
 				}
 			else
 				{
-				gpio_write_io(TH_ALERT_A14_PAD, DATA_LOW);
+				if (pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt > 250)
+					{
+					gpio_write_io(TH_ALERT_A14_PAD, DATA_LOW);
+					pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG = 0;
+					}
 				}
 			
 			
@@ -2336,6 +2234,9 @@ void FindMax_ColorAssign(void){
 	INT32U frame;
 
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt++;
+	
+	if(pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG == 1)
+		pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt++;
 
 
 	if (pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt == 75)
@@ -2801,7 +2702,7 @@ static void disp_task_entry(void const *parm)
 
 	ScalerFormat_t scale;
 	ScalerPara_t para;
-	INT16S TmpDispBuf_sum;
+	INT16S TmpDispBuf;
 
     DBG_PRINT("disp_task_entry start \r\n");
     // Initialize display device
@@ -2964,7 +2865,7 @@ static void disp_task_entry(void const *parm)
 #endif
 
 		userDefine_spNum = 0;
-		for(lpcnt = 0 ; lpcnt < 3 ; lpcnt++) // 64x64 Big Font(line 1)
+		for(lpcnt = 0 ; lpcnt < 3 ; lpcnt++) // 64x64 Big Font(line1)
         {
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
 						
@@ -2992,7 +2893,7 @@ static void disp_task_entry(void const *parm)
 		}
 
 
-		for(lpcnt = 3 ; lpcnt < 6 ; lpcnt++)	// 32x32 small Font  (line 2)
+		for(lpcnt = 3 ; lpcnt < 6 ; lpcnt++)	// 32x32 small Font  (line2)
 		{
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
 						
@@ -3038,11 +2939,31 @@ static void disp_task_entry(void const *parm)
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
 
+
+			// alert/No alert sign [userDefine_spNum = 7] // line3
+			lpcnt = 2;
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_ZOOM_SP);
+
+			if(DISPLAY_DEVICE == DISDEV_TFT)
+				{
+				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
+				y_pos=3*SP_sm_V_SIZE;
+				}
+		
+			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
+				{
+			x_pos=lpcnt*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
+			y_pos=0*SP_sm_V_SIZE;
+				}
+
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_ZOOM_CellIdx); // 放在 HDMI 上位置 
+				userDefine_spNum++;
+			
+				
+		#if 0 // line3
 		for(lpcnt = 7 ; lpcnt < 10 ; lpcnt++)	// 32x32 small Font (line 3)
 		{
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
-						
-    #if 1
 			
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
@@ -3055,15 +2976,11 @@ static void disp_task_entry(void const *parm)
 			x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
 			y_pos=(-1)*SP_sm_V_SIZE;
 				}
-
-    #else
-			x_pos=(lpcnt%MLX_LINE)*pos_x;
-			y_pos=(lpcnt/MLX_LINE)*pos_y;
-    #endif
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
 
 		}
+	#endif // line3
 		
 
 	//paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,1024);
@@ -3096,11 +3013,20 @@ static void disp_task_entry(void const *parm)
 						device_h_size,110,0,16);
 					cpu_draw_line_osd(OverZeroDiff_value,display_buf,40,
 						device_h_size,160,0,17);
-
+					if(DISPLAY_DEVICE == DISDEV_TFT)
+						{
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,80,
 						device_h_size,90,0,10);
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,display_buf,80,
 						device_h_size,110,0,10);
+						}
+					if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
+						{
+					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,80,
+						device_h_size,50,0,10);
+					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor,display_buf,80,
+						device_h_size,110,0,10);
+						}
 
 					cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL,display_buf,80,
 						device_h_size,160,0,11);
@@ -3120,7 +3046,6 @@ static void disp_task_entry(void const *parm)
 					OvAlertVal_SUM = 0 ;
 					TmpMaxDispBuf_cnt = 0;
 					Tmp1pointDisp_Pre = 0;
-					Tmp1pointMaxDisp_cnt = 0;	   
 
 				}
 			else
@@ -3149,6 +3074,15 @@ static void disp_task_entry(void const *parm)
 							device_h_size,320,100,8);
 						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,
 							device_h_size,360,110,17);
+						
+						if (pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET >= 0)
+							{
+							cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET,display_buf,
+							device_h_size,400,120,16);
+							}
+						else
+							cpu_draw_advalue_osd(abs(pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET),display_buf,
+								device_h_size,400,120,1);
 						}
 					
 					if(DISPLAY_DEVICE == DISDEV_TFT)
@@ -3158,6 +3092,14 @@ static void disp_task_entry(void const *parm)
 
 						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMax,display_buf,
 							device_h_size,288,0,6);
+						if (pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET >= 0)
+							{
+							cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET,display_buf,180,
+							device_h_size,220,100,16);
+							}
+						else
+							cpu_draw_line_osd(abs(pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET),display_buf,180,
+								device_h_size,220,100,1);
 					
 						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet,display_buf,200,
 							device_h_size,220,0,8);
@@ -3180,45 +3122,29 @@ static void disp_task_entry(void const *parm)
 
 			if (TmpMaxDispBuf_cnt == 0)
 				{
-				for (i = 0; i< TMP_MAX_DISP_buf_len; ++i)
-					{
-					TmpDispBuf[i] = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
-					}
 				TmpMaxDispBuf_cnt++;
-				TmpDispBuf_sum = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
-				
 				TmpDispBuf_Pre = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
 				}
-			else
+				
+			if ( abs(TmpDispBuf_Pre - pMLX_TH32x24_Para->MLX_TH32x24_TmpMax) < 5 ) 
 				{
-					TmpDispBuf_sum = 0;
-					for (i = 0; i < TMP_MAX_DISP_buf_len; ++i)
-						{
-						TmpDispBuf[i] = TmpDispBuf[i + 1];
-						TmpDispBuf_sum = TmpDispBuf_sum + TmpDispBuf[i];
-						}
-					TmpDispBuf[TMP_MAX_DISP_buf_len -1 ] = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
-					TmpDispBuf_sum = TmpDispBuf_sum + TmpDispBuf[TMP_MAX_DISP_buf_len -1];
-					TmpDispBuf_sum = TmpDispBuf_sum/TMP_MAX_DISP_buf_len ;
-				}
-			if ( abs(TmpDispBuf_Pre - TmpDispBuf_sum) < 5 ) 
-				{
-				TmpDispBuf_sum = TmpDispBuf_Pre;
+				TmpDispBuf = TmpDispBuf_Pre;
 				}
 			else
 				{
-				TmpDispBuf_Pre = TmpDispBuf_sum;
+				TmpDispBuf_Pre = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
+				TmpDispBuf = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
 				}
 			
 			paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
 			
 			//
-			//	64x64 Big Font  (line 1)
+			//	64x64 Big Font  (line1)
 			//
 			sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
 		    	
 			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +		
-				( (TmpDispBuf_sum/100) * SP_CHR_SIZE));
+				( (TmpDispBuf/100) * SP_CHR_SIZE));
 				//( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax/100) * SP_CHR_SIZE));
 
             Get_sprite_image_info(0,(SpN_ptr *)&sp_ptr);
@@ -3230,7 +3156,7 @@ static void disp_task_entry(void const *parm)
             }
 
 			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	
-				( (TmpDispBuf_sum%100)/10 * SP_CHR_SIZE));
+				( (TmpDispBuf%100)/10 * SP_CHR_SIZE));
 				//( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%100)/10 * SP_CHR_SIZE));
 
             Get_sprite_image_info(1,(SpN_ptr *)&sp_ptr);
@@ -3244,7 +3170,7 @@ static void disp_task_entry(void const *parm)
 			
 			 sprite_base_addr = (INT32U)_SPRITE_Number0_9pv1_CellData;
 			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  
-			 	((TmpDispBuf_sum%10) * SP_CHR_SIZE));
+			 	((TmpDispBuf%10) * SP_CHR_SIZE));
 			 	//((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
 			 Get_sprite_image_info(2,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -3256,7 +3182,7 @@ static void disp_task_entry(void const *parm)
 
 
 			//
-			//	32x32 small Font (line 2)
+			//	32x32 small Font (line2)
 			//
 
 			// +/- sign
@@ -3333,6 +3259,28 @@ static void disp_task_entry(void const *parm)
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
+
+			// alert sign (line3)
+			if (pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG == 1)
+				{
+				sprite_base_addr = (INT32U)_SPRITE_SmFnt_alert_CellData;
+				}
+			else
+				{
+				sprite_base_addr = (INT32U)_SPRITE_SmFnt_NoAlert_CellData;
+				}
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // -
+				 Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
+            	sp_num_addr=sp_ptr.nSPNum_ptr;
+           	 for(i=0;i<sp_ptr.nSP_CharNum;i++)
+           		 {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            	}
+				
+			
+			
+		#if 0	// line3
 			//	32x32 small Font (line 3)
 			//
 
@@ -3393,6 +3341,7 @@ static void disp_task_entry(void const *parm)
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
+		#endif // line3
 
 			gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, device_h_size, device_v_size,
 			//	(INT32U)_Text001_IMG0000_CellData); // Calculate Number array
@@ -3486,7 +3435,7 @@ static void prcess_task_entry(void const *parm)
 
 	gpio_init_io(TH_ALERT_A14_PAD, GPIO_OUTPUT);
 	gpio_set_port_attribute(TH_ALERT_A14_PAD, ATTRIBUTE_HIGH);
-	gpio_write_io(TH_ALERT_A14_PAD, DATA_HIGH);
+	gpio_write_io(TH_ALERT_A14_PAD, DATA_LOW);
 
 
 	gpio_init_io(TH_TEST1_A12_PAD, GPIO_OUTPUT);
@@ -4108,12 +4057,13 @@ void GPM4_CSI_DISP_Demo(void)
 	DBG_PRINT("Set MLX_TH32x24_ReadElecOffset_timer_isr ret--> %d, set -%d- ms \r\n",nRet,
 		1000/pMLX_TH32x24_Para->MLX_TH32x24_sampleHz) ;
 
-	pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet = 340;
+	pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet = 330;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = GRAY_AMP_START;
 	pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE = GRAY_AMP_SCALE;
 	pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 1;
-
-
+	pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET = 0;
+	pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG = 0;
+	pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt = 0;
 
     // ad key init
 	adc_key_scan_init();
@@ -4141,34 +4091,23 @@ void GPM4_CSI_DISP_Demo(void)
 			DBG_PRINT("ad_key-2 selection -alterTmpSet = %d\r\n",
 				pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet);
 		}
-		else if(ADKEY_IO6)
-			{
-				pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET ++;
-				if( pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET > 1 )
-					pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET = 0;
-			DBG_PRINT("ad_key-6 selection LowPass_SET = %d\r\n",
-				pMLX_TH32x24_Para->MLX_TH32x24_LowPass_SET);
-			}
-
-		//if( pMLX_TH32x24_Para->MLX_TH32x24_ColorMode == 0 ){
-
 		else if(ADKEY_IO3)
 			{
-			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START =
-				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START + 10;
-			if( pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START > 240 )
-				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START = GRAY_AMP_START;
+			pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET =
+				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET + 3;
+			if( pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET > 240 )
+				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET = 0;
 
-			DBG_PRINT("ad_key-3 selection -AMP_START = %d\r\n",
-				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_START);
+			DBG_PRINT("ad_key-3 selection -OvAlertVal_SET = %d\r\n",
+				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET);
 			}
 		else if(ADKEY_IO4)
 			{
-			pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE ++;
-			if( pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE > 10 )
-				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE = 0;
-			DBG_PRINT("ad_key-4 selection -AMP_SCALE = %d\r\n",
-				pMLX_TH32x24_Para->MLX_TH32x24_GRAY_AMP_SCALE);
+			pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET --;
+			if( pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET < -240 )
+				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET = 0;
+			DBG_PRINT("ad_key-4 selection -OvAlertVal_SET = %d\r\n",
+				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET);
 			}
 
 		//}
