@@ -154,6 +154,12 @@ static prcess_mem_t *prcess_mem_set;
 #define SP_sm_CHR_SIZE                         (SP_sm_H_SIZE*SP_sm_V_SIZE*SP_SIZE_CH)
 //define SP_MAX_A_LEVEL                      30		// 256 sprite 可用 
 
+#define SP_unit_H_SIZE                           32//64//16 //8
+#define SP_unit_V_SIZE                           64//64//16 //8
+#define SP_SIZE_CH                          4
+#define SP_unit_CHR_SIZE                         (SP_unit_H_SIZE*SP_unit_V_SIZE*SP_SIZE_CH)
+
+
 #define	G_area		255
 #define	B_area		0
 #define	A_area		0
@@ -2891,7 +2897,7 @@ static void disp_task_entry(void const *parm)
 		}
 
 			lpcnt = 4;
-			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite023_half_SP);
 
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
@@ -2905,7 +2911,7 @@ static void disp_task_entry(void const *parm)
 			y_pos=(lpcnt/5)*SP_V_SIZE -2* SP_V_SIZE;
 				}
 
-			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N1_CellIdx); // 放在 HDMI 上位置 
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N2_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
 
 
@@ -3222,16 +3228,16 @@ static void disp_task_entry(void const *parm)
             }
 			//set_sprite_disable(4);
 
-			sprite_base_addr = (INT32U)_SPRITE_Unit_Null_CellData;
+			sprite_base_addr = (INT32U)_SPRITE_UnitHalf_CellData;
 			if (pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET == 0)
 				{
-				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit C
-			 	(0* SP_CHR_SIZE));
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit half C
+			 	(1* SP_unit_CHR_SIZE));
 				}
 			else
 				{
-			 	sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit F
-			 	(1* SP_CHR_SIZE));
+			 	sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit half F
+			 	(2* SP_unit_CHR_SIZE));
 				}
 			 	//((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
 			 Get_sprite_image_info(4,(SpN_ptr *)&sp_ptr);
