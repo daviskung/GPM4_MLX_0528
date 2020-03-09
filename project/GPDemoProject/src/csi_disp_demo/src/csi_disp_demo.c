@@ -148,16 +148,22 @@ static prcess_mem_t *prcess_mem_set;
 #define SP_CHR_SIZE                         (SP_H_SIZE*SP_V_SIZE*SP_SIZE_CH)
 #define SP_MAX_A_LEVEL                      30		// 256 sprite 可用 
 
-#define SP_sm_H_SIZE                           32//64//16 //8
-#define SP_sm_V_SIZE                           32//64//16 //8
+#define SP_sm_H_SIZE                         32
+#define SP_sm_V_SIZE                         32
 #define SP_SIZE_CH                          4
-#define SP_sm_CHR_SIZE                         (SP_sm_H_SIZE*SP_sm_V_SIZE*SP_SIZE_CH)
+#define SP_sm_CHR_SIZE                       (SP_sm_H_SIZE*SP_sm_V_SIZE*SP_SIZE_CH)
 //define SP_MAX_A_LEVEL                      30		// 256 sprite 可用 
 
-#define SP_unit_H_SIZE                           32//64//16 //8
-#define SP_unit_V_SIZE                           64//64//16 //8
+#define SP_unit_H_SIZE                      32
+#define SP_unit_V_SIZE                      64
 #define SP_SIZE_CH                          4
-#define SP_unit_CHR_SIZE                         (SP_unit_H_SIZE*SP_unit_V_SIZE*SP_SIZE_CH)
+#define SP_unit_CHR_SIZE                     (SP_unit_H_SIZE*SP_unit_V_SIZE*SP_SIZE_CH)
+
+#define SP_sm_unit_H_SIZE                   16
+#define SP_sm_unit_V_SIZE                   32
+#define SP_SIZE_CH                          4
+#define SP_sm_unit_CHR_SIZE                  (SP_sm_unit_H_SIZE*SP_sm_unit_V_SIZE*SP_SIZE_CH)
+
 
 
 #define	G_area		255
@@ -2705,7 +2711,7 @@ static void disp_task_entry(void const *parm)
 	INT32U 	lpcnt;
 
 	INT16S ColorLp;
-	INT16U OvAlertVal_SUMtmp;
+	INT16U AlertTmpSet_tmp;
 
 	ScalerFormat_t scale;
 	ScalerPara_t para;
@@ -2831,7 +2837,7 @@ static void disp_task_entry(void const *parm)
 		gplib_ppu_sprite_zoom_enable_set(ppu_register_set, 1);							 // Enable sprite zoom mode
 		gplib_ppu_sprite_rgba_mode_set(ppu_register_set, 1);
 
-		gplib_ppu_sprite_blend_mode_set(ppu_register_set, 1);							 // Enable sprite blend mode
+		//gplib_ppu_sprite_blend_mode_set(ppu_register_set, 1);							 // Enable sprite blend mode
 
 	#if 1
 		//text 2 2D UI
@@ -2887,7 +2893,7 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=(lpcnt%5)*(SP_H_SIZE-26) +4* SP_H_SIZE + 32;
+			x_pos=(lpcnt%5)*(SP_H_SIZE-26) +4* SP_H_SIZE + 64;
 			y_pos=(lpcnt/5)*SP_V_SIZE -2* SP_V_SIZE;
 				}
 
@@ -2907,7 +2913,7 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=(lpcnt%5)*(SP_H_SIZE-24) +4* SP_H_SIZE + 32;
+			x_pos=(lpcnt%5)*(SP_H_SIZE-24) +4* SP_H_SIZE + 64;
 			y_pos=(lpcnt/5)*SP_V_SIZE -2* SP_V_SIZE;
 				}
 
@@ -2917,7 +2923,7 @@ static void disp_task_entry(void const *parm)
 
 
 
-		for(lpcnt = 5 ; lpcnt < 8 ; lpcnt++)	// 32x32 small Font  (line2)
+		for(lpcnt = 5 ; lpcnt < 9 ; lpcnt++)	// 32x32 small Font  (line2)
 		{
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
 			if(DISPLAY_DEVICE == DISDEV_TFT)
@@ -2928,13 +2934,30 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=lpcnt*(SP_sm_H_SIZE-8) +10* SP_sm_H_SIZE;
+			x_pos=lpcnt*(SP_sm_H_SIZE-8) +7* SP_sm_H_SIZE;
 			y_pos=-2*SP_sm_V_SIZE;
 				}
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
 
 		}
+
+		
+		lpcnt = 9; //  16x32 unit C/F
+		set_sprite_init(userDefine_spNum,(INT32U)&Sprite025_half_C_SP);
+			if(DISPLAY_DEVICE == DISDEV_TFT)
+				{
+				x_pos=lpcnt*(SP_sm_unit_H_SIZE-8) + 5*SP_sm_unit_H_SIZE;
+				y_pos=3*SP_sm_unit_V_SIZE;
+				}
+
+			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
+				{
+			x_pos=lpcnt*(SP_sm_H_SIZE-8) +7* SP_sm_H_SIZE +7;
+			y_pos=-2*SP_sm_V_SIZE;
+				}
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N4_CellIdx); // 放在 HDMI 上位置 
+				userDefine_spNum++;
 
 			// +/- sign userDefine_spNum = 6]
 			/*
@@ -2970,7 +2993,7 @@ static void disp_task_entry(void const *parm)
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
 			x_pos=lpcnt*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
-			y_pos=0*SP_sm_V_SIZE;
+			y_pos=1*SP_sm_V_SIZE;
 				}
 
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
@@ -3185,7 +3208,7 @@ static void disp_task_entry(void const *parm)
             {
             	// Blending is 64-level when sprite window function is disabled.
 				// This function should be used to set blending level when sprite window function is disabled.
-	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
@@ -3200,7 +3223,7 @@ static void disp_task_entry(void const *parm)
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
 
-	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
@@ -3213,7 +3236,7 @@ static void disp_task_entry(void const *parm)
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
 
-	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
@@ -3227,7 +3250,7 @@ static void disp_task_entry(void const *parm)
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
 
-	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
@@ -3237,12 +3260,12 @@ static void disp_task_entry(void const *parm)
 			if (pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET == 0)
 				{
 				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit half C
-			 	(1* SP_unit_CHR_SIZE));
+			 	(0* SP_unit_CHR_SIZE));
 				}
 			else
 				{
 			 	sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit half F
-			 	(2* SP_unit_CHR_SIZE));
+			 	(1* SP_unit_CHR_SIZE));
 				}
 			 	//((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
 			 Get_sprite_image_info(4,(SpN_ptr *)&sp_ptr);
@@ -3250,14 +3273,12 @@ static void disp_task_entry(void const *parm)
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
 
-	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
-			//
-			//	32x32 small Font (line2)
-			//
+			
 			#if 0 // +/-
 			// +/- sign
 
@@ -3285,25 +3306,44 @@ static void disp_task_entry(void const *parm)
 
 			#endif // +/-
 
+			//
+			//	32x32 small Font (line2)
+			//
+
+			
+			AlertTmpSet_tmp = pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet; //
+			if (pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET == 1) // unit F
+				{
+				AlertTmpSet_tmp = (AlertTmpSet_tmp*9)/5 +320;
+				//DBG_PRINT("TmpDispBuf= %d\r\n",TmpDispBuf);
+				}
+			
 			sprite_base_addr = (INT32U)_SPRITE_NumFntSmall_N3_CellData;
-
-
-			//OvAlertVal_SUMtmp = abs(OvAlertVal_SUM); // abs() 沒有 +/- 才可以 
-
-			//DBG_PRINT(" [%d]",OvAlertVal_SUMtmp);
-
-
-			OvAlertVal_SUMtmp = pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet; //
-
+			if ((AlertTmpSet_tmp/1000) != 0)
+				{
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +		// 千位數 
+				( ((AlertTmpSet_tmp/1000)+1) * SP_sm_CHR_SIZE));
+				}
+			else
+				{
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	0);	// 千位數  = Null
+				}
+			Get_sprite_image_info(5,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+			
+			sprite_base_addr = (INT32U)_SPRITE_NumFntSmall_N3_CellData;
 			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 百位數 
-			//	( (pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet/100) * SP_sm_CHR_SIZE));
-			//((INT16U)OvAlertVal_SUM/100) * SP_sm_CHR_SIZE);
-			OvAlertVal_SUMtmp/100 * SP_sm_CHR_SIZE);
+			((AlertTmpSet_tmp/100)%10 + 1)  * SP_sm_CHR_SIZE);
 
 			//DBG_PRINT(" \r\n");
 			//DBG_PRINT("32x32-0 = 0x%x /",sprite_characterNum_pos_addr);
 
-            Get_sprite_image_info(5,(SpN_ptr *)&sp_ptr);
+            Get_sprite_image_info(6,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
@@ -3312,10 +3352,10 @@ static void disp_task_entry(void const *parm)
             }
 
 			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 十位數 
-				( ( OvAlertVal_SUMtmp%100)/10* SP_sm_CHR_SIZE)); // for test
+				( ((AlertTmpSet_tmp/10)%10 + 1)* SP_sm_CHR_SIZE)); // 
 
 			//DBG_PRINT("32x32-1 = 0x%x /",sprite_characterNum_pos_addr);
-            Get_sprite_image_info(6,(SpN_ptr *)&sp_ptr);
+            Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
@@ -3325,10 +3365,29 @@ static void disp_task_entry(void const *parm)
 
 			 sprite_base_addr = (INT32U)_SPRITE_SmFnt_N3p_CellData;
 			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 個位數 
-			 	(( OvAlertVal_SUMtmp%10) * SP_sm_CHR_SIZE)); // fortest
+			 	((AlertTmpSet_tmp%10) * SP_sm_CHR_SIZE)); // fortest
 
 			 //DBG_PRINT("32x32-2 = 0x%x \r\n",sprite_characterNum_pos_addr);
-			 Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
+			 Get_sprite_image_info(8,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+
+			sprite_base_addr = (INT32U)_SPRITE_SmFnt_unit_hal_CellData;
+			if (pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET == 0)
+				{
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit half C
+			 	(0* SP_sm_unit_CHR_SIZE));
+				}
+			else
+				{
+			 	sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit half F
+			 	(1* SP_sm_unit_CHR_SIZE));
+				}
+			 Get_sprite_image_info(9,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
@@ -3341,7 +3400,7 @@ static void disp_task_entry(void const *parm)
 				{
 				sprite_base_addr = (INT32U)_SPRITE_SmFnt_alert_CellData;
 				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // -
-				 Get_sprite_image_info(8,(SpN_ptr *)&sp_ptr);
+				 Get_sprite_image_info(10,(SpN_ptr *)&sp_ptr);
 				gplib_ppu_sprite_attribute_zoom_set((SpN_RAM *)sp_ptr.nSPNum_ptr, 36); // SP_ZOOM36
             	sp_num_addr=sp_ptr.nSPNum_ptr;
            	 	for(i=0;i<sp_ptr.nSP_CharNum;i++)
@@ -3354,7 +3413,7 @@ static void disp_task_entry(void const *parm)
 				{
 				sprite_base_addr = (INT32U)_SPRITE_SmFnt_NoAlert_CellData;
 				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // -
-				 Get_sprite_image_info(8,(SpN_ptr *)&sp_ptr);
+				 Get_sprite_image_info(10,(SpN_ptr *)&sp_ptr);
 				gplib_ppu_sprite_attribute_zoom_set((SpN_RAM *)sp_ptr.nSPNum_ptr, 0); // SP_ZOOM0
             	sp_num_addr=sp_ptr.nSPNum_ptr;
            	 	for(i=0;i<sp_ptr.nSP_CharNum;i++)
