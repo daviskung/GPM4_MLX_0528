@@ -2896,7 +2896,7 @@ static void disp_task_entry(void const *parm)
 
 		}
 
-			lpcnt = 4;
+			lpcnt = 4; // unit C/F
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite023_half_SP);
 
 			if(DISPLAY_DEVICE == DISDEV_TFT)
@@ -3153,6 +3153,11 @@ static void disp_task_entry(void const *parm)
 				TmpDispBuf_Pre = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
 				TmpDispBuf = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
 				}
+			if (pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET == 1) // unit F
+				{
+				TmpDispBuf = (TmpDispBuf*9)/5 +320;
+				//DBG_PRINT("TmpDispBuf= %d\r\n",TmpDispBuf);
+				}
 
 			paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
 
@@ -3215,7 +3220,7 @@ static void disp_task_entry(void const *parm)
 
 			sprite_base_addr = (INT32U)_SPRITE_Number0_9pv1_CellData;
 			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 個位數 
-			 	(((TmpDispBuf/10)%10 + 1) * SP_CHR_SIZE));
+			 	((TmpDispBuf%10 + 1) * SP_CHR_SIZE));
 			 	//((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
 			 Get_sprite_image_info(3,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -4177,14 +4182,17 @@ void GPM4_CSI_DISP_Demo(void)
 		}
 		else if(ADKEY_IO3)
 			{
-			pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET =
-				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET + 3;
-			if( pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET > 240 )
-				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET = 0;
+			pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET =
+				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET + 1;
+			
+			if( pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET > 1 )
+				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET = 0;
 
-			DBG_PRINT("ad_key-3 selection -OvAlertVal_SET = %d\r\n",
-				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET);
+			DBG_PRINT("ad_key-3 TMPunit_SET = %d\r\n",
+				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET);
 			}
+		
+		/*
 		else if(ADKEY_IO4)
 			{
 			pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET --;
@@ -4193,7 +4201,8 @@ void GPM4_CSI_DISP_Demo(void)
 			DBG_PRINT("ad_key-4 selection -OvAlertVal_SET = %d\r\n",
 				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET);
 			}
-
+		*/
+		
 		//}
 
 
