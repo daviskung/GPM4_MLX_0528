@@ -33,6 +33,7 @@ extern const INT16U _SPRITE_SmFnt_N3p_CellData[];
 extern const INT16U _SPRITE_SmFnt_signOnly_CellData[];
 extern const INT16U _SPRITE_SmFnt_alert_CellData[];
 extern const INT16U _SPRITE_SmFnt_NoAlert_CellData[];
+extern const INT16U _SPRITE_Unit_Null_CellData[];
 
 
 

@@ -31,7 +31,7 @@
 
 
 #include "sprite_dataSP_HDR.h"
-//#include "SPRITE_Number0_9_HDR.h" //  自己產生 先不用
+//#include "SPRITE_Number0_9_HDR.h" //  自己產生 先不用 
 
 #include "TEXT_Platform_verification_1_HDR.h"
 
@@ -1030,7 +1030,7 @@ static void mazeTest_Preview_PScaler(void)
 			 pMLX_TH32x24_Para->result[pixelNumber] =(INT16S)(To*10);
 			 	}
 
-			else 
+			else
 			 	pMLX_TH32x24_Para->result[pixelNumber] = -1; // NOT ZONE1 set -1
 			}
 		 }
@@ -1455,13 +1455,13 @@ void ScaleUpForH_Mark(void)
 			for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
 					//RGB888TmpValue = *(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0 + cellNum);
 					tmp_i2 = cellNum % 32;
-	
+
 				if((( cellNum % 32) == 0 ) && ( cellNum != 0 ))
 					{
 						tmp_start = tmp_i;
 						//DBG_PRINT("tmp_start = %d,tmp_i2 = %d , cellNum = %d	\r\n",tmp_start,tmp_i2,cellNum);
 					}
-	
+
 				for (tmp_i = tmp_start + tmp_i2 *ScaleUp_3 ; tmp_i < tmp_start + (tmp_i2 *ScaleUp_3)+ ScaleUp_3; ++tmp_i)
 					{
 					*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
@@ -1469,20 +1469,20 @@ void ScaleUpForH_Mark(void)
 					}
 				for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
 					{
-	
+
 					*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
 							=RGB888TmpValue;
 					}
 				for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32*2)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32*2)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
 					{
-	
+
 					*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
 							=RGB888TmpValue;
 					}
-	
+
 			}
 
-	
+
 
 
 }
@@ -1536,14 +1536,14 @@ void FindMax_ColorAssign(void){
 
 	INT16U	 TmpMinTable_number,TmpMax_Mark_Table_number,TmpMaxTable_number;
 	INT16S	 TmpMax_avg;
-		
+
 	//INT16U	 TmpMaxTable_Mark_number[5];
 
 	INT16U  *pMLX_TH32x24_TmpOutput_INT16U_buf0;
 
 	INT16U	SingleColorTmpValue,SingleColorShiftValue;
-	
-	
+
+
 
 	pMLX_TH32x24_ImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_image; // image format ?
 		pMLX_TH32x24_LowPassImgOutput_INT32S_buf0 = pMLX_TH32x24_Para->result_LOWPASS_image;
@@ -1764,7 +1764,7 @@ void FindMax_ColorAssign(void){
 			TmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
 			TmpMin = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
 			RedMarkTmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
-			
+
 			//DBG_PRINT("M=%d m=%d\r\n ",TmpMax,TmpMin);
 			}
 	for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
@@ -1790,7 +1790,7 @@ void FindMax_ColorAssign(void){
 			 TminUnderZero = 0;
 			 }
 		 }
-	 
+
 	 if(((cellNum/32) >CORE_AREA_limit)&&((cellNum/32)<(SENSOR_AREA_HIGH -CORE_AREA_limit))
 			 &&((cellNum%32)>CORE_AREA_limit)&&((cellNum%32)<(SENSOR_AREA_WIDTH -CORE_AREA_limit))){
 		 if (ImgObject >= 0)
@@ -1915,13 +1915,13 @@ void FindMax_ColorAssign(void){
 			*(pMLX_TH32x24_Grayframe_INT8U_buf0+ tmp_i2)
 			= GrayTmpValue;
 
-			#if 0	// 背景藍色
+			#if 0	// 背景藍色 
 			RGB888TmpValue =(INT32U)GrayTmpValue<<24 | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0x000000ff; // 籃底色 
 			// FF’ (255) 表示 alpha 係數。‘00’ 表示紅色的數量，‘FF’ 表示綠色的數量 ‘00’ 表示藍色的數量. 
-			#else	// 灰階
+			#else	// 灰階 
 			RGB888TmpValue =(INT32U)GrayTmpValue | (INT32U)GrayTmpValue<<8 | (INT32U)GrayTmpValue<<16 | 0xff000000;	// 灰階 
 			#endif
-			
+
 			*(pMLX_TH32x24_RGB888Colorframe_INT32U_buf0+ tmp_i2)
 			= RGB888TmpValue;
 
@@ -1931,8 +1931,8 @@ void FindMax_ColorAssign(void){
 	if ((pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag == 1)
 		&& (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))
 	{
-		
-		
+
+
 		if((TmpMin != 0) && (TmpMax != 0))
 			{
 
@@ -1940,20 +1940,20 @@ void FindMax_ColorAssign(void){
 			pMLX_TH32x24_Para->MLX_TH32x24_TmpMin = TmpMin;
 			pMLX_TH32x24_Para->MLX_TH32x24_TmpMax = TmpMax;
 			pMLX_TH32x24_Para->MLX_TH32x24_RedMarkTmpMax=RedMarkTmpMax;
-			
+
 			OvAlertVal_SUM = 0;
-						
+
 			for (tmp_i2 = 0; tmp_i2 < (ALERT_BUF_LEN - 1); ++tmp_i2)
 				{
-				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal[tmp_i2] = 
+				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal[tmp_i2] =
 					pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal[tmp_i2 + 1];
-				OvAlertVal_SUM = OvAlertVal_SUM + 
+				OvAlertVal_SUM = OvAlertVal_SUM +
 					pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal[tmp_i2 + 1];
 				}
-			
-			pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal[ALERT_BUF_LEN-1] = 			
+
+			pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal[ALERT_BUF_LEN-1] =
 				pMLX_TH32x24_Para->MLX_TH32x24_TmpMax - pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet 	;
-			
+
 			OvAlertVal_SUM = OvAlertVal_SUM + pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal[ALERT_BUF_LEN-1];
 
 			if (OvAlertVal_SUM > pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET)
@@ -1970,8 +1970,8 @@ void FindMax_ColorAssign(void){
 					pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG = 0;
 					}
 				}
-			
-			
+
+
 			/*
 			DBG_PRINT("\r\n SUM = %d \r\n ",OvAlertVal_SUM);
 			for (tmp_i2 = 0; tmp_i2 < ALERT_BUF_LEN; ++tmp_i2)
@@ -1981,12 +1981,12 @@ void FindMax_ColorAssign(void){
 				}
 			DBG_PRINT("\r\n SUM = %d \r\n ",OvAlertVal_SUM);
 			*/
-			
+
 			}
-		
-		pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag = 0;	// 
+
+		pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag = 0;	//
 		pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag = 1;
-		
+
 		//DBG_PRINT("M_=%d \r\n ",TmpMaxTable_number);
 		//DBG_PRINT("TmpMin=%d [%d] , TmpMax=%d [%d] \r\n",TmpMin,TmpMinTable_number,TmpMax,TmpMaxTable_number);
 
@@ -2011,7 +2011,7 @@ void FindMax_ColorAssign(void){
 			= 0xffff0000;
 		*/
 
-		
+
 		for (tmp_i2 = 103; tmp_i2 < 121; ++tmp_i2)	// upper line
 			{
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ tmp_i2)
@@ -2033,20 +2033,20 @@ void FindMax_ColorAssign(void){
 			= 0x20008f00;
 			}
 
-			
+
 
 		// HighTMark is Squre Red
-		// ZONE 1 only		
+		// ZONE 1 only
 		//*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number)
 		//	= 0xffff0000;
-		
+
 		if((TmpMax_Mark_Table_number+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit) ) // to right < 24
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+1)
 				= 0xffff0000;
 		if((TmpMax_Mark_Table_number-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit ) // to left >= 8
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-1)
 				= 0xffff0000;
-		
+
 		if((TmpMax_Mark_Table_number-rowNumEnd_32)/rowNumEnd_32 >= TMPZONE1_VER_AREA_limit) // to upper >=4
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-rowNumEnd_32)
 			= 0xffff0000;
@@ -2058,7 +2058,7 @@ void FindMax_ColorAssign(void){
 			&& ((TmpMax_Mark_Table_number-rowNumEnd_32-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit)) // to left >= 8
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-rowNumEnd_32-1)
 			= 0xffff0000;
-		
+
 		if((TmpMax_Mark_Table_number+rowNumEnd_32)/rowNumEnd_32 < (SENSOR_AREA_HIGH -TMPZONE1_VER_AREA_limit) ) // to lower <=20
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+rowNumEnd_32)
 				= 0xffff0000;
@@ -2070,7 +2070,7 @@ void FindMax_ColorAssign(void){
 			&& ((TmpMax_Mark_Table_number+rowNumEnd_32-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit)) // to left >= 8
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+rowNumEnd_32-1)
 				= 0xffff0000;
-		
+
 		//ScaleUpForH_Mark();
 		//
 		// scale function for HighTMark (x 3) / ScaleUp_3
@@ -2143,7 +2143,7 @@ void FindMax_ColorAssign(void){
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_MAX_VAL = MLX_Gray_MAX_val_Ary[19]; // 255 會有計算 error
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = MLX_Gray_START_val_Ary[19];
 					pMLX_TH32x24_Para->TmpTbInd_buf_Enable = 0;
-					
+
 					pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd = 19;
 					TmpTbInd = 0;
 					//DBG_PRINT("OverZeroDiff_value > 0  \r\n");
@@ -2198,7 +2198,7 @@ void FindMax_ColorAssign(void){
 #endif
 
 				}
-			
+
 
 
 
@@ -2235,7 +2235,7 @@ void FindMax_ColorAssign(void){
 	INT32U frame;
 
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt++;
-	
+
 	if(pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG == 1)
 		pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt++;
 
@@ -2410,7 +2410,7 @@ static void csi_task_entry(void const *parm)
 	}
     prcess_state_post(PRCESS_STATE_OK);
 
-	
+
 	PscalerBufferSize = (device_h_size * device_v_size * 2);
 	DBG_PRINT("PscalerBufferSize for HighTMark = %d\r\n",PscalerBufferSize);
 	PscalerBuffer = (INT32U) gp_malloc_align(PscalerBufferSize , 32);
@@ -2481,7 +2481,7 @@ static void csi_task_entry(void const *parm)
 
 		pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL = GRAY_START_COLOR;
 			DBG_PRINT("MLX_TH32x24_GRAY_START_VAL =%d \r\n",pMLX_TH32x24_Para->MLX_TH32x24_GRAY_START_VAL);
-		
+
 		//for(tmp_i=0;tmp_i<IMG_AVG_buf_len;tmp_i++){
 		//	pMLX_TH32x24_INT16U_avg_buf[tmp_i]= (INT16U*)pMLX_TH32x24_Para->MLX_TH32x24_avg_buf_addr[tmp_i];
 		//}
@@ -2785,7 +2785,7 @@ static void disp_task_entry(void const *parm)
 
 #if 1
 
-	
+
 		// PPU setting start
 		DBG_PRINT("PPU setting start \r\n");
 
@@ -2824,7 +2824,7 @@ static void disp_task_entry(void const *parm)
 		gplib_ppu_sprite_segment_set(ppu_register_set, 0);										// sprite cell data
 		gplib_ppu_sprite_zoom_enable_set(ppu_register_set, 1);							 // Enable sprite zoom mode
 		gplib_ppu_sprite_rgba_mode_set(ppu_register_set, 1);
-		
+
 		gplib_ppu_sprite_blend_mode_set(ppu_register_set, 1);							 // Enable sprite blend mode
 
 	#if 1
@@ -2848,7 +2848,7 @@ static void disp_task_entry(void const *parm)
 
 		gplib_ppu_text_segment_set(ppu_register_set, C_PPU_TEXT2, 0);	 // Set TEXT segment address
 		gplib_ppu_text_blend_set(ppu_register_set, C_PPU_TEXT2, 1, 1, 32);	// Set Blend
-		
+
 
 
 
@@ -2869,62 +2869,69 @@ static void disp_task_entry(void const *parm)
 #endif
 
 		userDefine_spNum = 0;
-		for(lpcnt = 0 ; lpcnt < 3 ; lpcnt++) // 64x64 Big Font(line1)
+		for(lpcnt = 0 ; lpcnt < 4 ; lpcnt++) // 64x64 Big Font(line1)
         {
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
-						
-    #if 1
-			
+
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
 				x_pos=(lpcnt%5)*(SP_H_SIZE-26) + 3*SP_H_SIZE;
 				y_pos=(lpcnt/5)*SP_V_SIZE;
 				}
-		
+
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=(lpcnt%5)*(SP_H_SIZE-26) +6* SP_H_SIZE;
+			x_pos=(lpcnt%5)*(SP_H_SIZE-26) +4* SP_H_SIZE + 32;
 			y_pos=(lpcnt/5)*SP_V_SIZE -2* SP_V_SIZE;
 				}
 
-    #else
-			x_pos=(lpcnt%MLX_LINE)*pos_x;
-			y_pos=(lpcnt/MLX_LINE)*pos_y;
-    #endif
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N1_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
 
 		}
 
+			lpcnt = 4;
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
 
-		for(lpcnt = 3 ; lpcnt < 6 ; lpcnt++)	// 32x32 small Font  (line2)
+			if(DISPLAY_DEVICE == DISDEV_TFT)
+				{
+				x_pos=(lpcnt%5)*(SP_H_SIZE-20) + 3*SP_H_SIZE;
+				y_pos=(lpcnt/5)*SP_V_SIZE;
+				}
+
+			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
+				{
+			x_pos=(lpcnt%5)*(SP_H_SIZE-24) +4* SP_H_SIZE + 32;
+			y_pos=(lpcnt/5)*SP_V_SIZE -2* SP_V_SIZE;
+				}
+
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N1_CellIdx); // 放在 HDMI 上位置 
+				userDefine_spNum++;
+
+
+
+
+		for(lpcnt = 5 ; lpcnt < 8 ; lpcnt++)	// 32x32 small Font  (line2)
 		{
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
-						
-    #if 1
-			
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
 				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
 				y_pos=3*SP_sm_V_SIZE;
 				}
-		
+
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=lpcnt*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
+			x_pos=lpcnt*(SP_sm_H_SIZE-8) +10* SP_sm_H_SIZE;
 			y_pos=-2*SP_sm_V_SIZE;
 				}
-
-    #else
-			x_pos=(lpcnt%MLX_LINE)*pos_x;
-			y_pos=(lpcnt/MLX_LINE)*pos_y;
-    #endif
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
 
 		}
 
 			// +/- sign userDefine_spNum = 6]
+			/*
 			lpcnt = 2;
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
 
@@ -2933,7 +2940,7 @@ static void disp_task_entry(void const *parm)
 				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
 				y_pos=3*SP_sm_V_SIZE;
 				}
-		
+
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
 			x_pos=lpcnt*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
@@ -2942,9 +2949,9 @@ static void disp_task_entry(void const *parm)
 
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
+			*/
 
-
-			// alert/No alert sign [userDefine_spNum = 7] // line3
+			// alert/No alert sign [userDefine_spNum = 10] // line3
 			lpcnt = 2;
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
 
@@ -2953,7 +2960,7 @@ static void disp_task_entry(void const *parm)
 				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
 				y_pos=3*SP_sm_V_SIZE;
 				}
-		
+
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
 			x_pos=lpcnt*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
@@ -2962,19 +2969,19 @@ static void disp_task_entry(void const *parm)
 
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
-			
-				
+
+
 		#if 0 // line3
 		for(lpcnt = 7 ; lpcnt < 10 ; lpcnt++)	// 32x32 small Font (line 3)
 		{
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
-			
+
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
 				x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
 				y_pos=4*SP_sm_V_SIZE;
 				}
-		
+
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
 			x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
@@ -2985,7 +2992,7 @@ static void disp_task_entry(void const *parm)
 
 		}
 	#endif // line3
-		
+
 
 	//paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,1024);
 		if(userDefine_spNum > 0){
@@ -3078,7 +3085,7 @@ static void disp_task_entry(void const *parm)
 							device_h_size,320,100,8);
 						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,
 							device_h_size,360,110,17);
-						
+
 						if (pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET >= 0)
 							{
 							cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET,display_buf,
@@ -3088,7 +3095,7 @@ static void disp_task_entry(void const *parm)
 							cpu_draw_advalue_osd(abs(pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET),display_buf,
 								device_h_size,400,120,1);
 						}
-					
+
 					if(DISPLAY_DEVICE == DISDEV_TFT)
 						{
 						cpu_draw_advalue_osd(pMLX_TH32x24_Para->MLX_TH32x24_TmpMin,display_buf,
@@ -3104,33 +3111,34 @@ static void disp_task_entry(void const *parm)
 						else
 							cpu_draw_line_osd(abs(pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET),display_buf,180,
 								device_h_size,220,100,1);
-					
+
 						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet,display_buf,200,
 							device_h_size,220,0,8);
 						cpu_draw_line_osd(pMLX_TH32x24_Para->MLX_TH32x24_GRAY_TmpTbInd,display_buf,200,
 							device_h_size,220,100,17);
-					}	
-					
-					
+					}
+
+
 				}
 
 
 		//
 		//	COLOR_SET_6 --> sprite display mode
 		//
-		
+
 		if(( pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag == 1 ) &&
 			(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))	// no signal ONE color
 			{
 			// TmpDispBuf = 250; ini val
+			// 華氏 = 攝氏*(9/5)+32
 
 			if (TmpMaxDispBuf_cnt == 0)
 				{
 				TmpMaxDispBuf_cnt++;
 				TmpDispBuf_Pre = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
 				}
-				
-			if ( abs(TmpDispBuf_Pre - pMLX_TH32x24_Para->MLX_TH32x24_TmpMax) < 5 ) 
+
+			if ( abs(TmpDispBuf_Pre - pMLX_TH32x24_Para->MLX_TH32x24_TmpMax) < 5 )
 				{
 				TmpDispBuf = TmpDispBuf_Pre;
 				}
@@ -3139,17 +3147,26 @@ static void disp_task_entry(void const *parm)
 				TmpDispBuf_Pre = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
 				TmpDispBuf = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax;
 				}
-			
+
 			paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
-			
+
 			//
 			//	64x64 Big Font  (line1)
 			//
-			sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
-		    	
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +		
-				( (TmpDispBuf/100) * SP_CHR_SIZE));
-				//( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax/100) * SP_CHR_SIZE));
+			if ((TmpDispBuf/1000) != 0)
+				{
+
+				sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +		// 千位數 
+				( ((TmpDispBuf/1000)+1) * SP_CHR_SIZE));
+				}
+			else
+				{
+				sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	0);	// 千位數  = Null
+				
+				}
+
 
             Get_sprite_image_info(0,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -3157,56 +3174,95 @@ static void disp_task_entry(void const *parm)
             {
             	// Blending is 64-level when sprite window function is disabled.
 				// This function should be used to set blending level when sprite window function is disabled.
-	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,60);
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	
-				( (TmpDispBuf%100)/10 * SP_CHR_SIZE));
+			sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +		// 百位數 
+				( ((TmpDispBuf/100)%10 + 1) * SP_CHR_SIZE));
 				//( (pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%100)/10 * SP_CHR_SIZE));
 
             Get_sprite_image_info(1,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
+
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
-			
-			 sprite_base_addr = (INT32U)_SPRITE_Number0_9pv1_CellData;
-			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  
-			 	((TmpDispBuf%10) * SP_CHR_SIZE));
+			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 十位數 
+			 	(((TmpDispBuf/10)%10 + 1 ) * SP_CHR_SIZE));
 			 	//((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
 			 Get_sprite_image_info(2,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
+
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
+			sprite_base_addr = (INT32U)_SPRITE_Number0_9pv1_CellData;
+			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 個位數 
+			 	(((TmpDispBuf/10)%10 + 1) * SP_CHR_SIZE));
+			 	//((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
+			 Get_sprite_image_info(3,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
+			//set_sprite_disable(4);
+
+			sprite_base_addr = (INT32U)_SPRITE_Unit_Null_CellData;
+			if (pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET == 0)
+				{
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit C
+			 	(0* SP_CHR_SIZE));
+				}
+			else
+				{
+			 	sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // unit F
+			 	(1* SP_CHR_SIZE));
+				}
+			 	//((pMLX_TH32x24_Para->MLX_TH32x24_TmpMax%10) * SP_CHR_SIZE));
+			 Get_sprite_image_info(4,(SpN_ptr *)&sp_ptr);
+            sp_num_addr=sp_ptr.nSPNum_ptr;
+            for(i=0;i<sp_ptr.nSP_CharNum;i++)
+            {
+
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
+                sp_num_addr+=sizeof(SpN_RAM);
+            }
 
 			//
 			//	32x32 small Font (line2)
 			//
-
+			#if 0 // +/-
 			// +/- sign
 
 			sprite_base_addr = (INT32U)_SPRITE_SmFnt_signOnly_CellData;
 			if (OvAlertVal_SUM >= 0)
 				{
-				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +
 			 	(0 * SP_sm_CHR_SIZE)); // +
 				}
 			else
 				{
-				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +
 			 	(1 * SP_sm_CHR_SIZE)); // -
 				}
-			 
-			 
+
+
 			 //DBG_PRINT("32x32-2 = 0x%x \r\n",sprite_characterNum_pos_addr);
 			 Get_sprite_image_info(6,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -3216,25 +3272,27 @@ static void disp_task_entry(void const *parm)
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
+			#endif // +/-
 
-			
 			sprite_base_addr = (INT32U)_SPRITE_NumFntSmall_N3_CellData;
-			
-			
-			OvAlertVal_SUMtmp = abs(OvAlertVal_SUM); // abs() 沒有 +/- 才可以
-			
+
+
+			//OvAlertVal_SUMtmp = abs(OvAlertVal_SUM); // abs() 沒有 +/- 才可以 
+
 			//DBG_PRINT(" [%d]",OvAlertVal_SUMtmp);
-			
-			
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 百位數
+
+
+			OvAlertVal_SUMtmp = pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet; //
+
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 百位數 
 			//	( (pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet/100) * SP_sm_CHR_SIZE));
 			//((INT16U)OvAlertVal_SUM/100) * SP_sm_CHR_SIZE);
 			OvAlertVal_SUMtmp/100 * SP_sm_CHR_SIZE);
-			
+
 			//DBG_PRINT(" \r\n");
 			//DBG_PRINT("32x32-0 = 0x%x /",sprite_characterNum_pos_addr);
 
-            Get_sprite_image_info(3,(SpN_ptr *)&sp_ptr);
+            Get_sprite_image_info(5,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
@@ -3242,11 +3300,11 @@ static void disp_task_entry(void const *parm)
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 十位數
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 十位數 
 				( ( OvAlertVal_SUMtmp%100)/10* SP_sm_CHR_SIZE)); // for test
-			
+
 			//DBG_PRINT("32x32-1 = 0x%x /",sprite_characterNum_pos_addr);
-            Get_sprite_image_info(4,(SpN_ptr *)&sp_ptr);
+            Get_sprite_image_info(6,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
@@ -3255,11 +3313,11 @@ static void disp_task_entry(void const *parm)
             }
 
 			 sprite_base_addr = (INT32U)_SPRITE_SmFnt_N3p_CellData;
-			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 個位數
+			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 個位數 
 			 	(( OvAlertVal_SUMtmp%10) * SP_sm_CHR_SIZE)); // fortest
-			 
+
 			 //DBG_PRINT("32x32-2 = 0x%x \r\n",sprite_characterNum_pos_addr);
-			 Get_sprite_image_info(5,(SpN_ptr *)&sp_ptr);
+			 Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
@@ -3272,7 +3330,7 @@ static void disp_task_entry(void const *parm)
 				{
 				sprite_base_addr = (INT32U)_SPRITE_SmFnt_alert_CellData;
 				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // -
-				 Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
+				 Get_sprite_image_info(8,(SpN_ptr *)&sp_ptr);
 				gplib_ppu_sprite_attribute_zoom_set((SpN_RAM *)sp_ptr.nSPNum_ptr, 36); // SP_ZOOM36
             	sp_num_addr=sp_ptr.nSPNum_ptr;
            	 	for(i=0;i<sp_ptr.nSP_CharNum;i++)
@@ -3285,7 +3343,7 @@ static void disp_task_entry(void const *parm)
 				{
 				sprite_base_addr = (INT32U)_SPRITE_SmFnt_NoAlert_CellData;
 				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // -
-				 Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
+				 Get_sprite_image_info(8,(SpN_ptr *)&sp_ptr);
 				gplib_ppu_sprite_attribute_zoom_set((SpN_RAM *)sp_ptr.nSPNum_ptr, 0); // SP_ZOOM0
             	sp_num_addr=sp_ptr.nSPNum_ptr;
            	 	for(i=0;i<sp_ptr.nSP_CharNum;i++)
@@ -3294,10 +3352,10 @@ static void disp_task_entry(void const *parm)
         		        sp_num_addr+=sizeof(SpN_RAM);
             		}
 				}
-				
-				
-			
-			
+
+
+
+
 		#if 0	// line3
 			//	32x32 small Font (line 3)
 			//
@@ -3308,7 +3366,7 @@ static void disp_task_entry(void const *parm)
 				Tmp1pointDisp_Pre = pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax;
 				Tmp1pointMaxDisp_cnt++;
 				}
-			if ( abs(Tmp1pointDisp_Pre - pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax) < 5 ) 
+			if ( abs(Tmp1pointDisp_Pre - pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax) < 5 )
 				{
 				TmpDispBuf_sum = Tmp1pointDisp_Pre;
 				}
@@ -3319,11 +3377,11 @@ static void disp_task_entry(void const *parm)
 				}
 
 			sprite_base_addr = (INT32U)_SPRITE_NumFntSmall_N3_CellData;
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 百位數
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 百位數 
 			//	( (pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet/100) * SP_sm_CHR_SIZE));
 			//((INT16U)OvAlertVal_SUM/100) * SP_sm_CHR_SIZE);
 			TmpDispBuf_sum/100 * SP_sm_CHR_SIZE);
-			
+
 			//DBG_PRINT(" \r\n");
 			//DBG_PRINT("32x32-0 = 0x%x /",sprite_characterNum_pos_addr);
 
@@ -3335,9 +3393,9 @@ static void disp_task_entry(void const *parm)
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 十位數
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 十位數 
 				( ( TmpDispBuf_sum%100)/10* SP_sm_CHR_SIZE)); // for test
-			
+
 			//DBG_PRINT("32x32-1 = 0x%x /",sprite_characterNum_pos_addr);
             Get_sprite_image_info(8,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -3348,9 +3406,9 @@ static void disp_task_entry(void const *parm)
             }
 
 			 sprite_base_addr = (INT32U)_SPRITE_SmFnt_N3p_CellData;
-			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 個位數
+			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 個位數 
 			 	(( TmpDispBuf_sum%10) * SP_sm_CHR_SIZE)); // fortest
-			 
+
 			 //DBG_PRINT("32x32-2 = 0x%x \r\n",sprite_characterNum_pos_addr);
 			 Get_sprite_image_info(9,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -3365,10 +3423,10 @@ static void disp_task_entry(void const *parm)
 			//	(INT32U)_Text001_IMG0000_CellData); // Calculate Number array
 			//(INT32U)_Text_BLUE_IMG0_CellData);
 			(INT32U)pMLX_TH32x24_Para->MLX_TH32x24_HighTMark_display_frame);
-			
-			
+
+
 			pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag = 0;
-			
+
 			}
 
 			gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT1, h_size, h_size,
@@ -3400,7 +3458,7 @@ static void disp_task_entry(void const *parm)
 	//	}
 
 
-    
+
 }
 
 static void prcess_task_entry(void const *parm)
@@ -3694,7 +3752,7 @@ static void prcess_task_entry(void const *parm)
 		//
 		// MLX_TH32x24 sensor scaler
 		//
-		
+
 
 		gp_memset((INT8S *)&scale, 0x00, sizeof(scale));
 			//drv_l2_scaler_init();
@@ -3816,7 +3874,7 @@ static void prcess_task_entry(void const *parm)
 			scale.output_x_offset = 0;
 
 			//scale.output_y_addr = scaler_frame;
-			
+
 			scale.output_y_addr = pMLX_TH32x24_Para->MLX_TH32x24_HighTMark_display_frame;
 			//scale.output_y_addr = PscalerBuffer;
 			scale.output_u_addr = 0;
@@ -3845,11 +3903,11 @@ static void prcess_task_entry(void const *parm)
 			while(1);
 			}
 
-			
+
 
 		//DBG_PRINT(" HighTMark-F [t=%d] \r\n",xTaskGetTickCount());
 
-		
+
 
 
 		}
@@ -4063,7 +4121,7 @@ void GPM4_CSI_DISP_Demo(void)
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt = 0;
 	pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag = 0;
 	pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag = 0;
-	
+
 	//pMLX_TH32x24_Para->MLX_TH32x24_InitReadEE_startON = 1;
 	//pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 100; // 5.7~ 732 (100ms),20(50ms),100(10 ms),500(2 ms)
 	pMLX_TH32x24_Para->MLX_TH32x24_sampleHz = 500; // 5.7~ 732 (100ms),20(50ms),100(10 ms),200(5ms),500(2 ms)
@@ -4082,6 +4140,8 @@ void GPM4_CSI_DISP_Demo(void)
 	pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET = 0;
 	pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG = 0;
 	pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt = 0;
+
+	pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET = 0; // C
 
     // ad key init
 	adc_key_scan_init();
