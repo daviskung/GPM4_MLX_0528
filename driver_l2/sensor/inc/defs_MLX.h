@@ -254,7 +254,8 @@
 
   	  INT8U  MLX_TH32x24_LowPass_SET;	  
 	  
-	  INT8U  MLX_TH32x24_GRAY_TmpTbInd;	  
+	  INT8U  MLX_TH32x24_GRAY_TmpTbInd;	
+	  INT8U	 MLX_TH32x24_PWR_KEY_OFF;
   } MLX_TH32x24Para_t;
 
   typedef struct	paramsMLX90640_s

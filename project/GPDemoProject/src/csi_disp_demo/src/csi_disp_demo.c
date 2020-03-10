@@ -1771,6 +1771,7 @@ void FindMax_ColorAssign(void){
 	TmpMax = 0;
 	TmpMin = 0;
 	RedMarkTmpMax = 0;
+	TmpMax_Mark_Table_number = 0;
 
 	if (pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag == 1){
 			TmpMax = *(pMLX_TH32x24_TmpOutput_INT16U_buf0 + MLX_ZONE1_1stPixel);
@@ -1846,8 +1847,7 @@ void FindMax_ColorAssign(void){
 				RedMarkTmpMax = TmpOutObject;
 				 tmp_i = cellNum/rowNumEnd_32;
 				 tmp_i2 = tmp_i*rowNumEnd_32 + (rowNumEnd_32 - 1 - (cellNum%rowNumEnd_32));
-				 TmpMax_Mark_Table_number=tmp_i2; //(左右 對調 後 正確位置) 
-
+				 TmpMax_Mark_Table_number=(INT16U)tmp_i2; //(左右 對調 後 正確位置) 
 				}
 			if(TmpOutObject > TmpMax){	// for display
 				TmpMax = TmpOutObject;
@@ -2002,6 +2002,9 @@ void FindMax_ColorAssign(void){
 		//DBG_PRINT("M_=%d \r\n ",TmpMaxTable_number);
 		//DBG_PRINT("TmpMin=%d [%d] , TmpMax=%d [%d] \r\n",TmpMin,TmpMinTable_number,TmpMax,TmpMaxTable_number);
 
+		if((TmpMin != 0) && (TmpMax != 0) && (TmpMax_Mark_Table_number != 0))
+			{
+
 		gp_memset((INT8S *)pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0,
 		0x00,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 透明度0 ,RGB 白色 
 		//0xffff0000,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // ARGB 紅色 
@@ -2052,6 +2055,12 @@ void FindMax_ColorAssign(void){
 		//*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number)
 		//	= 0xffff0000;
 
+		//TmpMax_Mark_Table_number = pMLX_TH32x24_Para->MLX_TH32x24_TmpMax_Mark_Table_number_test;
+		if (TmpMax_Mark_Table_number < 136)
+			{
+			DBG_PRINT("-%d-",TmpMax_Mark_Table_number);
+			}
+
 		if((TmpMax_Mark_Table_number+1)%rowNumEnd_32 < (SENSOR_AREA_WIDTH -TMPZONE1_HOR_AREA_limit) ) // to right < 24
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+1)
 				= 0xffff0000;
@@ -2082,6 +2091,7 @@ void FindMax_ColorAssign(void){
 			&& ((TmpMax_Mark_Table_number+rowNumEnd_32-1)%rowNumEnd_32 >= TMPZONE1_HOR_AREA_limit)) // to left >= 8
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number+rowNumEnd_32-1)
 				= 0xffff0000;
+			}
 
 		//ScaleUpForH_Mark();
 		//
@@ -2090,8 +2100,8 @@ void FindMax_ColorAssign(void){
 		tmp_i2 = 0;
 		tmp_start =0;
 		for(cellNum=0;cellNum<MLX_Pixel;cellNum++){
-				RGB888TmpValue = *(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0 + cellNum);
-				tmp_i2 = cellNum % 32;
+			RGB888TmpValue = *(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0 + cellNum);
+			tmp_i2 = cellNum % 32;
 
 			if((( cellNum % 32) == 0 ) && ( cellNum != 0 ))
 				{
@@ -2119,6 +2129,46 @@ void FindMax_ColorAssign(void){
 
 		}
 
+		//
+		// power off (blue)
+		//
+
+		if (pMLX_TH32x24_Para->MLX_TH32x24_PWR_KEY_OFF == 1)
+			{
+			tmp_i2 = 0;
+			tmp_start =0;
+			for(cellNum=0;cellNum<MLX_Pixel;cellNum++)
+				{
+
+			RGB888TmpValue = 0xff0000ff;	// power off (blue)
+			tmp_i2 = cellNum % 32;
+
+			if((( cellNum % 32) == 0 ) && ( cellNum != 0 ))
+				{
+					tmp_start = tmp_i;
+					//DBG_PRINT("tmp_start = %d,tmp_i2 = %d , cellNum = %d  \r\n",tmp_start,tmp_i2,cellNum);
+				}
+
+			for (tmp_i = tmp_start + tmp_i2 *ScaleUp_3 ; tmp_i < tmp_start + (tmp_i2 *ScaleUp_3)+ ScaleUp_3; ++tmp_i)
+				{
+				*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
+						=RGB888TmpValue;
+				}
+			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
+				{
+
+				*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
+						=RGB888TmpValue;
+				}
+			for(tmp_i = tmp_start + ((tmp_i2+rowNumEnd_32*2)*ScaleUp_3) ; tmp_i < tmp_start +((tmp_i2+rowNumEnd_32*2)*ScaleUp_3)+ScaleUp_3 ; tmp_i++ )
+				{
+
+				*(pMLX_TH32x24_RGB888_HighTMarkScaleUp_INT32U_buf0 + tmp_i )
+						=RGB888TmpValue;
+				}
+
+				}
+			}
 
 
 
@@ -2247,13 +2297,7 @@ void FindMax_ColorAssign(void){
 	INT32U frame;
 	//INT8U	key_cnt;
 
-	/*
-	if((R_SYSTEM_POWER_CTRL1 & 0x01) == 1)
-	{		
-		DBG_PRINT("PWR_ON0-1 0x%x\r\n",R_SYSTEM_POWER_CTRL1);
-			
-	}
-	*/
+	
 
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt++;
 
@@ -2951,7 +2995,7 @@ static void disp_task_entry(void const *parm)
 
 		}
 
-		
+
 		lpcnt = 9; //  16x32 unit C/F
 		set_sprite_init(userDefine_spNum,(INT32U)&Sprite025_half_C_SP);
 			if(DISPLAY_DEVICE == DISDEV_TFT)
@@ -3207,7 +3251,7 @@ static void disp_task_entry(void const *parm)
 				{
 				sprite_base_addr = (INT32U)_SPRITE_Number0_9_V0_CellData;
 				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	0);	// 千位數  = Null
-				
+
 				}
 
 
@@ -3287,7 +3331,7 @@ static void disp_task_entry(void const *parm)
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
-			
+
 			#if 0 // +/-
 			// +/- sign
 
@@ -3319,14 +3363,14 @@ static void disp_task_entry(void const *parm)
 			//	32x32 small Font (line2)
 			//
 
-			
+
 			AlertTmpSet_tmp = pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet; //
 			if (pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET == 1) // unit F
 				{
 				AlertTmpSet_tmp = (AlertTmpSet_tmp*9)/5 +320;
 				//DBG_PRINT("TmpDispBuf= %d\r\n",TmpDispBuf);
 				}
-			
+
 			sprite_base_addr = (INT32U)_SPRITE_NumFntSmall_N3_CellData;
 			if ((AlertTmpSet_tmp/1000) != 0)
 				{
@@ -3344,7 +3388,7 @@ static void disp_task_entry(void const *parm)
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
-			
+
 			sprite_base_addr = (INT32U)_SPRITE_NumFntSmall_N3_CellData;
 			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 百位數 
 			((AlertTmpSet_tmp/100)%10 + 1)  * SP_sm_CHR_SIZE);
@@ -3361,7 +3405,7 @@ static void disp_task_entry(void const *parm)
             }
 
 			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 十位數 
-				( ((AlertTmpSet_tmp/10)%10 + 1)* SP_sm_CHR_SIZE)); // 
+				( ((AlertTmpSet_tmp/10)%10 + 1)* SP_sm_CHR_SIZE)); //
 
 			//DBG_PRINT("32x32-1 = 0x%x /",sprite_characterNum_pos_addr);
             Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
@@ -3498,10 +3542,15 @@ static void disp_task_entry(void const *parm)
             }
 		#endif // line3
 
-			gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, device_h_size, device_v_size,
-			//	(INT32U)_Text001_IMG0000_CellData); // Calculate Number array
-			//(INT32U)_Text_BLUE_IMG0_CellData);
-			(INT32U)pMLX_TH32x24_Para->MLX_TH32x24_HighTMark_display_frame);
+
+
+
+				gplib_ppu_text_calculate_number_array(ppu_register_set, C_PPU_TEXT2, device_h_size, device_v_size,
+				//	(INT32U)_Text001_IMG0000_CellData); // Calculate Number array
+				//(INT32U)_Text_BLUE_IMG0_CellData);
+				(INT32U)pMLX_TH32x24_Para->MLX_TH32x24_HighTMark_display_frame);
+
+
 
 
 			pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag = 0;
@@ -3805,7 +3854,7 @@ static void prcess_task_entry(void const *parm)
 			else
 				gpio_write_io(TH_STATUS_A15_PAD, DATA_LOW);
 		*/
-			DBG_PRINT(" CalculateTo [t=%d] %d\r\n",xTaskGetTickCount()-TimeCnt1,
+			DBG_PRINT(" CalculateTo [t=%d] %d \r\n",xTaskGetTickCount()-TimeCnt1,
 				pMLX_TH32x24_Para->MLX_TH32x24_TmpMax);
 
 				//pMLX_TH32x24_Para->MLX_TH32x24_Time_Flag = 0;
@@ -4043,6 +4092,7 @@ void GPM4_CSI_DISP_Demo(void)
 
 
 	INT32S  nRet;
+	INT8U	pwr_key_cnt;
 
 #if CSI_SD_EN == 1
     while(1)
@@ -4221,9 +4271,11 @@ void GPM4_CSI_DISP_Demo(void)
 	pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt = 0;
 
 	pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET = 0; // C
+	pMLX_TH32x24_Para->MLX_TH32x24_PWR_KEY_OFF = 0;
 
     // ad key init
 	adc_key_scan_init();
+	pwr_key_cnt = 0;
 
 	while(1)
 	{
@@ -4252,32 +4304,41 @@ void GPM4_CSI_DISP_Demo(void)
 			{
 			pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET =
 				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET + 1;
-			
+
 			if( pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET > 1 )
 				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET = 0;
 
 			DBG_PRINT("ad_key-3 TMPunit_SET = %d\r\n",
 				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET);
 			}
-		
-		else if(ADKEY_forPWR_ON0)
+
+		else if(ADKEY_forPWR_ON0_C)
 			{
-			DBG_PRINT("PWR_ON0-> AD_KEY 0x%x\r\n",R_SYSTEM_POWER_CTRL1);
-			//DBG_PRINT("power down mode\r\n");
+			pwr_key_cnt++;
+			DBG_PRINT("PWR_ON0->C [%d]\r\n",pwr_key_cnt);
+			pMLX_TH32x24_Para->MLX_TH32x24_PWR_KEY_OFF = 1;
+			if (pwr_key_cnt > 10)
+				{
+				DBG_PRINT("power down mode\r\n");
+				//power down mode
+		   	 	R_SYSTEM_DDR_LDO = 0x0;
+		    	R_SYSTEM_POWER_CTRL0 &= ~0x1;
+		    	while(1);
+				}
 			}
-		
-		/*
+
+
+        /*
 		else if(ADKEY_IO4)
 			{
-			
-			DBG_PRINT("power down mode\r\n");
-			//power down mode
-		    R_SYSTEM_DDR_LDO = 0x0;
-		    R_SYSTEM_POWER_CTRL0 &= ~0x1;
-		    while(1);
+
 			}
-		*/
-		
+		else if(ADKEY_IO5)
+			{
+
+			}
+        */
+
 
 
 	}

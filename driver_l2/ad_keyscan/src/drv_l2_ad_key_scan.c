@@ -129,7 +129,7 @@ INT32U adc_key_scan(void)
 		ADKEY_IO7 = 0;
 		ADKEY_IO8 = 0;
 
-		ADKEY_forPWR_ON0 = 1;
+		ADKEY_forPWR_ON0 = 0;
 
 		ADKEY_IO1_C = 0;
 		ADKEY_IO2_C = 0;
