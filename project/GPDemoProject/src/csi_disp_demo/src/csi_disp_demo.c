@@ -2987,7 +2987,7 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=lpcnt*(SP_sm_H_SIZE-8) +7* SP_sm_H_SIZE;
+			x_pos=lpcnt*(SP_sm_H_SIZE-8) +8* SP_sm_H_SIZE;
 			y_pos=-2*SP_sm_V_SIZE;
 				}
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
@@ -3006,7 +3006,7 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=lpcnt*(SP_sm_H_SIZE-8) +7* SP_sm_H_SIZE +7;
+			x_pos=lpcnt*(SP_sm_H_SIZE-8) +8* SP_sm_H_SIZE +7;
 			y_pos=-2*SP_sm_V_SIZE;
 				}
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N4_CellIdx); // 放在 HDMI 上位置 
