@@ -32,6 +32,8 @@
 #define AD_KEY_6                                5
 #define AD_KEY_7                                6
 #define AD_KEY_8                                7
+#define AD_KEY_forPWR_ON0                       8	// PWR_ON0 as AD key 
+
 
 typedef enum {
     RB_KEY_DOWN,

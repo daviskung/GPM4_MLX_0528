@@ -12,8 +12,11 @@ xQueueHandle KeyTaskQ = NULL;
 
 INT32U ADKEY_IO1, ADKEY_IO2, ADKEY_IO3, ADKEY_IO4;
 INT32U ADKEY_IO5, ADKEY_IO6, ADKEY_IO7, ADKEY_IO8;
+INT32U ADKEY_forPWR_ON0;
 INT32U ADKEY_IO1_C, ADKEY_IO2_C, ADKEY_IO3_C, ADKEY_IO4_C;
 INT32U ADKEY_IO5_C, ADKEY_IO6_C, ADKEY_IO7_C, ADKEY_IO8_C;
+INT32U ADKEY_forPWR_ON0_C;
+
 
 extern void turnkey_adkey_resource_register(void* msg_qsend,void* msgq_id,INT32U msg_id);
 
@@ -93,6 +96,8 @@ INT32U adc_key_scan(void)
 		case AD_KEY_6:	ADKEY_IO6 = 1;	break;
 		case AD_KEY_7:	ADKEY_IO7 = 1;	break;
 		case AD_KEY_8:	ADKEY_IO8 = 1;	break;
+		
+		case AD_KEY_forPWR_ON0:	ADKEY_forPWR_ON0 = 1;	break;
 		}
 		//DBG_PRINT("PD = %d\r\n", KeyPara[0]);
 	}
@@ -108,6 +113,8 @@ INT32U adc_key_scan(void)
 		case AD_KEY_6:	ADKEY_IO6_C = 1;	break;
 		case AD_KEY_7:	ADKEY_IO7_C = 1;	break;
 		case AD_KEY_8:	ADKEY_IO8_C = 1;	break;
+		
+		case AD_KEY_forPWR_ON0:	ADKEY_forPWR_ON0_C = 1;	break;
 		}
 		//DBG_PRINT("PR = %d\r\n", KeyPara[0]);
 	}
@@ -122,6 +129,8 @@ INT32U adc_key_scan(void)
 		ADKEY_IO7 = 0;
 		ADKEY_IO8 = 0;
 
+		ADKEY_forPWR_ON0 = 1;
+
 		ADKEY_IO1_C = 0;
 		ADKEY_IO2_C = 0;
 		ADKEY_IO3_C = 0;
@@ -130,6 +139,8 @@ INT32U adc_key_scan(void)
 		ADKEY_IO6_C = 0;
 		ADKEY_IO7_C = 0;
 		ADKEY_IO8_C = 0;
+
+		ADKEY_forPWR_ON0_C = 0;
 		//DBG_PRINT("PU\r\n");
 	}
 	return 0;

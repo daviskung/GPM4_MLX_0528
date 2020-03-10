@@ -2245,6 +2245,15 @@ void FindMax_ColorAssign(void){
 {
 	INT8U err;
 	INT32U frame;
+	//INT8U	key_cnt;
+
+	/*
+	if((R_SYSTEM_POWER_CTRL1 & 0x01) == 1)
+	{		
+		DBG_PRINT("PWR_ON0-1 0x%x\r\n",R_SYSTEM_POWER_CTRL1);
+			
+	}
+	*/
 
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt++;
 
@@ -2887,7 +2896,7 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
-				x_pos=(lpcnt%5)*(SP_H_SIZE-26) + 3*SP_H_SIZE;
+				x_pos=(lpcnt%5)*(SP_H_SIZE-26) + 2*SP_H_SIZE;
 				y_pos=(lpcnt/5)*SP_V_SIZE;
 				}
 
@@ -2907,7 +2916,7 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
-				x_pos=(lpcnt%5)*(SP_H_SIZE-20) + 3*SP_H_SIZE;
+				x_pos=(lpcnt%5)*(SP_H_SIZE-26) + 2*SP_H_SIZE + 2;
 				y_pos=(lpcnt/5)*SP_V_SIZE;
 				}
 
@@ -2928,8 +2937,8 @@ static void disp_task_entry(void const *parm)
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
-				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
-				y_pos=3*SP_sm_V_SIZE;
+				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 2*SP_sm_H_SIZE;
+				y_pos=2*SP_sm_V_SIZE;
 				}
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
@@ -2947,8 +2956,8 @@ static void disp_task_entry(void const *parm)
 		set_sprite_init(userDefine_spNum,(INT32U)&Sprite025_half_C_SP);
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
-				x_pos=lpcnt*(SP_sm_unit_H_SIZE-8) + 5*SP_sm_unit_H_SIZE;
-				y_pos=3*SP_sm_unit_V_SIZE;
+				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 2*SP_sm_H_SIZE +2;
+				y_pos=2*SP_sm_V_SIZE;
 				}
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
@@ -4251,18 +4260,24 @@ void GPM4_CSI_DISP_Demo(void)
 				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET);
 			}
 		
+		else if(ADKEY_forPWR_ON0)
+			{
+			DBG_PRINT("PWR_ON0-> AD_KEY 0x%x\r\n",R_SYSTEM_POWER_CTRL1);
+			//DBG_PRINT("power down mode\r\n");
+			}
+		
 		/*
 		else if(ADKEY_IO4)
 			{
-			pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET --;
-			if( pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET < -240 )
-				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET = 0;
-			DBG_PRINT("ad_key-4 selection -OvAlertVal_SET = %d\r\n",
-				pMLX_TH32x24_Para->MLX_TH32x24_OvAlertVal_SET);
+			
+			DBG_PRINT("power down mode\r\n");
+			//power down mode
+		    R_SYSTEM_DDR_LDO = 0x0;
+		    R_SYSTEM_POWER_CTRL0 &= ~0x1;
+		    while(1);
 			}
 		*/
 		
-		//}
 
 
 	}

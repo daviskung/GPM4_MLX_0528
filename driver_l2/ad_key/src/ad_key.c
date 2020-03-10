@@ -206,6 +206,8 @@ static void ad_key_adc_isr(INT16U ad_val)
 		key = AD_KEY_7;
  	} else if((ad_val > C_AD_VALUE_7)&(ad_val <= C_AD_VALUE_8)) {
  		key = AD_KEY_8;
+	} else if((R_SYSTEM_POWER_CTRL1 & 0x01) == 1) {		// for power ON/OFF
+ 		key = AD_KEY_forPWR_ON0;
 	} else {
 		key = C_INVALID_KEY;	// no key pressed
 	}
