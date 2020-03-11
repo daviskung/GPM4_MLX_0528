@@ -300,7 +300,7 @@ INT32U	Gcnt_lp,Gcnt_lp2,GlobalTimeCnt1,GlobalTimeCnt2;
 int	OvAlertVal_SUM;
 //INT16S TmpDispBuf[TMP_MAX_DISP_buf_len];
 INT8U  TmpMaxDispBuf_cnt;
-INT16S TmpDispBuf_Pre,Tmp1pointDisp_Pre;
+INT16S TmpDispBuf_Pre;
 
 
 
@@ -1940,8 +1940,9 @@ void FindMax_ColorAssign(void){
 
 	}
 
-	if ((pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag == 1)
-		&& (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))
+	//if ((pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag == 1)
+	//	&& (pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))
+	if (pMLX_TH32x24_Para->MLX_TH32x24_calc_Time_Flag == 1)
 	{
 
 
@@ -3099,8 +3100,6 @@ static void disp_task_entry(void const *parm)
 
 			if(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor > NO_SIGNAL_FACTOR)	// no signal ONE color
 				{
-
-
 					//DBG_PRINT("device_h_size = %d device_v_size = %d\r\n",device_h_size,device_v_size);
 					cpu_draw_line_osd(UnderZeroDiff_value,display_buf,40,
 						device_h_size,110,0,16);
@@ -3138,7 +3137,7 @@ static void disp_task_entry(void const *parm)
 					}
 					OvAlertVal_SUM = 0 ;
 					TmpMaxDispBuf_cnt = 0;
-					Tmp1pointDisp_Pre = 0;
+					//Tmp1pointDisp_Pre = 0;
 
 				}
 			else
@@ -3208,8 +3207,10 @@ static void disp_task_entry(void const *parm)
 		//	COLOR_SET_6 --> sprite display mode
 		//
 
-		if(( pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag == 1 ) &&
-			(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))	// no signal ONE color
+		//if(( pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag == 1 ) &&
+		//	(pMLX_TH32x24_Para->MLX_TH32x24_GrayOutputFactor < NO_SIGNAL_FACTOR))	// no signal ONE color
+
+		if( pMLX_TH32x24_Para->MLX_TH32x24_disp_Time_Flag == 1 )
 			{
 			// TmpDispBuf = 250; ini val
 			// 華氏 = 攝氏*(9/5)+32
@@ -4325,6 +4326,12 @@ void GPM4_CSI_DISP_Demo(void)
 		    	R_SYSTEM_POWER_CTRL0 &= ~0x1;
 		    	while(1);
 				}
+			}
+		else if(!ADKEY_forPWR_ON0_C)
+			{
+			pwr_key_cnt = 0;
+			pMLX_TH32x24_Para->MLX_TH32x24_PWR_KEY_OFF = 0;
+			DBG_PRINT("CLEAR　power down mode\r\n");
 			}
 
 
