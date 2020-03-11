@@ -243,7 +243,8 @@
 	  INT16S MLX_TH32x24_OvAlertVal[ALERT_BUF_LEN];  
 	  INT16S MLX_TH32x24_OvAlertVal_SET;
 	  
-	  INT8U MLX_TH32x24_TMPunit_SET;	// 0->C / 1-> F
+	  INT8U MLX_TH32x24_TMPunit_SET;	// 0->C / 1-> F	  
+	  INT8U MLX_TH32x24_TMPunit_KEY;	// 1:RB_KEY_DOWN 0:RB_KEY_UP
 	  
 	  //INT16S  MLX_TH32x24_TempMaxAry[TMP_MAX_buf_len]; // 取 排最高點 順序
 	  //INT16U  MLX_TH32x24_TempMaxNum_Ary[TMP_MAX_buf_len]; // 取 排最高點 順序
