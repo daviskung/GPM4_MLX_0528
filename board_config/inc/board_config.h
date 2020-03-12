@@ -93,7 +93,7 @@
 #define I2C2_MUX1								MUX1//I2C1_SCL_SDA__IOD10_IOD12
 #define I2C2_MUX2								MUX2//I2C1_SCL_SDA__IOA10_IOA11
 
-#define I2C2_POS							    I2C2_MUX0
+#define I2C2_POS							    I2C2_MUX1
 #define I2C2_DRIVING						    IO_DRIVING_8mA
 
 /* SPI0 PINMUX */

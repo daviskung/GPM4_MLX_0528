@@ -141,6 +141,12 @@
 #define	emissivity_byUser	0.95
 #define	TA_SHIFT			8
 
+#define	SENSOR_ERROR		0
+#define	SENSOR_CONNECT		1
+#define	SENSOR_RUN			2
+
+
+
 
 
 
@@ -257,6 +263,13 @@
 	  
 	  INT8U  MLX_TH32x24_GRAY_TmpTbInd;	
 	  INT8U	 MLX_TH32x24_PWR_KEY_OFF;
+	  
+	  INT8U  MLX_TH32x24_SENSOR_INNER_STATUS;  
+	  INT8U  MLX_TH32x24_SENSOR_EXT_STATUS;
+
+	  INT8U  MLX_TH32x24_SENSOR_INNER_I2C_PORT;  
+	  INT8U  MLX_TH32x24_SENSOR_EXT__I2C_PORT;
+	  
   } MLX_TH32x24Para_t;
 
   typedef struct	paramsMLX90640_s

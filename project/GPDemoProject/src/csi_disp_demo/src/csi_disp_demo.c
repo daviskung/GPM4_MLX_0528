@@ -112,8 +112,8 @@ static prcess_mem_t *prcess_mem_set;
 
 #define	DEBUG_IO_OUT		0
 #define TH_STATUS_A15_PAD     	IO_A15
-#define TH_ALERT_A14_PAD    IO_A14
-#define TH_TEST1_A12_PAD    	IO_A12
+#define TH_ALERT_A14_PAD	    IO_A14
+#define TH_BUZZER_A12_PAD    	IO_A12
 
 
 
@@ -1978,12 +1978,16 @@ void FindMax_ColorAssign(void){
 				pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG = 1;
 				pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt = 0;
 				gpio_write_io(TH_ALERT_A14_PAD, DATA_HIGH);
+				
+				gpio_write_io(TH_BUZZER_A12_PAD, DATA_LOW);
 				}
 			else
 				{
 				if (pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt > 250)
 					{
 					gpio_write_io(TH_ALERT_A14_PAD, DATA_LOW);
+					
+					gpio_write_io(TH_BUZZER_A12_PAD, DATA_HIGH);
 					pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG = 0;
 					}
 				}
@@ -2506,7 +2510,7 @@ static void csi_task_entry(void const *parm)
 
 
 
-	MXL_handle.devNumber = I2C_1;
+	MXL_handle.devNumber = I2C_2;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
 	//MXL_handle.clkRate = 1200; // 1Mhz check from OSC. and can run
 	MXL_handle.clkRate = 1000; // 900kHz check from OSC.
@@ -3657,9 +3661,9 @@ static void prcess_task_entry(void const *parm)
 	gpio_write_io(TH_ALERT_A14_PAD, DATA_LOW);
 
 
-	gpio_init_io(TH_TEST1_A12_PAD, GPIO_OUTPUT);
-	gpio_set_port_attribute(TH_TEST1_A12_PAD, ATTRIBUTE_HIGH);
-	gpio_write_io(TH_TEST1_A12_PAD, DATA_HIGH);
+	gpio_init_io(TH_BUZZER_A12_PAD, GPIO_OUTPUT);
+	gpio_set_port_attribute(TH_BUZZER_A12_PAD, ATTRIBUTE_HIGH);
+	gpio_write_io(TH_BUZZER_A12_PAD, DATA_HIGH);
 
 
 	pMLX_TH32x24_TmpOutput_INT16U_buf0 = (pMLX_TH32x24_Para->result);
@@ -3695,7 +3699,7 @@ static void prcess_task_entry(void const *parm)
 
 
 	#if DEBUG_IO_OUT
-		gpio_write_io(TH_TEST1_A12_PAD, DATA_HIGH);
+		gpio_write_io(TH_BUZZER_A12_PAD, DATA_HIGH);
 	#endif
 
 		// 開始 計算 Tobject
@@ -4050,7 +4054,7 @@ static void prcess_task_entry(void const *parm)
         //================================================================
 
 	#if DEBUG_IO_OUT
-		   gpio_write_io(TH_TEST1_A12_PAD, DATA_LOW);
+		   gpio_write_io(TH_BUZZER_A12_PAD, DATA_LOW);
 	#endif
 
         //**************************************//
