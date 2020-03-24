@@ -40,6 +40,11 @@ extern const INT16U _SPRITE_SmFnt_NoAlert_CellData[];
 //extern const INT16U _SPRITE_Unit_Null_CellData[];
 extern const INT16U _SPRITE_UnitHalf_CellData[];
 extern const INT16U _SPRITE_SmFnt_unit_hal_CellData[];
+//extern const INT16U _SPRITE_test_white_CellData[];
+extern const unsigned char _SPRITE_test_blue_image0[] ;
+extern const INT16U _SP_EXT_FAIL_CellData[];
+
+
 
 
 

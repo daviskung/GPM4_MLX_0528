@@ -62,7 +62,7 @@ paramsMLX90640_t MLX90640_Para;     //,*pMLX90640_Para;
 *				 F U N C T I O N	D E C L A R A T I O N S 			  *
 **************************************************************************/
 static INT32S MXL_sccb_open(INT32U devNumber);
-static void MXL_sccb_close(void);
+static void MXL_sccb_close(INT32U devNumber);
 static INT32S MXL_sccb_write(INT8U reg, INT8U value);
 static INT32S MXL_sccb_read(INT8U reg, INT8U *value);
 static INT32S MLX_TH32x24_mem_alloc(void);	//davis
@@ -103,7 +103,7 @@ static INT32S MXL_sccb_open(INT32U devNumber)
     MXL_handle.clkRate = 1000;
     drv_l1_i2c_init(MXL_handle.devNumber);
 
-	DBG_PRINT(" MLX90640_SLAVE_ADDR Sccb open (I2C_2) in HW_I2C.\r\n");
+	DBG_PRINT(" MLX90640_SLAVE_ADDR Sccb open (0x%x) in HW_I2C.\r\n",devNumber);
 
 
 
@@ -112,7 +112,7 @@ static INT32S MXL_sccb_open(INT32U devNumber)
 	return STATUS_OK;
 }
 
-static void MXL_sccb_close(void)
+static void MXL_sccb_close(INT32U devNumber)
 {
 #if MXL_SCCB_MODE == SCCB_GPIO
 	if(MXL_handle) {
@@ -120,7 +120,7 @@ static void MXL_sccb_close(void)
 		MXL_handle = NULL;
 	}
 #elif MXL_SCCB_MODE == SCCB_HW_I2C
-	drv_l1_i2c_uninit(I2C_1);
+	drv_l1_i2c_uninit(devNumber);
 	MXL_handle.slaveAddr = 0;
 	MXL_handle.clkRate = 0;
 #endif
@@ -1074,7 +1074,8 @@ void MXL90640_thermopile_uninit(void)
 {
 
 	// release sccb
-	MXL_sccb_close();
+	MXL_sccb_close(I2C_2);
+	DBG_PRINT("MXL_sccb_close() -> I2C_2 \r\n");
 
 	// Turn off LDO 2.8V for CSI sensor
 	//drv_l1_power_ldo_28_ctrl(0, LDO_LDO28_2P8V);
@@ -1144,9 +1145,10 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	DBG_PRINT("pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF addr=0x%0x \r\n", pMLX_TH32x24_Para->MLX32x24_EE_READ_8bitBUF);
 	DBG_PRINT("pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF addr=0x%0x \r\n", pMLX_TH32x24_Para->MLX32x24_EE_READ_16bitBUF);
 
-	pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_I2C_PORT = I2C_2;
+	pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_I2C_PORT = I2C_1;
+	pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_I2C_PORT = I2C_2;
 
-	MXL_handle.devNumber = pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_I2C_PORT;
+	MXL_handle.devNumber = pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_I2C_PORT;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
 	MXL_handle.clkRate = 1000;
 
@@ -1155,7 +1157,62 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 	//
 	osDelay(80);
 	
-	pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS = SENSOR_CONNECT;
+	pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS = SENSOR_CONNECT;
+	pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS = SENSOR_OPEN;
+
+
+	// =====================================================================
+
+	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrDevID,pEEcopy16BIT);
+	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrDevID+1,pEEcopy16BIT+1);
+	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrDevID+2,pEEcopy16BIT+2);
+		DBG_PRINT("EEPROM MLX90640_AdrDevID addr=0x%04X, data=0x%04X - 0x%04X - 0x%04X \r\n",
+			MLX90640_AdrDevID, *(pEEcopy16BIT) ,*(pEEcopy16BIT+1),*(pEEcopy16BIT+2));
+
+	if ((*(pEEcopy16BIT) == 0x00) && (*(pEEcopy16BIT+1) == 0x00) && (*(pEEcopy16BIT+2) == 0x00))
+		{
+		pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS = SENSOR_ERROR;
+		}
+
+	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_EEAddrRegister1,pEEcopy16BIT);
+	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_EEAddrRegister2,pEEcopy16BIT+1);
+	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_EEAddrConfig,pEEcopy16BIT+2);
+	drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_EEAddrInternal_I2C,pEEcopy16BIT+3);
+		DBG_PRINT("EEPROM MLX90640_EEAddrRegister1 addr=0x%04X, data=0x%04X - 0x%04X - 0x%04X - 0x%04X \r\n",
+				MLX90640_EEAddrRegister1, *(pEEcopy16BIT) ,*(pEEcopy16BIT+1),*(pEEcopy16BIT+2),*(pEEcopy16BIT+3));
+	//
+	//	check which sensor(I2C data != 0x00) is on?
+	//
+
+	if ((*(pEEcopy16BIT) == 0x00) && (*(pEEcopy16BIT+1) == 0x00) && (*(pEEcopy16BIT+2) == 0x00))
+		{
+		pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS = SENSOR_ERROR;
+		}
+
+	
+	DBG_PRINT("SENSOR_EXT_STATUS = 0x%04x \r\n",pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS);
+
+
+	if (pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS == SENSOR_ERROR)
+		{
+		
+		MXL_sccb_close(pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_I2C_PORT);
+		DBG_PRINT("MXL_sccb_close() -> pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_I2C_PORT (0x%x) \r\n",
+			pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_I2C_PORT);
+
+		//
+		//	No Ext. sensor
+		//
+
+		MXL_sccb_open(pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_I2C_PORT);
+		DBG_PRINT("MXL_sccb_open() -> pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_I2C_PORT (0x%x) \r\n",
+			pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_I2C_PORT);
+		
+		MXL_handle.devNumber = pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_I2C_PORT;
+		MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
+		MXL_handle.clkRate = 1000;
+
+		pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS = SENSOR_CONNECT;
 
 
 	// =====================================================================
@@ -1188,6 +1245,9 @@ void MXL90640_thermopile_stream_start(INT32U index, INT32U bufA, INT32U bufB)
 
 	
 	DBG_PRINT("SENSOR_INNER_STATUS = 0x%04x \r\n",pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS);
+			
+		}
+
 
 	
 	FromEEcontrolRegister1 = *(pEEcopy16BIT);

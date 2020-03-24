@@ -166,15 +166,19 @@ static prcess_mem_t *prcess_mem_set;
 
 
 
-#define	FOCUS_AREA_COLOR		0x202C21EB	// 藍色
-#define	MARK_CROSS_AREA_COLOR			0x4f43D537	// 綠色
-#define	MARK_SQUARE_AREA_COLOR	0xffff0000	// 紅色
+#define	FOCUS_AREA_COLOR		0x202C21EB	// 藍色 
+#define	MARK_CROSS_AREA_COLOR			0x4f43D537	// 綠色 
+#define	MARK_SQUARE_AREA_COLOR	0xffff0000	// 紅色 
 
 
 #define	PWR_ON0_KEY_DOWN 	1
 #define	PWR_ON0_KEY_UP		0
 
 #define BIG_POINT	1
+
+#define TEMP_VAL_BLEND_VAL	40
+#define DATA_STATUS_ERR		50
+
 
 
 
@@ -305,6 +309,8 @@ int	OvAlertVal_SUM;
 //INT16S TmpDispBuf[TMP_MAX_DISP_buf_len];
 INT8U  TmpMaxDispBuf_cnt;
 INT16S TmpDispBuf_Pre;
+
+INT8U	Sensor_State;
 
 
 
@@ -1978,7 +1984,7 @@ void FindMax_ColorAssign(void){
 				pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG = 1;
 				pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt = 0;
 				gpio_write_io(TH_ALERT_A14_PAD, DATA_HIGH);
-				
+
 				gpio_write_io(TH_BUZZER_A12_PAD, DATA_LOW);
 				}
 			else
@@ -1986,7 +1992,7 @@ void FindMax_ColorAssign(void){
 				if (pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_cnt > 250)
 					{
 					gpio_write_io(TH_ALERT_A14_PAD, DATA_LOW);
-					
+
 					gpio_write_io(TH_BUZZER_A12_PAD, DATA_HIGH);
 					pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG = 0;
 					}
@@ -2016,13 +2022,13 @@ void FindMax_ColorAssign(void){
 		0x00,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // 透明度0 ,RGB 白色 
 		//0xffff0000,MLX_Pixel*IMAGE_DATA_INT32S_SIZE); // ARGB 紅色 
 
-		
+
 
 
 		for (tmp_i2 = 103; tmp_i2 < 121; ++tmp_i2)	// upper line
 			{
 			*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ tmp_i2)
-			= FOCUS_AREA_COLOR;		//= 0x20008f00; 綠色
+			= FOCUS_AREA_COLOR;		//= 0x20008f00; 綠色 
 			}
 		for (tmp_i2 = 647; tmp_i2 < 665; ++tmp_i2)	// lower line
 			{
@@ -2042,10 +2048,10 @@ void FindMax_ColorAssign(void){
 
 
 
-		// HighTMark 
+		// HighTMark
 		// ZONE 1 only
 		//
-		
+
 
 		if(pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG == 1)
 			{
@@ -2107,9 +2113,9 @@ void FindMax_ColorAssign(void){
 				*(pMLX_TH32x24_RGB888_HighTMark_INT32U_buf0+ TmpMax_Mark_Table_number-rowNumEnd_32)
 				= MARK_CROSS_AREA_COLOR;
 			}
-		
+
 			}
-		
+
 
 
 		//ScaleUpForH_Mark();
@@ -2316,7 +2322,7 @@ void FindMax_ColorAssign(void){
 	INT32U frame;
 	//INT8U	key_cnt;
 
-	
+
 
 	pMLX_TH32x24_Para->MLX_TH32x24_Time_cnt++;
 
@@ -2461,6 +2467,8 @@ static void csi_task_entry(void const *parm)
 	INT8U	sampleCnt;
 	DISP_DEV MLX_disp_dev;
 
+	INT16S 	Read_dataStatus_cnt;
+
     DBG_PRINT("csi_task_entry start \r\n");
     // csi init
     //mazeTest_Preview_PScaler();
@@ -2507,10 +2515,26 @@ static void csi_task_entry(void const *parm)
 	DBG_PRINT("davis --> MLX_TH32x24_HighTMark_display_frame addr = 0x%x ->width = %d / high = %d\r\n",
 		pMLX_TH32x24_Para->MLX_TH32x24_HighTMark_display_frame,device_h_size,device_v_size);
 
+	Sensor_State = SENSOR_RUN;
 
+	if ((pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS == SENSOR_CONNECT) &&
+		(pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS == SENSOR_OPEN))
+		{
+		MXL_handle.devNumber = pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_I2C_PORT ;
+		}
+	else if((pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS == SENSOR_ERROR) &&
+		(pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS == SENSOR_CONNECT))
+		{
+		MXL_handle.devNumber = pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_I2C_PORT ;
+		}
 
+	else
+		{
+		MXL_handle.devNumber = I2C_1;
+		Sensor_State = SENSOR_ERROR;
+		}
 
-	MXL_handle.devNumber = I2C_2;
+	//MXL_handle.devNumber = I2C_2;
 	MXL_handle.slaveAddr = MLX90640_SLAVE_ADDR<<1;
 	//MXL_handle.clkRate = 1200; // 1Mhz check from OSC. and can run
 	MXL_handle.clkRate = 1000; // 900kHz check from OSC.
@@ -2600,8 +2624,11 @@ static void csi_task_entry(void const *parm)
 
 	 dataReady = 0;
 	 frameData_cnt=0;
-	 while(dataReady == 0)
+	 Read_dataStatus_cnt = 0;
+	 
+	 while((dataReady == 0) && (Read_dataStatus_cnt <= DATA_STATUS_ERR))
 	 {
+	 	
 		 do{
 			 error = drv_l1_reg_2byte_data_2byte_read(&MXL_handle,MLX90640_AdrStatus,&statusRegister);
 			 //DBG_PRINT("read return-1  = %d \r\n",error);  // return data length , if error = -1
@@ -2611,8 +2638,16 @@ static void csi_task_entry(void const *parm)
 				 	DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/3,frameData_cnt);
 				 osDelay(DELAYTIME_at_REFRESH_RATE3[MLX90640_REFRESH_RATE_SET]/3);
 			 }
-		 }while(error == -1);
+			 Read_dataStatus_cnt++;
+			 //DBG_PRINT("Read_dataStatus_cnt(%d)",Read_dataStatus_cnt);
+		 }while((error == -1) && ( Read_dataStatus_cnt < DATA_STATUS_ERR+1 ));
 
+		if (Read_dataStatus_cnt >= DATA_STATUS_ERR)
+			{
+			Sensor_State = SENSOR_ERROR;
+			DBG_PRINT("SENSOR_ERROR-1");
+			
+			}
 		 dataReady = statusRegister & 0x0008; // 1 : A new data is available in RAM ?
 
 		 //DBG_PRINT(" 2.statusRegister = 0x%04x, dataReady = 0x%04x,frameData_cnt = %d \r\n",
@@ -2635,6 +2670,7 @@ static void csi_task_entry(void const *parm)
 
 
 			 frameData_cnt++;
+		 	//DBG_PRINT("frameData_cnt %d",frameData_cnt);
 		 }
 
 
@@ -2898,6 +2934,9 @@ static void disp_task_entry(void const *parm)
 		gplib_ppu_text_segment_set(ppu_register_set, C_PPU_TEXT1, 0);	 // Set TEXT segment address
 		//gplib_ppu_rgb565_transparent_color_set(ppu_register_set, 1, TRANSPARENT_COLOR);	// TRANSPARENT_COLOR = 0x00CD
 
+		// DUAL_BLD is 1 => Blending factor is useful under alpha channel mode. 
+		gplib_ppu_dual_blend_set(ppu_register_set,1);
+
 		gplib_ppu_palette_type_set(ppu_register_set, 0,1);
 		gplib_ppu_sprite_enable_set(ppu_register_set, 1);										// Disable Sprite
 		gplib_ppu_sprite_coordinate_set(ppu_register_set, 0);									// set sprite coordinate
@@ -2909,7 +2948,11 @@ static void disp_task_entry(void const *parm)
 		gplib_ppu_sprite_zoom_enable_set(ppu_register_set, 1);							 // Enable sprite zoom mode
 		gplib_ppu_sprite_rgba_mode_set(ppu_register_set, 1);
 
-		//gplib_ppu_sprite_blend_mode_set(ppu_register_set, 1);							 // Enable sprite blend mode
+		gplib_ppu_sprite_blend_mode_set(ppu_register_set, 1);							 // Enable sprite blend mode
+        //gplib_ppu_sprite_window_enable_set(ppu_register_set, 1);                         // Enable sprite window mode
+
+		//gplib_ppu_text_blend_set(ppu_register_set, C_PPU_TEXT1, 1, 1, 32);	// Set Blend
+
 
 	#if 1
 		//text 2 2D UI
@@ -2959,7 +3002,7 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
-				x_pos=(lpcnt%5)*(SP_H_SIZE-26) + 2*SP_H_SIZE;
+				x_pos=(lpcnt%5)*(SP_H_SIZE-26) + 1*SP_H_SIZE;
 				y_pos=(lpcnt/5)*SP_V_SIZE;
 				}
 
@@ -2979,7 +3022,7 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
-				x_pos=(lpcnt%5)*(SP_H_SIZE-26) + 2*SP_H_SIZE + 2;
+				x_pos=(lpcnt%5)*(SP_H_SIZE-26) + 1*SP_H_SIZE + 32;
 				y_pos=(lpcnt/5)*SP_V_SIZE;
 				}
 
@@ -3015,11 +3058,11 @@ static void disp_task_entry(void const *parm)
 		}
 
 
-		lpcnt = 9; //  16x32 unit C/F
+		lpcnt = 10; //  16x32 unit C/F
 		set_sprite_init(userDefine_spNum,(INT32U)&Sprite025_half_C_SP);
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
-				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 2*SP_sm_H_SIZE +2;
+				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 2*SP_sm_H_SIZE+1;
 				y_pos=2*SP_sm_V_SIZE;
 				}
 
@@ -3072,15 +3115,23 @@ static void disp_task_entry(void const *parm)
 				userDefine_spNum++;
 
 
-		#if 0 // line3
-		for(lpcnt = 7 ; lpcnt < 10 ; lpcnt++)	// 32x32 small Font (line 3)
-		{
-			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N3_SP);
+		#if 1 // line4 test
+
+			
+			/*	
+			Sensor_State = SENSOR_RUN;
+
+	if ((pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS == SENSOR_CONNECT) &&
+		(pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS == SENSOR_OPEN))
+		*/
+
+			lpcnt =2;
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
 
 			if(DISPLAY_DEVICE == DISDEV_TFT)
 				{
-				x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
-				y_pos=4*SP_sm_V_SIZE;
+				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
+				y_pos=5*SP_sm_V_SIZE;
 				}
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
@@ -3088,10 +3139,10 @@ static void disp_task_entry(void const *parm)
 			x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
 			y_pos=(-1)*SP_sm_V_SIZE;
 				}
-			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N3_CellIdx); // 放在 HDMI 上位置 
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N1_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
+			
 
-		}
 	#endif // line3
 
 
@@ -3254,6 +3305,42 @@ static void disp_task_entry(void const *parm)
 				//DBG_PRINT("TmpDispBuf= %d\r\n",TmpDispBuf);
 				}
 
+
+
+			#if 0 // line4 test
+
+			if((Sensor_State == SENSOR_RUN) && (pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS == SENSOR_CONNECT) &&
+				(pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS == SENSOR_OPEN))
+			{
+			/*	
+			Sensor_State = SENSOR_RUN;
+
+	if ((pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS == SENSOR_CONNECT) &&
+		(pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS == SENSOR_OPEN))
+		*/
+
+			lpcnt =2;
+			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
+
+			if(DISPLAY_DEVICE == DISDEV_TFT)
+				{
+				x_pos=lpcnt*(SP_sm_H_SIZE-8) + 5*SP_sm_H_SIZE;
+				y_pos=5*SP_sm_V_SIZE;
+				}
+
+			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
+				{
+			x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
+			y_pos=(-1)*SP_sm_V_SIZE;
+				}
+			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N1_CellIdx); // 放在 HDMI 上位置 
+				//userDefine_spNum++;
+			}
+
+	#endif // line3
+	
+
+			//gplib_ppu_text_blend_set(ppu_register_set, C_PPU_TEXT2, 1, 1, 10);	// Set Blend
 			paint_ppu_spriteram(ppu_register_set,Sprite_Coordinate_Freemode,LeftTop2Center_coordinate,userDefine_spNum);
 
 			//
@@ -3280,7 +3367,8 @@ static void disp_task_entry(void const *parm)
             {
             	// Blending is 64-level when sprite window function is disabled.
 				// This function should be used to set blending level when sprite window function is disabled.
-	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+	        	
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,TEMP_VAL_BLEND_VAL);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
@@ -3295,7 +3383,7 @@ static void disp_task_entry(void const *parm)
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
 
-	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,TEMP_VAL_BLEND_VAL);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
@@ -3308,7 +3396,7 @@ static void disp_task_entry(void const *parm)
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
 
-	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,TEMP_VAL_BLEND_VAL);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
@@ -3322,7 +3410,7 @@ static void disp_task_entry(void const *parm)
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
 
-	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,TEMP_VAL_BLEND_VAL);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
@@ -3345,7 +3433,9 @@ static void disp_task_entry(void const *parm)
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
 
-	        	//gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,5);
+				// Blending level down grade to 16-level when sprite window function is enabled.
+	        	//gplib_ppu_sprite_attribute_blend16_set((SpN_RAM *)sp_num_addr,1,8);
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,TEMP_VAL_BLEND_VAL);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
@@ -3498,67 +3588,35 @@ static void disp_task_entry(void const *parm)
 
 
 
-		#if 0	// line3
-			//	32x32 small Font (line 3)
-			//
+		#if 1	// check ext. or inner sensor
 
-			//
-			if (Tmp1pointMaxDisp_cnt == 0)
+			sprite_base_addr = (INT32U)_SP_EXT_FAIL_CellData;
+			//sprite_base_addr = (INT32U)_SPRITE_test_blue_image0;
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +
+						0* SP_CHR_SIZE);
+			if((Sensor_State == SENSOR_RUN) && (pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS == SENSOR_CONNECT) &&
+				(pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS == SENSOR_OPEN))
+			{
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +
+					1* SP_CHR_SIZE);
+			}
+			else if(Sensor_State == SENSOR_ERROR)
 				{
-				Tmp1pointDisp_Pre = pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax;
-				Tmp1pointMaxDisp_cnt++;
-				}
-			if ( abs(Tmp1pointDisp_Pre - pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax) < 5 )
-				{
-				TmpDispBuf_sum = Tmp1pointDisp_Pre;
-				}
-			else
-				{
-				TmpDispBuf_sum = pMLX_TH32x24_Para->MLX_TH32x24_1pointTmpMax;
-				Tmp1pointDisp_Pre = TmpDispBuf_sum;
+				DBG_PRINT("SENSOR_ERROR-2");
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +
+					2* SP_CHR_SIZE);
 				}
 
-			sprite_base_addr = (INT32U)_SPRITE_NumFntSmall_N3_CellData;
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 百位數 
-			//	( (pMLX_TH32x24_Para->MLX_TH32x24_alertTmpSet/100) * SP_sm_CHR_SIZE));
-			//((INT16U)OvAlertVal_SUM/100) * SP_sm_CHR_SIZE);
-			TmpDispBuf_sum/100 * SP_sm_CHR_SIZE);
-
-			//DBG_PRINT(" \r\n");
-			//DBG_PRINT("32x32-0 = 0x%x /",sprite_characterNum_pos_addr);
-
-            Get_sprite_image_info(7,(SpN_ptr *)&sp_ptr);
+            Get_sprite_image_info(11,(SpN_ptr *)&sp_ptr);
             sp_num_addr=sp_ptr.nSPNum_ptr;
             for(i=0;i<sp_ptr.nSP_CharNum;i++)
             {
+	        	gplib_ppu_sprite_attribute_blend64_set((SpN_RAM *)sp_num_addr,1,TEMP_VAL_BLEND_VAL);
                 gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
                 sp_num_addr+=sizeof(SpN_RAM);
             }
+					
 
-			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +	// 十位數 
-				( ( TmpDispBuf_sum%100)/10* SP_sm_CHR_SIZE)); // for test
-
-			//DBG_PRINT("32x32-1 = 0x%x /",sprite_characterNum_pos_addr);
-            Get_sprite_image_info(8,(SpN_ptr *)&sp_ptr);
-            sp_num_addr=sp_ptr.nSPNum_ptr;
-            for(i=0;i<sp_ptr.nSP_CharNum;i++)
-            {
-                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
-                sp_num_addr+=sizeof(SpN_RAM);
-            }
-
-			 sprite_base_addr = (INT32U)_SPRITE_SmFnt_N3p_CellData;
-			 sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr +  // 個位數 
-			 	(( TmpDispBuf_sum%10) * SP_sm_CHR_SIZE)); // fortest
-
-			 //DBG_PRINT("32x32-2 = 0x%x \r\n",sprite_characterNum_pos_addr);
-			 Get_sprite_image_info(9,(SpN_ptr *)&sp_ptr);
-            sp_num_addr=sp_ptr.nSPNum_ptr;
-            for(i=0;i<sp_ptr.nSP_CharNum;i++)
-            {
-                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
-                sp_num_addr+=sizeof(SpN_RAM);
-            }
 		#endif // line3
 
 
@@ -4329,11 +4387,11 @@ void GPM4_CSI_DISP_Demo(void)
 			pwr_key_cnt = 0;
 			pMLX_TH32x24_Para->MLX_TH32x24_PWR_KEY_OFF = 0;
 			DBG_PRINT("CLEAR　power down mode\r\n");
-			
+
 			pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_KEY = PWR_ON0_KEY_UP;
 			DBG_PRINT("PWR_ON0 key PWR_ON0_KEY_UP\r\n");
 			}
-		
+
 		if(ADKEY_forPWR_ON0)
 			{
 			if (pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_KEY == PWR_ON0_KEY_UP)
@@ -4343,17 +4401,17 @@ void GPM4_CSI_DISP_Demo(void)
 
 				if( pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET > 1 )
 				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET = 0;
-				
+
 				DBG_PRINT("PWR_ON0 key TMPunit_SET = %d\r\n",
 				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_SET);
 
 				pMLX_TH32x24_Para->MLX_TH32x24_TMPunit_KEY = PWR_ON0_KEY_DOWN;
-				
+
 				}
 			}
-		
 
-		
+
+
 
 
         /*
