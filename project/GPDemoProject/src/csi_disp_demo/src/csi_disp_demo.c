@@ -3014,8 +3014,8 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=(lpcnt%5)*(SP_H_SIZE-26) +4* SP_H_SIZE + 64;
-			y_pos=(lpcnt/5)*SP_V_SIZE -2* SP_V_SIZE;
+			x_pos=(lpcnt%5)*(SP_unit_H_SIZE) + 11* SP_unit_H_SIZE ;
+			y_pos=(lpcnt/5)*SP_unit_V_SIZE -2* SP_unit_V_SIZE;
 				}
 
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N2_CellIdx); // 放在 HDMI 上位置 
@@ -3034,8 +3034,8 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=(lpcnt%5)*(SP_H_SIZE-24) +4* SP_H_SIZE + 64;
-			y_pos=(lpcnt/5)*SP_V_SIZE -2* SP_V_SIZE;
+			x_pos=(lpcnt%5)*(SP_unit_H_SIZE) + 11* SP_unit_H_SIZE ;
+			y_pos=(lpcnt/5)*SP_unit_V_SIZE -2* SP_unit_V_SIZE;
 				}
 
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N2_CellIdx); // 放在 HDMI 上位置 
@@ -3055,8 +3055,8 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=lpcnt*(SP_sm_H_SIZE-8) +8* SP_sm_H_SIZE;
-			y_pos=-2*SP_sm_V_SIZE;
+			x_pos=lpcnt*(SP_sm_unit_H_SIZE) +20* SP_sm_unit_H_SIZE;
+			y_pos=-2*SP_sm_unit_V_SIZE;
 				}
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N4_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
@@ -3074,8 +3074,8 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=lpcnt*(SP_sm_H_SIZE-8) +8* SP_sm_H_SIZE +7;
-			y_pos=-2*SP_sm_V_SIZE;
+			x_pos=lpcnt*(SP_sm_unit_H_SIZE) +20* SP_sm_unit_H_SIZE;
+			y_pos=-2*SP_sm_unit_V_SIZE;
 				}
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N4_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
@@ -3113,7 +3113,7 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=lpcnt*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
+			x_pos=lpcnt*(SP_sm_H_SIZE) +11* SP_sm_H_SIZE;
 			y_pos=1*SP_sm_V_SIZE;
 				}
 
@@ -3121,15 +3121,7 @@ static void disp_task_entry(void const *parm)
 				userDefine_spNum++;
 
 
-		#if 1 // line4 test
-
-			
-			/*	
-			Sensor_State = SENSOR_RUN;
-
-	if ((pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_EXT_STATUS == SENSOR_CONNECT) &&
-		(pMLX_TH32x24_Para->MLX_TH32x24_SENSOR_INNER_STATUS == SENSOR_OPEN))
-		*/
+		#if 1 // EXT. mark
 
 			lpcnt =2;
 			set_sprite_init(userDefine_spNum,(INT32U)&Sprite001_N1_SP);
@@ -3142,8 +3134,8 @@ static void disp_task_entry(void const *parm)
 
 			if(DISPLAY_DEVICE == DISDEV_HDMI_480P)
 				{
-			x_pos=(lpcnt-4)*(SP_sm_H_SIZE-8) +11* SP_sm_H_SIZE;
-			y_pos=(-1)*SP_sm_V_SIZE;
+			x_pos=(-6)*(SP_sm_H_SIZE)-1 ;
+			y_pos=(-4)*SP_sm_V_SIZE;
 				}
 			set_sprite_display_init(userDefine_spNum,x_pos,y_pos,(INT32U)_Img0001_N1_CellIdx); // 放在 HDMI 上位置 
 				userDefine_spNum++;
@@ -3567,11 +3559,15 @@ static void disp_task_entry(void const *parm)
                 sp_num_addr+=sizeof(SpN_RAM);
             }
 
+			//
 			// alert sign (line3)
+			//
+			sprite_base_addr = (INT32U)_SPRITE_SmFnt_alert_CellData;
+			sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // null
 			if (pMLX_TH32x24_Para->MLX_TH32x24_AlertTime_ON_FLAG == 1)
 				{
-				sprite_base_addr = (INT32U)_SPRITE_SmFnt_alert_CellData;
-				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (0* SP_sm_CHR_SIZE)); // -
+				sprite_characterNum_pos_addr = (INT32U)(sprite_base_addr + (1* SP_sm_CHR_SIZE)); // alert ON
+				}
 				 Get_sprite_image_info(10,(SpN_ptr *)&sp_ptr);
 				gplib_ppu_sprite_attribute_zoom_set((SpN_RAM *)sp_ptr.nSPNum_ptr, 36); // SP_ZOOM36
             	sp_num_addr=sp_ptr.nSPNum_ptr;
@@ -3581,7 +3577,8 @@ static void disp_task_entry(void const *parm)
 		                gplib_ppu_sprite_attribute_character_number_set(ppu_register_set, (SpN_RAM *)sp_num_addr, (sprite_characterNum_pos_addr/2));
         		        sp_num_addr+=sizeof(SpN_RAM);
             		}
-				}
+				
+			/*
 			else
 				{
 				sprite_base_addr = (INT32U)_SPRITE_SmFnt_NoAlert_CellData;
@@ -3596,7 +3593,7 @@ static void disp_task_entry(void const *parm)
         		        sp_num_addr+=sizeof(SpN_RAM);
             		}
 				}
-
+			*/
 
 
 

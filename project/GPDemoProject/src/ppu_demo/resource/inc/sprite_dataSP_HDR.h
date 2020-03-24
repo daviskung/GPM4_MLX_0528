@@ -20,9 +20,6 @@ extern const INT16U _SP_32x64_unit_CellData[];
 extern const INT16U _Img0001_N2_CellIdx[];	//32x64
 extern const SPRITE Sprite023_half_SP[];
 
-//Sprite Cell data extern variables declaration
-extern const INT16U _SPRITE_NumForntSmall_CellData[];
-
 
 //Sprite Cell index extern variables declaration
 extern const INT16U _Img0001_N3_CellIdx[];		// 32x32
@@ -43,7 +40,6 @@ extern const INT16U _SPRITE_SmFnt_alert_CellData[];
 extern const INT16U _SPRITE_SmFnt_NoAlert_CellData[];
 //extern const INT16U _SPRITE_Unit_Null_CellData[];
 //extern const INT16U _SPRITE_test_white_CellData[];
-extern const unsigned char _SPRITE_test_blue_image0[] ;
 extern const INT16U _SP_EXT_FAIL_CellData[];
 
 
