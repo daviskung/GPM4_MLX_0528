@@ -79,13 +79,17 @@
 #define MLX90640_EEAddrstart 		0x2400
 #define MLX90640_EEMemAddrRead 		832
 #define MLX90640_RAM_AddrRead 		832
-//
-//	增加 
-//	frameData[832] = controlRegister1;
-//  frameData[833] = statusRegister & 0x0001;
-//	配合 demo code API
-//
-#define MLX90640_frameDataSize		834		//
+
+//--------------------------------------------|
+// frameData[0] - frameData[831] are RAM data 
+//  增加										
+//  frameData[832] = controlRegister1;		
+//  frameData[833] = statusRegister & 0x0001; 
+//  配合 demo code API							
+//											
+#define MLX90640_frameDataSize		834	
+//--------------------------------------------|
+
 #define MLX90640_RAMAddrstart 		0x0400
 
 #define MLX90640_RESOLUTION_16B 		0x00
